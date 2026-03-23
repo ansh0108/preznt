@@ -1,9 +1,9 @@
 fastapi
-uvicorn
+uvicorn[standard]
 python-dotenv
 groq
-faiss-cpu
-sentence-transformers
+faiss-cpu==1.9.0
+sentence-transformers==3.4.1
 pymupdf
 python-docx
 python-pptx
