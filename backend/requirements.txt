@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-dotenv
+groq
+faiss-cpu
+sentence-transformers
+pymupdf
+python-docx
+python-pptx
+requests
+python-multipart
+aiofiles

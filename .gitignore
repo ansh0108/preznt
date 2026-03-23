@@ -1,0 +1,20 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+
+# Data (stays local, persisted on Railway volume)
+backend/uploads/
+backend/indexes/
+backend/profiles/
+backend/photos/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# System
+.DS_Store
