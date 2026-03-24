@@ -1,29 +1,10 @@
 import os
-import requests
 from dotenv import load_dotenv
 from embeddings import search_index
+from groq_client import call_groq
 
 load_dotenv()
 INDEXES_DIR = os.path.join(os.getenv("DATA_DIR", "."), "indexes")
-
-
-def call_groq(messages: list, max_tokens: int = 500, temperature: float = 0.3) -> str:
-    resp = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {os.getenv('GROQ_API_KEY', '').strip()}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "llama-3.3-70b-versatile",
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens
-        },
-        timeout=30
-    )
-    resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"].strip()
 
 
 def build_profile_summary(profile: dict) -> str:

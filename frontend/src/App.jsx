@@ -446,7 +446,7 @@ function SetupPage({ onComplete }) {
   const STEPS = ["Profile", "LinkedIn", "Documents", "Build"];
 
   const createProfile = async () => {
-    if (!profile.name || !profile.title) return setError("Name and title are required");
+    if (!profile.name) return setError("Name is required");
     setLoading(true); setError(null);
     try {
       const res = await axios.post(`${API}/setup/profile`, { name: profile.name, title: profile.title, bio: profile.bio, github_urls: selectedRepos, github_username: githubUsername });
@@ -529,7 +529,7 @@ function SetupPage({ onComplete }) {
             <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 28 }}>This is your first impression — make it count</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <input placeholder="Full name *" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} />
-              <input placeholder="Professional title * — e.g. Data Analyst, AI Engineer" value={profile.title} onChange={e => setProfile({ ...profile, title: e.target.value })} />
+              <input placeholder="Professional title (optional) — e.g. Data Analyst, AI Engineer" value={profile.title} onChange={e => setProfile({ ...profile, title: e.target.value })} />
               <textarea rows={3} placeholder="Short bio (optional)" value={profile.bio} onChange={e => setProfile({ ...profile, bio: e.target.value })} />
               <PhotoUploadField photo={photo} setPhoto={setPhoto} />
               <Divider my={4} />
@@ -551,9 +551,24 @@ function SetupPage({ onComplete }) {
         {step === 2 && (
           <div>
             <div style={{ fontFamily: "var(--serif)", fontSize: 22, fontWeight: 500, marginBottom: 6 }}>LinkedIn export</div>
-            <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 8 }}>LinkedIn → Me → Settings → Data Privacy → Get a copy → Download PDF</div>
-            <div style={{ background: "var(--bg3)", border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: "9px 14px", marginBottom: 20, fontSize: 12, color: "var(--text3)", lineHeight: 1.5 }}>
-              This gives us your experience, education, and skills.
+            <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 14 }}>We use your LinkedIn PDF to extract experience, education, and skills.</div>
+            <div style={{ background: "var(--bg3)", border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: "14px 16px", marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text2)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>How to download your LinkedIn PDF</div>
+              {[
+                ["Go to linkedin.com", "Click your profile photo → View Profile"],
+                ["Click "More"", "On your profile page, click the More button below your name"],
+                ["Save to PDF", "Select \"Save to PDF\" from the dropdown — it downloads instantly"],
+              ].map(([title, desc], i) => (
+                <div key={i} style={{ display: "flex", gap: 12, marginBottom: i < 2 ? 10 : 0, alignItems: "flex-start" }}>
+                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{i + 1}</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)" }}>{title}</div>
+                    <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 2 }}>{desc}</div>
+                  </div>
+                </div>
+              ))}
             </div>
             <div onClick={() => document.getElementById("li-upload").click()} style={{ border: `2px dashed ${linkedinFile ? "var(--accent)" : "var(--line2)"}`, borderRadius: "var(--r-lg)", padding: "28px 20px", textAlign: "center", cursor: "pointer", background: linkedinFile ? "var(--accent-d)" : "transparent", transition: "all 0.2s" }}>
               <Icon name="file" size={28} color={linkedinFile ? "var(--accent)" : "var(--text3)"} style={{ marginBottom: 10 }} />
@@ -638,6 +653,35 @@ function SetupPage({ onComplete }) {
   );
 }
 
+// ─── SKILL CLUSTERING ────────────────────────────────────────────────────────
+const SKILL_CATEGORIES = {
+  "Languages": ["python", "r", "javascript", "typescript", "java", "sql", "html/css", "html", "css", "scala", "go", "c++", "c#", "bash", "shell", "matlab", "ruby", "php", "swift", "kotlin"],
+  "Data & Analytics": ["tableau", "power bi", "excel", "data analysis", "data intelligence", "looker", "metabase", "qlik", "dax", "etl", "data modeling", "data visualization", "business intelligence", "bi", "analytics", "reporting", "powerbi"],
+  "ML & AI": ["scikit-learn", "tensorflow", "pytorch", "keras", "xgboost", "lightgbm", "lasso", "ridge", "prophet", "machine learning", "deep learning", "nlp", "llm", "groq llama", "transformers", "huggingface", "statsmodels", "regression", "classification", "clustering", "groq"],
+  "Data Engineering": ["pandas", "numpy", "spark", "hadoop", "kafka", "airflow", "duckdb", "snowflake", "databricks", "polars", "pyspark", "data pipeline", "data warehouse", "dbt", "etl"],
+  "Databases": ["postgresql", "mysql", "mongodb", "redis", "sqlite", "oracle", "mssql", "cassandra", "bigquery", "redshift", "postgres"],
+  "Frameworks & Tools": ["fastapi", "react", "flask", "django", "node", "next.js", "vue", "angular", "spring", "express", "streamlit", "gradio", "node.js"],
+  "Cloud & DevOps": ["aws", "azure", "gcp", "docker", "kubernetes", "git", "github", "ci/cd", "terraform", "linux", "cloud"],
+};
+
+function clusterSkills(skills) {
+  const clusters = {};
+  const used = new Set();
+  for (const [category, keywords] of Object.entries(SKILL_CATEGORIES)) {
+    const matched = skills.filter(s => {
+      const sl = s.toLowerCase();
+      return keywords.some(k => sl === k || sl.includes(k) || k.includes(sl));
+    });
+    if (matched.length > 0) {
+      clusters[category] = matched;
+      matched.forEach(s => used.add(s));
+    }
+  }
+  const other = skills.filter(s => !used.has(s));
+  if (other.length > 0) clusters["Other"] = other;
+  return clusters;
+}
+
 // ─── OVERVIEW TAB ─────────────────────────────────────────────────────────────
 function Overview({ profile }) {
   const hasContent = profile.experience?.length || profile.education?.length || profile.skills?.length;
@@ -707,8 +751,15 @@ function Overview({ profile }) {
       {profile.skills?.length > 0 && (
         <div>
           <SecHead>Skills</SecHead>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-            {profile.skills.map((s, i) => <Pill key={i} size="md">{s}</Pill>)}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {Object.entries(clusterSkills(profile.skills)).map(([cat, skills]) => (
+              <div key={cat}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{cat}</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                  {skills.map((s, i) => <Pill key={i} size="md">{s}</Pill>)}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -1103,41 +1154,29 @@ function PortfolioPage({ userId, onBack }) {
             )}
           </div>
 
-          {/* Stats */}
-          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px", animation: "fadeUp 0.42s ease" }}>
-            <SecHead style={{ marginBottom: 14 }}>At a glance</SecHead>
-            <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-              {[
-                profile.experience?.length && { icon: "briefcase", label: "Experience", val: `${profile.experience.length} roles` },
-                profile.education?.length && { icon: "graduation", label: "Education", val: `${profile.education.length} degree${profile.education.length > 1 ? "s" : ""}` },
-                totalProjects > 0 && { icon: "code", label: "Projects", val: `${totalProjects} total` },
-                profile.skills?.length && { icon: "wrench", label: "Skills", val: `${profile.skills.length} listed` },
-              ].filter(Boolean).map((row, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text3)", fontSize: 13 }}>
-                    <Icon name={row.icon} size={14} color="var(--text3)" />{row.label}
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{row.val}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Top skills */}
+          {/* Top skills - clustered */}
           {profile.skills?.length > 0 && (
             <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px", animation: "fadeUp 0.44s ease" }}>
               <SecHead style={{ marginBottom: 12 }}>Top Skills</SecHead>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {profile.skills.slice(0, 14).map((s, i) => <Pill key={i}>{s}</Pill>)}
-                {profile.skills.length > 14 && <span style={{ fontSize: 12, color: "var(--text3)", alignSelf: "center" }}>+{profile.skills.length - 14} more</span>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {Object.entries(clusterSkills(profile.skills)).map(([cat, skills]) => (
+                  <div key={cat}>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6 }}>{cat}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                      {skills.map((s, i) => <Pill key={i}>{s}</Pill>)}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* Current role */}
-          {profile.experience?.[0] && (
+          {/* Current / Recent role */}
+          {profile.experience?.[0] && (() => {
+            const isCurrentRole = /present|current/i.test(profile.experience[0].dates || "");
+            return (
             <div style={{ background: "var(--accent-d)", border: "1px solid var(--accent-b)", borderRadius: "var(--r-lg)", padding: "16px 20px", animation: "fadeUp 0.46s ease" }}>
-              <SecHead style={{ marginBottom: 12, color: "var(--accent)" }}>Currently</SecHead>
+              <SecHead style={{ marginBottom: 12, color: "var(--accent)" }}>{isCurrentRole ? "Currently" : "Recently"}</SecHead>
               <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                 <OrgLogo name={profile.experience[0].company || profile.experience[0].title} size={34} />
                 <div>
@@ -1147,7 +1186,8 @@ function PortfolioPage({ userId, onBack }) {
                 </div>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* Open to */}
           {profile.target_roles?.length > 0 && (

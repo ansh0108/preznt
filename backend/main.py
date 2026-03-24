@@ -17,29 +17,10 @@ from parser import (
 from embeddings import build_index, index_exists
 from chatbot import chat
 from gap_analysis import analyze_gap
+from groq_client import call_groq
 
 load_dotenv()
 app = FastAPI()
-
-
-def call_groq(messages: list, max_tokens: int = 500, temperature: float = 0.2) -> str:
-    """Call Groq API directly via requests (avoids httpx/SDK network issues)."""
-    resp = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {os.getenv('GROQ_API_KEY', '').strip()}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "llama-3.3-70b-versatile",
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens
-        },
-        timeout=30
-    )
-    resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"].strip()
 
 app.add_middleware(CORSMiddleware, allow_origins=[
                    "*"], allow_methods=["*"], allow_headers=["*"])
