@@ -556,7 +556,7 @@ function SetupPage({ onComplete }) {
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text2)", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>How to download your LinkedIn PDF</div>
               {[
                 ["Go to linkedin.com", "Click your profile photo → View Profile"],
-                ["Click "More"", "On your profile page, click the More button below your name"],
+                ['Click "More"', "On your profile page, click the More button below your name"],
                 ["Save to PDF", "Select \"Save to PDF\" from the dropdown — it downloads instantly"],
               ].map(([title, desc], i) => (
                 <div key={i} style={{ display: "flex", gap: 12, marginBottom: i < 2 ? 10 : 0, alignItems: "flex-start" }}>
