@@ -27,7 +27,7 @@ def call_groq(messages: list, max_tokens: int = 500, temperature: float = 0.2) -
     resp = requests.post(
         "https://api.groq.com/openai/v1/chat/completions",
         headers={
-            "Authorization": f"Bearer {os.getenv('GROQ_API_KEY', '')}",
+            "Authorization": f"Bearer {os.getenv('GROQ_API_KEY', '').strip()}",
             "Content-Type": "application/json"
         },
         json={
