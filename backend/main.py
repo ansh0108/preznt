@@ -451,15 +451,16 @@ async def index_profile(user_id: str):
     profile["tagline"] = generate_short_bio(profile)
     save_profile(user_id, profile)
 
-    if not all_data:
-        raise HTTPException(status_code=400, detail="No data to index.")
+    chunks = 0
+    if all_data:
+        documents = prepare_documents(all_data)
+        result = build_index(documents, user_id, INDEXES_DIR)
+        chunks = result["chunks"]
 
-    documents = prepare_documents(all_data)
-    result = build_index(documents, user_id, INDEXES_DIR)
     profile["indexed"] = True
-    profile["chunk_count"] = result["chunks"]
+    profile["chunk_count"] = chunks
     save_profile(user_id, profile)
-    return {"message": f"Index built with {result['chunks']} chunks", "chunks": result["chunks"]}
+    return {"message": f"Index built with {chunks} chunks", "chunks": chunks}
 
 
 @app.post("/chat")

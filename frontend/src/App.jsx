@@ -629,6 +629,11 @@ function SetupPage({ onComplete }) {
                   {indexing ? <><Spinner size={14} color="#fff" /> Building · ~45 seconds</> : <><Icon name="zap" size={14} color="#fff" /> Build Portfolio</>}
                 </Btn>
                 {error && <div style={{ color: "var(--red)", fontSize: 12.5, marginTop: 16 }}>{error}</div>}
+                {!indexing && (
+                  <div style={{ marginTop: 20 }}>
+                    <Btn variant="ghost" onClick={() => setStep(3)}>← Back</Btn>
+                  </div>
+                )}
               </>
             ) : (
               <div style={{ animation: "fadeUp 0.4s ease" }}>
