@@ -1,12 +1,30 @@
 import os
 import json
-from groq import Groq
+import requests
 from dotenv import load_dotenv
 from embeddings import search_index
 
 load_dotenv()
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 INDEXES_DIR = os.path.join(os.getenv("DATA_DIR", "."), "indexes")
+
+
+def call_groq(messages: list, max_tokens: int = 500, temperature: float = 0.3) -> str:
+    resp = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {os.getenv('GROQ_API_KEY', '')}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "llama-3.3-70b-versatile",
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens
+        },
+        timeout=30
+    )
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"].strip()
 
 
 def build_profile_context(profile: dict) -> str:
@@ -86,17 +104,10 @@ Candidate Profile (includes data from LinkedIn, resume, and GitHub):
 
 Analyze the gap between this candidate's current profile and the target role. Be specific and actionable. Make sure to consider ALL listed skills and projects from every source."""
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user_message}
-        ],
-        temperature=0.3,
-        max_tokens=2000
-    )
-
-    raw = response.choices[0].message.content.strip()
+    raw = call_groq([
+        {"role": "system", "content": system},
+        {"role": "user", "content": user_message}
+    ], max_tokens=2000, temperature=0.3)
     raw = raw.replace("```json", "").replace("```", "").strip()
 
     try:

@@ -8,7 +8,6 @@ import json
 import shutil
 import requests
 import re
-from groq import Groq
 from dotenv import load_dotenv
 
 from parser import (
@@ -21,7 +20,26 @@ from gap_analysis import analyze_gap
 
 load_dotenv()
 app = FastAPI()
-groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+
+def call_groq(messages: list, max_tokens: int = 500, temperature: float = 0.2) -> str:
+    """Call Groq API directly via requests (avoids httpx/SDK network issues)."""
+    resp = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {os.getenv('GROQ_API_KEY', '')}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "llama-3.3-70b-versatile",
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens
+        },
+        timeout=30
+    )
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"].strip()
 
 app.add_middleware(CORSMiddleware, allow_origins=[
                    "*"], allow_methods=["*"], allow_headers=["*"])
@@ -91,12 +109,7 @@ Original: {raw_description}
 
 3-sentence first-person rewrite:"""
     try:
-        resp = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2, max_tokens=180
-        )
-        return resp.choices[0].message.content.strip()
+        return call_groq([{"role": "user", "content": prompt}], max_tokens=180, temperature=0.2)
     except Exception as e:
         print(f"[LLM] Summarize failed for {title}: {e}")
         return raw_description[:300]
@@ -157,12 +170,7 @@ Return ONLY a JSON array of skill strings, nothing else. Example: ["Python", "SQ
 Aim for 15-25 specific, accurate skills. No duplicates. Capitalize properly."""
 
     try:
-        resp = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.1, max_tokens=500
-        )
-        raw = resp.choices[0].message.content.strip()
+        raw = call_groq([{"role": "user", "content": prompt}], max_tokens=500, temperature=0.1)
         raw = raw.replace("```json", "").replace("```", "").strip()
         skills = json.loads(raw)
         if isinstance(skills, list):
@@ -207,13 +215,8 @@ Rules:
 Document:
 {text[:4000]}"""
     try:
-        resp = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.1, max_tokens=1500
-        )
-        raw = resp.choices[0].message.content.strip().replace(
-            "```json", "").replace("```", "").strip()
+        raw = call_groq([{"role": "user", "content": prompt}], max_tokens=1500, temperature=0.1)
+        raw = raw.replace("```json", "").replace("```", "").strip()
         data = json.loads(raw)
         projects = data.get("projects", [])
         skills = data.get("skills", [])
@@ -245,12 +248,7 @@ Top skills: {skills}
 
 Tagline:"""
     try:
-        resp = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3, max_tokens=30
-        )
-        return resp.choices[0].message.content.strip().strip('"').strip("'")
+        return call_groq([{"role": "user", "content": prompt}], max_tokens=30, temperature=0.3).strip('"').strip("'")
     except Exception as e:
         print(f"[LLM] Tagline failed: {e}")
         return title
@@ -272,12 +270,7 @@ README: {readme[:1500]}
 
 2-sentence description:"""
     try:
-        resp = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3, max_tokens=120
-        )
-        return resp.choices[0].message.content.strip()
+        return call_groq([{"role": "user", "content": prompt}], max_tokens=120, temperature=0.3)
     except Exception as e:
         print(f"[LLM] Repo desc failed for {name}: {e}")
         return ""

@@ -1,11 +1,29 @@
 import os
-from groq import Groq
+import requests
 from dotenv import load_dotenv
 from embeddings import search_index
 
 load_dotenv()
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 INDEXES_DIR = os.path.join(os.getenv("DATA_DIR", "."), "indexes")
+
+
+def call_groq(messages: list, max_tokens: int = 500, temperature: float = 0.3) -> str:
+    resp = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {os.getenv('GROQ_API_KEY', '')}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "llama-3.3-70b-versatile",
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens
+        },
+        timeout=30
+    )
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"].strip()
 
 
 def build_profile_summary(profile: dict) -> str:
@@ -87,11 +105,4 @@ Full profile context (LinkedIn + resume + GitHub):
 
     messages.append({"role": "user", "content": question})
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=messages,
-        temperature=0.3,
-        max_tokens=300
-    )
-
-    return response.choices[0].message.content
+    return call_groq(messages, max_tokens=300, temperature=0.3)
