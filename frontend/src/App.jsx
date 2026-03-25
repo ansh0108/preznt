@@ -1111,7 +1111,7 @@ function PortfolioPage({ userId, onBack }) {
         </div>
       </header>
 
-      <div style={{ maxWidth: 1160, margin: "0 auto", padding: "40px 32px", display: "grid", gridTemplateColumns: "272px 1fr", gap: 28, alignItems: "start" }}>
+      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "40px 48px", display: "grid", gridTemplateColumns: "300px 1fr", gap: 36, alignItems: "start" }}>
 
         {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14, position: "sticky", top: 73 }}>

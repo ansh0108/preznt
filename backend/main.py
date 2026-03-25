@@ -161,45 +161,106 @@ Aim for 15-25 specific, accurate skills. No duplicates. Capitalize properly."""
     return existing
 
 
+
+# Authoritative keyword map for known tools — checked before LLM to avoid miscategorization.
+KNOWN_SKILL_MAP = {
+    "Programming Languages": [
+        "python", "r", "sql", "javascript", "typescript", "java", "scala", "go", "c++", "c#",
+        "bash", "shell", "matlab", "ruby", "php", "swift", "kotlin", "html", "css", "html/css",
+    ],
+    "Machine Learning & AI": [
+        "scikit-learn", "tensorflow", "pytorch", "keras", "xgboost", "lightgbm", "catboost",
+        "lasso", "ridge", "prophet", "arima", "sarima", "sarimax", "lstm", "random forest",
+        "isolation forest", "decision tree", "gradient boosting", "nlp", "llm", "transformers",
+        "huggingface", "sentence transformers", "faiss", "statsmodels", "regression",
+        "classification", "clustering", "forecasting", "time series", "deep learning",
+        "machine learning", "neural network", "groq llama", "groq", "openai", "langchain",
+        "pandas", "numpy", "scipy", "statsmodels", "spacy",
+    ],
+    "Data & Analytics": [
+        "tableau", "power bi", "powerbi", "looker", "metabase", "qlik", "dax", "data analysis",
+        "data intelligence", "data visualization", "business intelligence", "bi", "analytics",
+        "reporting", "excel", "microsoft excel", "google sheets", "data modeling", "etl",
+        "data warehousing", "data pipeline", "management information systems",
+    ],
+    "Databases": [
+        "postgresql", "postgres", "mysql", "mongodb", "redis", "sqlite", "oracle", "mssql",
+        "cassandra", "bigquery", "redshift", "duckdb", "snowflake",
+    ],
+    "Data Engineering": [
+        "spark", "pyspark", "hadoop", "kafka", "airflow", "dbt", "databricks", "polars",
+        "data pipeline", "data warehouse", "data lake", "etl",
+    ],
+    "Frameworks & Tools": [
+        "fastapi", "flask", "django", "react", "node", "next.js", "vue", "angular",
+        "streamlit", "gradio", "vite", "node.js", "express",
+    ],
+    "Cloud & DevOps": [
+        "aws", "azure", "gcp", "docker", "kubernetes", "git", "github", "ci/cd",
+        "terraform", "linux", "cloud", "heroku", "railway", "vercel",
+    ],
+    "SAP & Enterprise": [
+        "sap", "sap analytics cloud", "sap hana", "salesforce", "crm", "erp",
+    ],
+}
+
+
 def cluster_skills_with_llm(skills: list, profile: dict) -> dict:
-    """Use LLM to dynamically cluster skills into appropriate categories for this person's field."""
+    """Cluster skills: keyword map first for known tools, LLM only for the remainder."""
     if not skills:
-        return {"Other": skills}
+        return {}
 
-    # Build context about what kind of professional this person is
-    roles = [f"{e.get('title','')} at {e.get('company','')}" for e in profile.get("experience", [])[:3]]
-    role_context = ", ".join(roles) if roles else ""
+    clusters = {}
+    used = set()
 
-    prompt = f"""Group these skills into 3-6 meaningful categories for a portfolio. The categories should reflect this person's actual field — do NOT use generic tech categories like "Languages" for a marketing or business person.
+    # Pass 1: authoritative keyword matching for well-known tools
+    for category, keywords in KNOWN_SKILL_MAP.items():
+        matched = [s for s in skills if s.lower() in keywords or any(k in s.lower() for k in keywords if len(k) > 4)]
+        if matched:
+            clusters[category] = matched
+            used.update(s.lower() for s in matched)
+
+    # Pass 2: LLM clusters the remaining unknown/domain skills
+    remaining = [s for s in skills if s.lower() not in used]
+    if remaining:
+        roles = [f"{e.get('title','')} at {e.get('company','')}" for e in profile.get("experience", [])[:3]]
+        role_context = ", ".join(roles) if roles else ""
+
+        prompt = f"""Group these remaining skills into appropriate portfolio categories for this person.
 
 Person's roles: {role_context}
-Skills to group: {', '.join(skills)}
+Skills to categorize: {', '.join(remaining)}
 
 Rules:
-- Use domain-appropriate category names (e.g. "Research Methods", "Marketing Tools", "Data & Analytics", "Programming Languages", "Cloud & DevOps", "Business Intelligence")
-- Only create a "Programming Languages" category if the person actually has programming language skills
-- Each skill must appear in exactly one category
-- No empty categories
-- Category names should be concise (2-4 words max)
+- Use domain-appropriate names (e.g. "Research Methods", "Marketing Tools", "Business Analysis", "Design Tools")
+- Do NOT create "Programming Languages", "Machine Learning", "Databases" — those are handled separately
+- Each skill in exactly one category, no empty categories, 2-4 word category names
+- If unsure, put in "Other"
 
-Return ONLY valid JSON: {{"Category Name": ["skill1", "skill2"], "Another Category": ["skill3"]}}"""
+Return ONLY valid JSON: {{"Category Name": ["skill1", "skill2"]}}"""
 
-    try:
-        raw = call_groq([{"role": "user", "content": prompt}], max_tokens=600, temperature=0.1)
-        raw = raw.replace("```json", "").replace("```", "").strip()
-        clusters = json.loads(raw)
-        if isinstance(clusters, dict):
-            # Ensure all skills are included (catch any dropped by LLM)
-            clustered = set(s.lower() for cat_skills in clusters.values() for s in cat_skills)
-            missing = [s for s in skills if s.lower() not in clustered]
-            if missing:
-                clusters["Other"] = missing
-            print(f"[Skills] Clustered into {len(clusters)} categories")
-            return clusters
-    except Exception as e:
-        print(f"[Skills] Clustering failed: {e}")
+        try:
+            raw = call_groq([{"role": "user", "content": prompt}], max_tokens=400, temperature=0.1)
+            raw = raw.replace("```json", "").replace("```", "").strip()
+            llm_clusters = json.loads(raw)
+            if isinstance(llm_clusters, dict):
+                for cat, cat_skills in llm_clusters.items():
+                    if cat_skills:
+                        clusters[cat] = cat_skills
+                        used.update(s.lower() for s in cat_skills)
+        except Exception as e:
+            print(f"[Skills] LLM clustering failed: {e}")
+            leftover = [s for s in remaining if s.lower() not in used]
+            if leftover:
+                clusters["Other"] = leftover
 
-    return {"Skills": skills}
+    # Catch anything still uncategorized
+    still_missing = [s for s in skills if s.lower() not in used]
+    if still_missing:
+        clusters.setdefault("Other", []).extend(still_missing)
+
+    print(f"[Skills] Clustered into {len(clusters)} categories")
+    return clusters
 
 
 def extract_resume_data(text: str, filename: str) -> dict:
@@ -464,7 +525,7 @@ async def index_profile(user_id: str):
         repos = parse_github_repos(profile["github_urls"])
         for r in repos:
             desc = (r.get("description") or "").strip()
-            if not desc and r.get("readme"):
+            if not desc and (r.get("readme") or r.get("name")):
                 print(f"[LLM] Generating description for {r['name']}...")
                 desc = generate_repo_description(r)
             enriched_repos.append({
