@@ -99,37 +99,29 @@ Original: {raw_description}
 def extract_skills_from_all_sources(profile: dict, github_repos: list) -> list:
     """Extract a comprehensive, deduplicated skills list from all profile sources."""
 
-    # Gather all text sources
     sources = []
 
-    # LinkedIn experience descriptions
     for exp in profile.get("experience", []):
         if exp.get("description"):
-            sources.append(
-                f"Role: {exp['title']} at {exp['company']}\n{exp['description']}")
+            sources.append(f"Role: {exp['title']} at {exp['company']}\n{exp['description']}")
 
-    # LinkedIn summary
     if profile.get("linkedin_summary"):
         sources.append(profile["linkedin_summary"])
 
-    # Resume projects
     for proj in profile.get("resume_projects", []):
         if proj.get("description"):
             sources.append(f"Project: {proj['name']}\n{proj['description']}")
         if proj.get("tech_stack"):
-            sources.append(f"Tech stack: {', '.join(proj['tech_stack'])}")
+            sources.append(f"Skills used: {', '.join(proj['tech_stack'])}")
 
-    # GitHub repos
     for repo in github_repos:
         if repo.get("description"):
-            sources.append(
-                f"GitHub project: {repo['name']}\n{repo['description']}")
+            sources.append(f"GitHub project: {repo['name']}\n{repo['description']}")
         if repo.get("topics"):
             sources.append(f"Topics: {', '.join(repo['topics'])}")
         if repo.get("readme"):
             sources.append(repo["readme"][:500])
 
-    # Existing skills as seed
     existing = profile.get("skills", [])
 
     if not sources:
@@ -137,17 +129,17 @@ def extract_skills_from_all_sources(profile: dict, github_repos: list) -> list:
 
     combined_text = "\n\n".join(sources)[:5000]
 
-    prompt = f"""Extract a comprehensive list of technical skills from this professional profile.
+    prompt = f"""Extract a comprehensive list of skills from this professional profile. This person may be in any field — tech, marketing, sales, finance, research, design, etc.
 
-Include: programming languages, frameworks, libraries, tools, platforms, databases, methodologies, cloud services, data tools, ML/AI tools.
-Exclude: soft skills, company names, university names, locations, person names, job titles.
+Include ALL relevant skills: tools, software, platforms, methodologies, frameworks, domain-specific techniques, analytical methods, research methods, certifications. Include both technical and domain-specific professional skills.
+Exclude: soft skills (communication, teamwork), company names, university names, locations, person names, vague adjectives.
 
 Seed skills already known: {', '.join(existing)}
 
 Profile text:
 {combined_text}
 
-Return ONLY a JSON array of skill strings, nothing else. Example: ["Python", "SQL", "Tableau", "FastAPI"]
+Return ONLY a JSON array of skill strings, nothing else. Example: ["Python", "Tableau", "Van Westendorp", "SAP Analytics Cloud", "Journey Mapping"]
 Aim for 15-25 specific, accurate skills. No duplicates. Capitalize properly."""
 
     try:
@@ -155,7 +147,6 @@ Aim for 15-25 specific, accurate skills. No duplicates. Capitalize properly."""
         raw = raw.replace("```json", "").replace("```", "").strip()
         skills = json.loads(raw)
         if isinstance(skills, list):
-            # Merge with existing, deduplicate case-insensitively
             seen = set()
             merged = []
             for s in skills:
@@ -170,28 +161,71 @@ Aim for 15-25 specific, accurate skills. No duplicates. Capitalize properly."""
     return existing
 
 
+def cluster_skills_with_llm(skills: list, profile: dict) -> dict:
+    """Use LLM to dynamically cluster skills into appropriate categories for this person's field."""
+    if not skills:
+        return {"Other": skills}
+
+    # Build context about what kind of professional this person is
+    roles = [f"{e.get('title','')} at {e.get('company','')}" for e in profile.get("experience", [])[:3]]
+    role_context = ", ".join(roles) if roles else ""
+
+    prompt = f"""Group these skills into 3-6 meaningful categories for a portfolio. The categories should reflect this person's actual field — do NOT use generic tech categories like "Languages" for a marketing or business person.
+
+Person's roles: {role_context}
+Skills to group: {', '.join(skills)}
+
+Rules:
+- Use domain-appropriate category names (e.g. "Research Methods", "Marketing Tools", "Data & Analytics", "Programming Languages", "Cloud & DevOps", "Business Intelligence")
+- Only create a "Programming Languages" category if the person actually has programming language skills
+- Each skill must appear in exactly one category
+- No empty categories
+- Category names should be concise (2-4 words max)
+
+Return ONLY valid JSON: {{"Category Name": ["skill1", "skill2"], "Another Category": ["skill3"]}}"""
+
+    try:
+        raw = call_groq([{"role": "user", "content": prompt}], max_tokens=600, temperature=0.1)
+        raw = raw.replace("```json", "").replace("```", "").strip()
+        clusters = json.loads(raw)
+        if isinstance(clusters, dict):
+            # Ensure all skills are included (catch any dropped by LLM)
+            clustered = set(s.lower() for cat_skills in clusters.values() for s in cat_skills)
+            missing = [s for s in skills if s.lower() not in clustered]
+            if missing:
+                clusters["Other"] = missing
+            print(f"[Skills] Clustered into {len(clusters)} categories")
+            return clusters
+    except Exception as e:
+        print(f"[Skills] Clustering failed: {e}")
+
+    return {"Skills": skills}
+
+
 def extract_resume_data(text: str, filename: str) -> dict:
     if not text or len(text) < 100:
         return {"projects": [], "skills": []}
-    prompt = f"""Extract structured information from this resume/document.
+    prompt = f"""Extract structured information from this resume/document. This person may work in any field — tech, marketing, sales, finance, research, design, etc.
 
 Return ONLY valid JSON, nothing else:
 {{
   "projects": [
     {{
       "name": "Project Name",
-      "description": "2-3 sentence description: what it does, tech used, outcome",
-      "tech_stack": ["Python", "React"],
+      "description": "2-3 sentence narrative: what the person set out to do, how they approached it, and what was achieved. Write in a natural storytelling style — not bullet points or resume fragments.",
+      "tech_stack": ["Tool or method used", "Another tool"],
       "type": "personal"
     }}
   ],
-  "skills": ["Python", "SQL", "Tableau"]
+  "skills": ["Python", "SQL", "Van Westendorp", "Journey Mapping"]
 }}
 
 Rules:
 - Only clearly defined projects (not job responsibilities)
-- skills = tools, technologies, frameworks only (no soft skills, names, locations)
+- skills = tools, software, platforms, methodologies, domain-specific techniques — include both technical AND domain/professional skills relevant to this person's field
+- Exclude vague soft skills (communication, teamwork) but include domain-specific methods
 - Max 10 projects, 20 skills
+- tech_stack can include non-technical tools and methods (e.g. "SAP Analytics Cloud", "Van Westendorp", "Figma")
 
 Document:
 {text[:4000]}"""
@@ -446,7 +480,11 @@ async def index_profile(user_id: str):
     print("[LLM] Extracting comprehensive skills from all sources...")
     profile["skills"] = extract_skills_from_all_sources(profile, enriched_repos)
 
-    # 4. Generate tagline
+    # 4. Cluster skills dynamically
+    print("[LLM] Clustering skills...")
+    profile["skill_clusters"] = cluster_skills_with_llm(profile["skills"], profile)
+
+    # 5. Generate tagline
     print("[LLM] Generating tagline...")
     profile["tagline"] = generate_short_bio(profile)
     save_profile(user_id, profile)
@@ -522,6 +560,7 @@ async def get_profile(user_id: str):
         "education": profile.get("education", []),
         "experience": profile.get("experience", []),
         "skills": profile.get("skills", []),
+        "skill_clusters": profile.get("skill_clusters", {}),
         "target_roles": profile.get("target_roles", []),
         "tagline": profile.get("tagline", ""),
         "indexed": profile.get("indexed", False),

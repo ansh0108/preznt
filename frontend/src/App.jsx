@@ -5,8 +5,18 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8004";
 
 function getRouteFromHash() {
   const match = window.location.hash.match(/^#\/portfolio\/(.+)$/);
-  if (match) return { page: "portfolio", userId: match[1] };
+  if (match) {
+    const slug = match[1];
+    // user_id is always the last 8-char hex segment: "ansh-dasrapuria-62ce3b34"
+    const idMatch = slug.match(/([0-9a-f]{8})$/);
+    const userId = idMatch ? idMatch[1] : slug;
+    return { page: "portfolio", userId };
+  }
   return { page: "setup", userId: null };
+}
+
+function nameToSlug(name) {
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 // ─── ICONS (clean SVGs, no emojis) ───────────────────────────────────────────
@@ -482,7 +492,7 @@ function SetupPage({ onComplete }) {
     finally { setIndexing(false); }
   };
 
-  const portfolioUrl = userId ? `${window.location.origin}${window.location.pathname}#/portfolio/${userId}` : "";
+  const portfolioUrl = userId ? `${window.location.origin}${window.location.pathname}#/portfolio/${nameToSlug(profile.name)}-${userId}` : "";
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px", background: "var(--bg)" }}>
@@ -659,32 +669,13 @@ function SetupPage({ onComplete }) {
 }
 
 // ─── SKILL CLUSTERING ────────────────────────────────────────────────────────
-const SKILL_CATEGORIES = {
-  "Languages": ["python", "r", "javascript", "typescript", "java", "sql", "html/css", "html", "css", "scala", "go", "c++", "c#", "bash", "shell", "matlab", "ruby", "php", "swift", "kotlin"],
-  "Data & Analytics": ["tableau", "power bi", "excel", "data analysis", "data intelligence", "looker", "metabase", "qlik", "dax", "etl", "data modeling", "data visualization", "business intelligence", "bi", "analytics", "reporting", "powerbi"],
-  "ML & AI": ["scikit-learn", "tensorflow", "pytorch", "keras", "xgboost", "lightgbm", "lasso", "ridge", "prophet", "machine learning", "deep learning", "nlp", "llm", "groq llama", "transformers", "huggingface", "statsmodels", "regression", "classification", "clustering", "groq"],
-  "Data Engineering": ["pandas", "numpy", "spark", "hadoop", "kafka", "airflow", "duckdb", "snowflake", "databricks", "polars", "pyspark", "data pipeline", "data warehouse", "dbt", "etl"],
-  "Databases": ["postgresql", "mysql", "mongodb", "redis", "sqlite", "oracle", "mssql", "cassandra", "bigquery", "redshift", "postgres"],
-  "Frameworks & Tools": ["fastapi", "react", "flask", "django", "node", "next.js", "vue", "angular", "spring", "express", "streamlit", "gradio", "node.js"],
-  "Cloud & DevOps": ["aws", "azure", "gcp", "docker", "kubernetes", "git", "github", "ci/cd", "terraform", "linux", "cloud"],
-};
-
-function clusterSkills(skills) {
-  const clusters = {};
-  const used = new Set();
-  for (const [category, keywords] of Object.entries(SKILL_CATEGORIES)) {
-    const matched = skills.filter(s => {
-      const sl = s.toLowerCase();
-      return keywords.some(k => sl === k || sl.includes(k) || k.includes(sl));
-    });
-    if (matched.length > 0) {
-      clusters[category] = matched;
-      matched.forEach(s => used.add(s));
-    }
-  }
-  const other = skills.filter(s => !used.has(s));
-  if (other.length > 0) clusters["Other"] = other;
-  return clusters;
+// Clusters come from the backend (LLM-generated, field-appropriate).
+// Falls back to a single "Skills" bucket if not yet available.
+function getSkillClusters(profile) {
+  const clusters = profile.skill_clusters;
+  if (clusters && Object.keys(clusters).length > 0) return clusters;
+  if (profile.skills?.length > 0) return { "Skills": profile.skills };
+  return {};
 }
 
 // ─── OVERVIEW TAB ─────────────────────────────────────────────────────────────
@@ -757,7 +748,7 @@ function Overview({ profile }) {
         <div>
           <SecHead>Skills</SecHead>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {Object.entries(clusterSkills(profile.skills)).map(([cat, skills]) => (
+            {Object.entries(getSkillClusters(profile)).map(([cat, skills]) => (
               <div key={cat}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{cat}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
@@ -1096,7 +1087,7 @@ function PortfolioPage({ userId, onBack }) {
     { id: "gap", label: "Gap Analysis", icon: "target" },
   ];
 
-  const portfolioUrl = `${window.location.origin}${window.location.pathname}#/portfolio/${userId}`;
+  const portfolioUrl = `${window.location.origin}${window.location.pathname}#/portfolio/${nameToSlug(profile.name)}-${userId}`;
   const totalProjects = (profile.github_repos?.length || 0) + (profile.resume_projects?.length || 0);
 
   const copyLink = () => {
@@ -1164,7 +1155,7 @@ function PortfolioPage({ userId, onBack }) {
             <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px", animation: "fadeUp 0.44s ease" }}>
               <SecHead style={{ marginBottom: 12 }}>Top Skills</SecHead>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {Object.entries(clusterSkills(profile.skills)).map(([cat, skills]) => (
+                {Object.entries(getSkillClusters(profile)).map(([cat, skills]) => (
                   <div key={cat}>
                     <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6 }}>{cat}</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
