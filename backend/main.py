@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Header
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Header, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -171,6 +171,78 @@ async def add_github_url(user_id: str, req: AddGithubRequest):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.post("/evaluate/upload")
+async def evaluate_upload(
+    name: str = Form(""),
+    github_url: str = Form(""),
+    resume: UploadFile = File(None),
+    linkedin: UploadFile = File(None),
+):
+    """Create a temporary candidate profile from uploaded files for recruiter evaluation."""
+    user_id = str(uuid.uuid4())[:8]
+    profile = {
+        "user_id": user_id, "name": name or "Candidate", "title": "", "bio": "",
+        "github_urls": [github_url.strip()] if github_url.strip() else [],
+        "github_username": "", "target_roles": [], "documents": [],
+        "indexed": False, "education": [], "experience": [],
+        "skills": [], "linkedin_summary": "",
+        "github_repos": [], "resume_projects": [], "photo_ext": None,
+        "resume_filename": None, "is_temp": True,
+    }
+
+    if linkedin and linkedin.filename:
+        filepath = os.path.join(UPLOADS_DIR, f"{user_id}_linkedin.pdf")
+        with open(filepath, "wb") as f:
+            shutil.copyfileobj(linkedin.file, f)
+        parsed = parse_linkedin_pdf(filepath)
+        profile["documents"].append({"type": parsed["type"], "raw_text": parsed["raw_text"], "source": parsed["source"]})
+        structured = parsed.get("structured", {})
+        profile["education"] = structured.get("education", [])
+        profile["experience"] = structured.get("experience", [])
+        profile["skills"] = structured.get("skills", [])
+        profile["linkedin_summary"] = structured.get("summary", "")
+        if not profile["name"] or profile["name"] == "Candidate":
+            profile["name"] = structured.get("name", "") or name or "Candidate"
+        if not profile["title"]:
+            profile["title"] = structured.get("title", "")
+
+    if resume and resume.filename:
+        ext = resume.filename.split(".")[-1].lower()
+        filepath = os.path.join(UPLOADS_DIR, f"{user_id}_{resume.filename}")
+        with open(filepath, "wb") as f:
+            shutil.copyfileobj(resume.file, f)
+        parsers = {"pdf": parse_pdf_file, "docx": parse_docx_file, "pptx": parse_pptx_file}
+        parsed = parsers.get(ext, parse_txt_file)(filepath, resume.filename)
+        profile["documents"].append(parsed)
+        extracted = extract_resume_data(parsed.get("raw_text", ""), resume.filename)
+        profile["resume_projects"] = extracted.get("projects", [])
+        existing_skills = {s.lower() for s in profile["skills"]}
+        profile["skills"] += [s for s in extracted.get("skills", []) if s.lower() not in existing_skills]
+        profile["resume_filename"] = f"{user_id}_{resume.filename}"
+        contact = extract_contact_info(parsed.get("raw_text", ""))
+        if contact.get("email"): profile["email"] = contact["email"]
+        if contact.get("phone"): profile["phone"] = contact["phone"]
+        if not profile["name"] or profile["name"] == "Candidate":
+            profile["name"] = contact.get("name", "") or name or "Candidate"
+
+    save_profile(user_id, profile)
+
+    # Build index immediately
+    if profile["documents"] or profile["github_urls"]:
+        all_data = list(profile["documents"])
+        if profile["github_urls"]:
+            repos = parse_github_repos(profile["github_urls"])
+            profile["github_repos"] = [{"name": r.get("name", ""), "description": r.get("description", ""), "language": r.get("language", ""), "topics": r.get("topics", []), "stars": r.get("stars", 0)} for r in repos]
+            all_data += repos
+        if all_data:
+            docs = prepare_documents(all_data)
+            build_index(docs, user_id, INDEXES_DIR)
+            profile["indexed"] = True
+        save_profile(user_id, profile)
+
+    return profile
 
 
 def save_profile(user_id: str, profile: dict):

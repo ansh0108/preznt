@@ -1421,9 +1421,27 @@ function PortfolioPage({ userId, onBack }) {
             )}
           </div>
 
+          {/* Current / Recent role */}
+          {profile.experience?.[0] && (() => {
+            const isCurrentRole = /present|current/i.test(profile.experience[0].dates || "");
+            return (
+            <div style={{ background: "var(--accent-d)", border: "1px solid var(--accent-b)", borderRadius: "var(--r-lg)", padding: "16px 20px", animation: "fadeUp 0.44s ease" }}>
+              <SecHead style={{ marginBottom: 12, color: "var(--accent)" }}>{isCurrentRole ? "Currently" : "Recently"}</SecHead>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <OrgLogo name={profile.experience[0].company || profile.experience[0].title} size={34} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text)", lineHeight: 1.3 }}>{profile.experience[0].title}</div>
+                  <div style={{ fontSize: 12.5, color: "var(--accent)", marginTop: 3, fontWeight: 600 }}>{profile.experience[0].company}</div>
+                  <div style={{ fontSize: 11.5, color: "var(--text3)", marginTop: 3 }}>{profile.experience[0].dates}</div>
+                </div>
+              </div>
+            </div>
+            );
+          })()}
+
           {/* Top skills - clustered */}
           {profile.skills?.length > 0 && (
-            <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px", animation: "fadeUp 0.44s ease" }}>
+            <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px", animation: "fadeUp 0.46s ease" }}>
               <SecHead style={{ marginBottom: 12 }}>Top Skills</SecHead>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {Object.entries(getSkillClusters(profile)).map(([cat, skills]) => (
@@ -1437,24 +1455,6 @@ function PortfolioPage({ userId, onBack }) {
               </div>
             </div>
           )}
-
-          {/* Current / Recent role */}
-          {profile.experience?.[0] && (() => {
-            const isCurrentRole = /present|current/i.test(profile.experience[0].dates || "");
-            return (
-            <div style={{ background: "var(--accent-d)", border: "1px solid var(--accent-b)", borderRadius: "var(--r-lg)", padding: "16px 20px", animation: "fadeUp 0.46s ease" }}>
-              <SecHead style={{ marginBottom: 12, color: "var(--accent)" }}>{isCurrentRole ? "Currently" : "Recently"}</SecHead>
-              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <OrgLogo name={profile.experience[0].company || profile.experience[0].title} size={34} />
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text)", lineHeight: 1.3 }}>{profile.experience[0].title}</div>
-                  <div style={{ fontSize: 12.5, color: "var(--accent)", marginTop: 3, fontWeight: 600 }}>{profile.experience[0].company}</div>
-                  <div style={{ fontSize: 11.5, color: "var(--text3)", marginTop: 3 }}>{profile.experience[0].dates}</div>
-                </div>
-              </div>
-            </div>
-            );
-          })()}
 
           {/* Open to */}
           {profile.target_roles?.length > 0 && (
@@ -1714,11 +1714,16 @@ function CandidateEvaluator({ candidate: c, onRemove }) {
       </div>
       {tab === "portfolio" && (
         <div style={{ padding: "18px 20px" }}>
-          <a href={portfolioUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--accent)", fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 12 }}>
-            Open full portfolio <Icon name="external" size={13} color="var(--accent)" />
-          </a>
+          {c.is_temp ? (
+            <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 12, fontStyle: "italic" }}>Evaluated from uploaded files — no preznt portfolio.</div>
+          ) : (
+            <a href={portfolioUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--accent)", fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 12 }}>
+              Open full portfolio <Icon name="external" size={13} color="var(--accent)" />
+            </a>
+          )}
           {c.tagline && <div style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic", marginBottom: 12 }}>{c.tagline}</div>}
           {c.skills?.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{c.skills.slice(0, 14).map((s, i) => <Pill key={i} color="var(--accent)">{s}</Pill>)}</div>}
+          {c.experience?.[0] && <div style={{ marginTop: 12, fontSize: 13, color: "var(--text2)" }}>{c.experience[0].title} at <span style={{ color: "var(--accent)" }}>{c.experience[0].company}</span></div>}
         </div>
       )}
       {tab === "fit" && (
@@ -1768,9 +1773,18 @@ function RecruiterDashboard({ auth, onLogout }) {
   const [poolLoading, setPoolLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [candidates, setCandidates] = useState([]);
+  const [addMode, setAddMode] = useState("url"); // "url" | "upload"
+  // URL mode
   const [candidateUrl, setCandidateUrl] = useState("");
   const [candidateLoading, setCandidateLoading] = useState(false);
   const [candidateError, setCandidateError] = useState("");
+  // Upload mode
+  const [uploadName, setUploadName] = useState("");
+  const [uploadResume, setUploadResume] = useState(null);
+  const [uploadLinkedin, setUploadLinkedin] = useState(null);
+  const [uploadGithub, setUploadGithub] = useState("");
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   useEffect(() => {
     axios.get(`${API}/profiles/list`)
@@ -1792,6 +1806,22 @@ function RecruiterDashboard({ auth, onLogout }) {
       setCandidateUrl("");
     } catch { setCandidateError("Could not find that portfolio. Check the URL."); }
     finally { setCandidateLoading(false); }
+  };
+
+  const addByUpload = async () => {
+    if (!uploadResume && !uploadLinkedin && !uploadGithub.trim()) return setUploadError("Add at least one file or GitHub URL.");
+    setUploadError(""); setUploadLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("name", uploadName.trim());
+      fd.append("github_url", uploadGithub.trim());
+      if (uploadResume) fd.append("resume", uploadResume);
+      if (uploadLinkedin) fd.append("linkedin", uploadLinkedin);
+      const r = await axios.post(`${API}/evaluate/upload`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+      setCandidates(prev => [...prev, r.data]);
+      setUploadName(""); setUploadResume(null); setUploadLinkedin(null); setUploadGithub("");
+    } catch { setUploadError("Upload failed. Please try again."); }
+    finally { setUploadLoading(false); }
   };
 
   const filtered = profiles.filter(p => {
@@ -1816,15 +1846,63 @@ function RecruiterDashboard({ auth, onLogout }) {
         {/* Evaluate a Candidate */}
         <div style={{ marginBottom: 52 }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", fontFamily: "var(--serif)", marginBottom: 6 }}>Evaluate a Candidate</div>
-          <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 20 }}>Paste a preznt portfolio link to add a candidate and run a JD fit analysis.</div>
-          <div style={{ display: "flex", gap: 10, maxWidth: 640, marginBottom: 8 }}>
-            <input value={candidateUrl} onChange={e => setCandidateUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && addCandidate()}
-              placeholder="Paste portfolio URL, e.g. preznt-phi.vercel.app/#/portfolio/name-id" style={{ flex: 1 }} />
-            <Btn onClick={addCandidate} disabled={candidateLoading || !candidateUrl.trim()}>
-              {candidateLoading ? <Spinner size={14} color="#fff" /> : "Add Candidate"}
-            </Btn>
+          <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 20 }}>Add a candidate via their preznt portfolio link, or upload their resume / LinkedIn / GitHub directly.</div>
+
+          {/* Mode toggle */}
+          <div style={{ display: "flex", gap: 2, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content", marginBottom: 20 }}>
+            {[{ id: "url", label: "By Portfolio URL" }, { id: "upload", label: "Upload Files" }].map(m => (
+              <button key={m.id} onClick={() => { setAddMode(m.id); setCandidateError(""); setUploadError(""); }}
+                style={{ background: addMode === m.id ? "var(--bg3)" : "transparent", color: addMode === m.id ? "var(--text)" : "var(--text3)", padding: "7px 16px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: addMode === m.id ? 600 : 400, border: addMode === m.id ? "1px solid var(--line2)" : "1px solid transparent", cursor: "pointer" }}>
+                {m.label}
+              </button>
+            ))}
           </div>
-          {candidateError && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{candidateError}</div>}
+
+          {addMode === "url" ? (
+            <>
+              <div style={{ display: "flex", gap: 10, maxWidth: 640, marginBottom: 8 }}>
+                <input value={candidateUrl} onChange={e => setCandidateUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && addCandidate()}
+                  placeholder="Paste portfolio URL, e.g. preznt-phi.vercel.app/#/portfolio/name-id" style={{ flex: 1 }} />
+                <Btn onClick={addCandidate} disabled={candidateLoading || !candidateUrl.trim()}>
+                  {candidateLoading ? <Spinner size={14} color="#fff" /> : "Add Candidate"}
+                </Btn>
+              </div>
+              {candidateError && <div style={{ color: "var(--red)", fontSize: 13 }}>{candidateError}</div>}
+            </>
+          ) : (
+            <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px 24px", maxWidth: 640 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Candidate Name</div>
+                  <input value={uploadName} onChange={e => setUploadName(e.target.value)} placeholder="Full name (optional)" style={{ width: "100%" }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>GitHub Profile URL</div>
+                  <input value={uploadGithub} onChange={e => setUploadGithub(e.target.value)} placeholder="github.com/username" style={{ width: "100%" }} />
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 18 }}>
+                {[
+                  { label: "Resume / CV", accept: ".pdf,.docx,.pptx,.txt", file: uploadResume, setFile: setUploadResume },
+                  { label: "LinkedIn PDF", accept: ".pdf", file: uploadLinkedin, setFile: setUploadLinkedin },
+                ].map(({ label, accept, file, setFile }) => (
+                  <label key={label} style={{ cursor: "pointer" }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+                    <div style={{ border: `1px dashed ${file ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "12px 14px", display: "flex", alignItems: "center", gap: 8, background: file ? "rgba(45,212,191,0.06)" : "var(--bg2)", transition: "all 0.15s" }}>
+                      <Icon name={file ? "check" : "file"} size={14} color={file ? "var(--teal)" : "var(--text3)"} />
+                      <span style={{ fontSize: 12.5, color: file ? "var(--teal)" : "var(--text3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file ? file.name : `Upload ${label}`}</span>
+                    </div>
+                    <input type="file" accept={accept} style={{ display: "none" }} onChange={e => setFile(e.target.files[0] || null)} />
+                  </label>
+                ))}
+              </div>
+              {uploadError && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 12 }}>{uploadError}</div>}
+              <Btn onClick={addByUpload} disabled={uploadLoading || (!uploadResume && !uploadLinkedin && !uploadGithub.trim())}>
+                {uploadLoading ? <><Spinner size={14} color="#fff" /> Analyzing…</> : <><Icon name="zap" size={14} color="#fff" /> Analyze Candidate</>}
+              </Btn>
+            </div>
+          )}
+
           {candidates.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 24 }}>
               {candidates.map(c => (
