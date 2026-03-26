@@ -104,6 +104,19 @@ const GlobalStyle = () => (
       --r-xl:     24px;
     }
 
+    .light-mode {
+      --bg:    #f8f8fb;
+      --bg1:   #ffffff;
+      --bg2:   #f1f1f5;
+      --bg3:   #e8e8ef;
+      --bg4:   #dddde8;
+      --line:  rgba(0,0,0,0.07);
+      --line2: rgba(0,0,0,0.12);
+      --text:  #0d0d14;
+      --text2: #3a3a50;
+      --text3: #7a7a96;
+    }
+
     body {
       background: var(--bg);
       color: var(--text);
@@ -728,7 +741,7 @@ function getSkillClusters(profile) {
 }
 
 // ─── OVERVIEW TAB ─────────────────────────────────────────────────────────────
-function Overview({ profile }) {
+function Overview({ profile, hideSections = [] }) {
   const hasContent = profile.experience?.length || profile.education?.length || profile.skills?.length;
   if (!hasContent) return (
     <div style={{ textAlign: "center", padding: "64px 20px" }}>
@@ -739,14 +752,14 @@ function Overview({ profile }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
-      {(profile.bio || profile.linkedin_summary) && (
+      {(profile.bio || profile.linkedin_summary) && !hideSections.includes("about") && (
         <div>
           <SecHead>About</SecHead>
           <div style={{ color: "var(--text2)", fontSize: 14, lineHeight: 1.85, fontWeight: 400 }}>{profile.bio || profile.linkedin_summary}</div>
         </div>
       )}
 
-      {profile.experience?.length > 0 && (
+      {profile.experience?.length > 0 && !hideSections.includes("experience") && (
         <div>
           <SecHead>Experience</SecHead>
           <div style={{ display: "flex", flexDirection: "column" }}>
@@ -772,7 +785,7 @@ function Overview({ profile }) {
         </div>
       )}
 
-      {profile.education?.length > 0 && (
+      {profile.education?.length > 0 && !hideSections.includes("education") && (
         <div>
           <SecHead>Education</SecHead>
           <div style={{ display: "flex", flexDirection: "column" }}>
@@ -793,7 +806,7 @@ function Overview({ profile }) {
         </div>
       )}
 
-      {profile.skills?.length > 0 && (
+      {profile.skills?.length > 0 && !hideSections.includes("skills") && (
         <div>
           <SecHead>Skills</SecHead>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -813,17 +826,23 @@ function Overview({ profile }) {
 }
 
 // ─── PROJECTS TAB (with sub-tabs) ────────────────────────────────────────────
-function Projects({ profile }) {
-  const githubRepos = profile.github_repos || [];
+function Projects({ profile, hideSections = [], featuredRepos = [] }) {
+  const githubRepos = [...(profile.github_repos || [])].sort((a, b) => {
+    const aF = featuredRepos.includes(a.name) ? 0 : 1;
+    const bF = featuredRepos.includes(b.name) ? 0 : 1;
+    return aF - bF;
+  });
   const resumeProjects = profile.resume_projects || [];
-  const [sub, setSub] = useState(githubRepos.length > 0 ? "github" : "resume");
+  const showGithub = !hideSections.includes("github") && githubRepos.length > 0;
+  const showResume = !hideSections.includes("resume_projects") && resumeProjects.length > 0;
+  const [sub, setSub] = useState(showGithub ? "github" : "resume");
 
   useEffect(() => {
-    if (githubRepos.length > 0) setSub("github");
-    else if (resumeProjects.length > 0) setSub("resume");
+    if (showGithub) setSub("github");
+    else if (showResume) setSub("resume");
   }, [profile]);
 
-  const hasAny = githubRepos.length > 0 || resumeProjects.length > 0;
+  const hasAny = showGithub || showResume;
   if (!hasAny) return (
     <div style={{ textAlign: "center", padding: "64px 20px" }}>
       <Icon name="code" size={36} color="var(--text3)" style={{ marginBottom: 16 }} />
@@ -851,8 +870,8 @@ function Projects({ profile }) {
     <div>
       {/* Sub-tab bar */}
       <div style={{ display: "flex", gap: 6, marginBottom: 24, background: "var(--bg)", border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: 4, width: "fit-content" }}>
-        {githubRepos.length > 0 && <SubTab id="github" label="GitHub" count={githubRepos.length} />}
-        {resumeProjects.length > 0 && <SubTab id="resume" label="From Resume" count={resumeProjects.length} />}
+        {showGithub && <SubTab id="github" label="GitHub" count={githubRepos.length} />}
+        {showResume && <SubTab id="resume" label="From Resume" count={resumeProjects.length} />}
       </div>
 
       {/* GitHub repos */}
@@ -867,6 +886,7 @@ function Projects({ profile }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <Icon name="github" size={16} color="var(--text2)" />
                     <span style={{ fontFamily: "var(--sans)", fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{repo.name}</span>
+                    {featuredRepos.includes(repo.name) && <Pill color="var(--accent)" size="sm">Featured</Pill>}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                     {repo.stars > 0 && <span style={{ fontSize: 12, color: "var(--text3)", display: "flex", alignItems: "center", gap: 4 }}><Icon name="star" size={12} color="var(--amber)" />{repo.stars}</span>}
@@ -1450,13 +1470,20 @@ function PortfolioPage({ userId, onBack }) {
   const portfolioUrl = `${window.location.origin}${window.location.pathname}#/portfolio/${nameToSlug(profile.name)}-${userId}`;
   const totalProjects = (profile.github_repos?.length || 0) + (profile.resume_projects?.length || 0);
 
+  const prefs = profile?.preferences || {};
+  const accent = prefs.accent || "#818cf8";
+  const darkMode = prefs.dark_mode !== false;
+  const template = prefs.template || "sidebar";
+  const hideSections = prefs.hide_sections || [];
+  const featuredRepos = prefs.featured_repos || [];
+
   const copyLink = () => {
     navigator.clipboard.writeText(portfolioUrl);
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className={darkMode ? "" : "light-mode"} style={{ minHeight: "100vh", background: "var(--bg)", "--accent": accent, "--accent-d": accent + "1a", "--accent-b": accent + "40" }}>
       {/* Header */}
       <header style={{ background: "var(--bg1)", borderBottom: "1px solid var(--line)", padding: "14px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 20, backdropFilter: "blur(12px)" }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 19, fontWeight: 500, letterSpacing: "-0.01em" }}>
@@ -1471,6 +1498,45 @@ function PortfolioPage({ userId, onBack }) {
         </div>
       </header>
 
+      {template === "fullwidth" ? (
+        <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px" }}>
+          {/* Compact hero */}
+          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "24px 28px", display: "flex", gap: 20, alignItems: "center", marginBottom: 28, animation: "fadeUp 0.4s ease" }}>
+            <ProfileAvatar profile={profile} size={72} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "var(--serif)", fontSize: 22, fontWeight: 600 }}>{profile.name}</div>
+              <div style={{ color: "var(--accent)", fontSize: 13, fontWeight: 600, marginTop: 4 }}>{profile.title}</div>
+              {!hideSections.includes("current_role") && profile.experience?.[0] && (
+                <div style={{ fontSize: 12.5, color: "var(--text3)", marginTop: 6 }}>
+                  {profile.experience[0].title} at {profile.experience[0].company} · {profile.experience[0].dates}
+                </div>
+              )}
+            </div>
+            {profile.github_username && (
+              <a href={`https://github.com/${profile.github_username}`} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                <button style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--bg3)", border: "1px solid var(--line2)", color: "var(--text2)", borderRadius: "var(--r-md)", padding: "7px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                  <Icon name="github" size={13} color="currentColor" /> GitHub
+                </button>
+              </a>
+            )}
+          </div>
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: 2, marginBottom: 22, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content" }}>
+            {TABS.map(t => (
+              <button key={t.id} onClick={() => switchTab(t.id)} style={{ background: tab === t.id ? "var(--bg3)" : "transparent", color: tab === t.id ? "var(--text)" : "var(--text3)", padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400, transition: "all 0.15s", display: "flex", alignItems: "center", gap: 7, border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent" }}>
+                <Icon name={t.icon} size={14} color={tab === t.id ? "var(--accent)" : "var(--text3)"} /> {t.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "28px 30px", minHeight: 520 }}>
+            <div style={{ display: tab === "overview" ? "block" : "none" }}><Overview profile={profile} hideSections={hideSections} /></div>
+            <div style={{ display: tab === "projects" ? "block" : "none" }}><Projects profile={profile} hideSections={hideSections} featuredRepos={featuredRepos} /></div>
+            <div style={{ display: tab === "chat" ? "block" : "none", height: 540, margin: "-28px -30px" }}>
+              <Chatbot userId={userId} userName={profile.name} messages={chatMessages} setMessages={setChatMessages} />
+            </div>
+          </div>
+        </div>
+      ) : (
       <div style={{ maxWidth: 1440, margin: "0 auto", padding: "40px 48px", display: "grid", gridTemplateColumns: "300px 1fr", gap: 36, alignItems: "start" }}>
 
         {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
@@ -1511,7 +1577,7 @@ function PortfolioPage({ userId, onBack }) {
           </div>
 
           {/* Current / Recent role */}
-          {profile.experience?.[0] && (() => {
+          {!hideSections.includes("current_role") && profile.experience?.[0] && (() => {
             const isCurrentRole = /present|current/i.test(profile.experience[0].dates || "");
             return (
             <div style={{ background: "var(--accent-d)", border: "1px solid var(--accent-b)", borderRadius: "var(--r-lg)", padding: "16px 20px", animation: "fadeUp 0.44s ease" }}>
@@ -1529,7 +1595,7 @@ function PortfolioPage({ userId, onBack }) {
           })()}
 
           {/* Top skills - clustered */}
-          {profile.skills?.length > 0 && (
+          {!hideSections.includes("skills") && profile.skills?.length > 0 && (
             <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px", animation: "fadeUp 0.46s ease" }}>
               <SecHead style={{ marginBottom: 12 }}>Top Skills</SecHead>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1577,14 +1643,15 @@ function PortfolioPage({ userId, onBack }) {
 
           {/* Content panel — all tabs stay mounted to preserve state */}
           <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "28px 30px", minHeight: 520 }}>
-            <div style={{ display: tab === "overview" ? "block" : "none" }}><Overview profile={profile} /></div>
-            <div style={{ display: tab === "projects" ? "block" : "none" }}><Projects profile={profile} /></div>
+            <div style={{ display: tab === "overview" ? "block" : "none" }}><Overview profile={profile} hideSections={hideSections} /></div>
+            <div style={{ display: tab === "projects" ? "block" : "none" }}><Projects profile={profile} hideSections={hideSections} featuredRepos={featuredRepos} /></div>
             <div style={{ display: tab === "chat" ? "block" : "none", height: 540, margin: "-28px -30px" }}>
               <Chatbot userId={userId} userName={profile.name} messages={chatMessages} setMessages={setChatMessages} />
             </div>
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -2239,6 +2306,164 @@ function PortfolioAnalytics({ portfolioId, token }) {
   );
 }
 
+// ─── CUSTOMIZE TAB ────────────────────────────────────────────────────────────
+function CustomizeTab({ portfolioId, auth, profile, onPrefsChange }) {
+  const DEFAULT_PREFS = { accent: "#818cf8", dark_mode: true, template: "sidebar", hide_sections: [], featured_repos: [] };
+  const [prefs, setPrefs] = useState(profile?.preferences || DEFAULT_PREFS);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (profile?.preferences) setPrefs({ ...DEFAULT_PREFS, ...profile.preferences });
+  }, [profile]);
+
+  const save = async (next) => {
+    setSaving(true);
+    try {
+      await axios.patch(`${API}/profile/${portfolioId}/preferences`, next, { headers: { Authorization: `Bearer ${auth.token}` } });
+      setSaved(true); onPrefsChange?.(next);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {} finally { setSaving(false); }
+  };
+
+  const update = (key, val) => {
+    const next = { ...prefs, [key]: val };
+    setPrefs(next); save(next);
+  };
+
+  const toggleSection = (sec) => {
+    const cur = prefs.hide_sections || [];
+    update("hide_sections", cur.includes(sec) ? cur.filter(s => s !== sec) : [...cur, sec]);
+  };
+
+  const toggleFeatured = (name) => {
+    const cur = prefs.featured_repos || [];
+    update("featured_repos", cur.includes(name) ? cur.filter(r => r !== name) : [...cur, name]);
+  };
+
+  const COLORS = [
+    { label: "Indigo", value: "#818cf8" }, { label: "Rose", value: "#f472b6" },
+    { label: "Teal", value: "#2dd4bf" },   { label: "Amber", value: "#fbbf24" },
+    { label: "Green", value: "#4ade80" },  { label: "Blue", value: "#60a5fa" },
+    { label: "Violet", value: "#a78bfa" }, { label: "Orange", value: "#fb923c" },
+  ];
+
+  const SECTIONS = [
+    { id: "about", label: "About / Bio" },
+    { id: "current_role", label: "Current Role card" },
+    { id: "skills", label: "Skills" },
+    { id: "experience", label: "Experience" },
+    { id: "education", label: "Education" },
+    { id: "github", label: "GitHub Projects" },
+    { id: "resume_projects", label: "Resume Projects" },
+  ];
+
+  const Row = ({ label, children }) => (
+    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingBottom: 22, borderBottom: "1px solid var(--line)", marginBottom: 22, gap: 24, flexWrap: "wrap" }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", minWidth: 140 }}>{label}</div>
+      <div style={{ flex: 1, minWidth: 220 }}>{children}</div>
+    </div>
+  );
+
+  const Toggle = ({ on, onClick, label }) => (
+    <button onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
+      <div style={{ width: 40, height: 22, borderRadius: 100, background: on ? "var(--accent)" : "var(--bg3)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+        <div style={{ position: "absolute", top: 3, left: on ? 21 : 3, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+      </div>
+      <span style={{ fontSize: 13, color: "var(--text2)" }}>{label}</span>
+    </button>
+  );
+
+  const githubRepos = profile?.github_repos || [];
+
+  return (
+    <div style={{ maxWidth: 680 }}>
+      <SecHead>Customize Portfolio</SecHead>
+      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 28 }}>
+        Changes save automatically and appear live on your public portfolio.
+        {saved && <span style={{ marginLeft: 12, color: "var(--teal)", fontWeight: 600 }}>Saved!</span>}
+        {saving && <span style={{ marginLeft: 12, color: "var(--text3)" }}>Saving…</span>}
+      </div>
+
+      {/* Accent color */}
+      <Row label="Accent Color">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          {COLORS.map(c => (
+            <button key={c.value} onClick={() => update("accent", c.value)} title={c.label}
+              style={{ width: 32, height: 32, borderRadius: "50%", background: c.value, border: prefs.accent === c.value ? "3px solid var(--text)" : "3px solid transparent", cursor: "pointer", transition: "transform 0.15s, border 0.15s", transform: prefs.accent === c.value ? "scale(1.2)" : "scale(1)" }} />
+          ))}
+        </div>
+      </Row>
+
+      {/* Mode */}
+      <Row label="Appearance">
+        <div style={{ display: "flex", gap: 10 }}>
+          {[{ id: true, label: "Dark" }, { id: false, label: "Light" }].map(m => (
+            <button key={String(m.id)} onClick={() => update("dark_mode", m.id)}
+              style={{ padding: "8px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "1px solid", borderColor: prefs.dark_mode === m.id ? "var(--accent)" : "var(--line2)", background: prefs.dark_mode === m.id ? "var(--accent-d)" : "var(--bg2)", color: prefs.dark_mode === m.id ? "var(--accent)" : "var(--text3)", transition: "all 0.15s" }}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </Row>
+
+      {/* Template */}
+      <Row label="Layout">
+        <div style={{ display: "flex", gap: 12 }}>
+          {[
+            { id: "sidebar", label: "Sidebar", desc: "Profile sidebar + tabbed main area" },
+            { id: "fullwidth", label: "Full Width", desc: "No sidebar — single wide column" },
+          ].map(t => (
+            <button key={t.id} onClick={() => update("template", t.id)}
+              style={{ flex: 1, padding: "14px 16px", borderRadius: "var(--r-lg)", border: `2px solid ${prefs.template === t.id ? "var(--accent)" : "var(--line2)"}`, background: prefs.template === t.id ? "var(--accent-d)" : "var(--bg2)", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+              {/* Mini layout preview */}
+              <div style={{ display: "flex", gap: 4, marginBottom: 10, height: 36 }}>
+                {t.id === "sidebar"
+                  ? <><div style={{ width: 10, height: "100%", borderRadius: 3, background: prefs.template === t.id ? "var(--accent-b)" : "var(--bg3)" }} /><div style={{ flex: 1, height: "100%", borderRadius: 3, background: prefs.template === t.id ? "var(--accent-d)" : "var(--bg3)" }} /></>
+                  : <div style={{ flex: 1, height: "100%", borderRadius: 3, background: prefs.template === t.id ? "var(--accent-d)" : "var(--bg3)" }} />}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: prefs.template === t.id ? "var(--accent)" : "var(--text)", marginBottom: 3 }}>{t.label}</div>
+              <div style={{ fontSize: 12, color: "var(--text3)" }}>{t.desc}</div>
+            </button>
+          ))}
+        </div>
+      </Row>
+
+      {/* Sections */}
+      <Row label="Visible Sections">
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {SECTIONS.map(s => (
+            <Toggle key={s.id} on={!(prefs.hide_sections || []).includes(s.id)} onClick={() => toggleSection(s.id)} label={s.label} />
+          ))}
+        </div>
+      </Row>
+
+      {/* Featured repos */}
+      {githubRepos.length > 0 && (
+        <Row label="Featured Projects">
+          <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 10 }}>Pinned repos appear first in your portfolio.</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {githubRepos.map(r => {
+              const isFeatured = (prefs.featured_repos || []).includes(r.name);
+              return (
+                <button key={r.name} onClick={() => toggleFeatured(r.name)}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: isFeatured ? "var(--accent-d)" : "var(--bg2)", border: `1px solid ${isFeatured ? "var(--accent-b)" : "var(--line2)"}`, borderRadius: "var(--r-md)", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+                  <Icon name={isFeatured ? "star" : "github"} size={14} color={isFeatured ? "var(--accent)" : "var(--text3)"} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: isFeatured ? "var(--accent)" : "var(--text)" }}>{r.name}</div>
+                    {r.language && <div style={{ fontSize: 11.5, color: "var(--text3)", marginTop: 2 }}>{r.language}</div>}
+                  </div>
+                  {isFeatured && <Pill color="var(--accent)">Featured</Pill>}
+                </button>
+              );
+            })}
+          </div>
+        </Row>
+      )}
+    </div>
+  );
+}
+
 // ─── SEEKER PROFILE DASHBOARD ────────────────────────────────────────────────
 function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
   const [profile, setProfile] = useState(null);
@@ -2311,6 +2536,7 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
     { id: "gap", label: "Gap Analysis", icon: "target" },
     { id: "cover", label: "Cover Letter", icon: "file" },
     { id: "analytics", label: "Analytics", icon: "chart" },
+    { id: "customize", label: "Customize", icon: "wrench" },
   ];
 
   return (
@@ -2456,6 +2682,9 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
             {tab === "analytics" && (
               <PortfolioAnalytics portfolioId={portfolioId} token={auth.token} />
             )}
+
+            {/* Customize */}
+            {tab === "customize" && <CustomizeTab portfolioId={portfolioId} auth={auth} profile={profile} onPrefsChange={(p) => setProfile(prev => ({ ...prev, preferences: p }))} />}
           </div>
         </div>
       </div>

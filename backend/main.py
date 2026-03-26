@@ -95,6 +95,14 @@ class TabEventRequest(BaseModel):
     tab: str
 
 
+class PreferencesRequest(BaseModel):
+    accent: str = "#818cf8"
+    dark_mode: bool = True
+    template: str = "sidebar"
+    hide_sections: list[str] = []
+    featured_repos: list[str] = []
+
+
 # ─── ANALYTICS ENDPOINTS ──────────────────────────────────────────────────────
 @app.post("/analytics/{user_id}/view")
 async def track_view(user_id: str):
@@ -150,6 +158,19 @@ async def link_portfolio_endpoint(req: LinkPortfolioRequest, authorization: str 
     user = get_current_user(authorization)
     link_portfolio(user["id"], req.portfolio_id)
     return {"message": "Portfolio linked"}
+
+
+@app.patch("/profile/{user_id}/preferences")
+async def update_preferences(user_id: str, req: PreferencesRequest, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    if user.get("portfolio_id") != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    profile = load_profile(user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    profile["preferences"] = req.dict()
+    save_profile(user_id, profile)
+    return {"message": "Preferences saved"}
 
 
 @app.post("/profile/{user_id}/github")
