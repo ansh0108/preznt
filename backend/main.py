@@ -84,6 +84,10 @@ class LinkPortfolioRequest(BaseModel):
     portfolio_id: str
 
 
+class AddGithubRequest(BaseModel):
+    github_url: str
+
+
 @app.post("/auth/signup")
 async def signup(req: SignupRequest):
     if req.user_type not in ("seeker", "recruiter"):
@@ -118,6 +122,23 @@ async def link_portfolio_endpoint(req: LinkPortfolioRequest, authorization: str 
     user = get_current_user(authorization)
     link_portfolio(user["id"], req.portfolio_id)
     return {"message": "Portfolio linked"}
+
+
+@app.post("/profile/{user_id}/github")
+async def add_github_url(user_id: str, req: AddGithubRequest):
+    profile = load_profile(user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    url = req.github_url.strip()
+    if not url or "github.com" not in url:
+        raise HTTPException(status_code=400, detail="Invalid GitHub URL")
+    existing = profile.get("github_urls", [])
+    if url not in existing:
+        existing.append(url)
+        profile["github_urls"] = existing
+        profile["indexed"] = False
+        save_profile(user_id, profile)
+    return {"message": "GitHub URL added", "github_urls": existing}
 
 
 @app.get("/health")

@@ -1106,6 +1106,51 @@ function GapAnalysis({ userId, role, setRole, result, setResult, error, setError
   );
 }
 
+// ─── PROFILE PHOTO ────────────────────────────────────────────────────────────
+function ProfilePhoto({ userId, name, size = 60 }) {
+  const [err, setErr] = useState(false);
+  const PALETTE = ["#818cf8", "#f472b6", "#2dd4bf", "#fbbf24", "#a78bfa", "#34d399"];
+  const color = PALETTE[(name?.charCodeAt(0) || 0) % PALETTE.length];
+  const initials = (name || "").split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  if (err || !userId) {
+    return (
+      <div style={{ width: size, height: size, borderRadius: "50%", background: `${color}20`, border: `2px solid ${color}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.35, fontWeight: 700, color, margin: "0 auto" }}>
+        {initials}
+      </div>
+    );
+  }
+  return (
+    <img src={`${API}/photo/${userId}`} alt={name} onError={() => setErr(true)}
+      style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", objectPosition: "center 15%", border: "2px solid var(--line2)", display: "block", margin: "0 auto" }} />
+  );
+}
+
+// ─── UPLOAD ROW ───────────────────────────────────────────────────────────────
+function UploadRow({ label, icon, done, accept, onFile }) {
+  const inputId = `upload-${label.replace(/\s/g, "-")}`;
+  const [uploading, setUploading] = useState(false);
+  const handle = async (file) => {
+    setUploading(true);
+    try { await onFile(file); } catch {} finally { setUploading(false); }
+  };
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: done ? "rgba(45,212,191,0.1)" : "var(--bg3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name={done ? "check" : icon} size={14} color={done ? "var(--teal)" : "var(--text3)"} />
+        </div>
+        <span style={{ fontSize: 13, color: done ? "var(--text2)" : "var(--text3)", fontWeight: 500 }}>{label}</span>
+      </div>
+      <label htmlFor={inputId} style={{ cursor: "pointer" }}>
+        <div style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: done ? "var(--text3)" : "var(--accent)", padding: "3px 10px", fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}>
+          {uploading ? <Spinner size={10} color="var(--accent)" /> : done ? "Replace" : "Upload"}
+        </div>
+        <input id={inputId} type="file" accept={accept} style={{ display: "none" }} onChange={e => e.target.files[0] && handle(e.target.files[0])} />
+      </label>
+    </div>
+  );
+}
+
 // ─── COVER LETTER ────────────────────────────────────────────────────────────
 function CoverLetter({ userId, profile, jd, setJd, company, setCompany, role, setRole, result, setResult }) {
   const [loading, setLoading] = useState(false);
@@ -1280,13 +1325,6 @@ function PortfolioPage({ userId, onBack }) {
   const [copied, setCopied] = useState(false);
   // Lifted state so switching tabs doesn't reset anything
   const [chatMessages, setChatMessages] = useState(null);
-  const [gapRole, setGapRole] = useState("");
-  const [gapResult, setGapResult] = useState(null);
-  const [gapError, setGapError] = useState(null);
-  const [clJd, setClJd] = useState("");
-  const [clCompany, setClCompany] = useState("");
-  const [clRole, setClRole] = useState("");
-  const [clResult, setClResult] = useState(null);
 
   useEffect(() => {
     axios.get(`${API}/profile/${userId}`)
@@ -1305,8 +1343,6 @@ function PortfolioPage({ userId, onBack }) {
     { id: "overview", label: "Overview", icon: "user" },
     { id: "projects", label: "Projects", icon: "code" },
     { id: "chat", label: "Ask AI", icon: "chat" },
-    { id: "cover", label: "Cover Letter", icon: "file" },
-    { id: "gap", label: "Gap Analysis", icon: "target" },
   ];
 
   const portfolioUrl = `${window.location.origin}${window.location.pathname}#/portfolio/${nameToSlug(profile.name)}-${userId}`;
@@ -1443,12 +1479,6 @@ function PortfolioPage({ userId, onBack }) {
             <div style={{ display: tab === "projects" ? "block" : "none" }}><Projects profile={profile} /></div>
             <div style={{ display: tab === "chat" ? "block" : "none", height: 540, margin: "-28px -30px" }}>
               <Chatbot userId={userId} userName={profile.name} messages={chatMessages} setMessages={setChatMessages} />
-            </div>
-            <div style={{ display: tab === "cover" ? "block" : "none" }}>
-              <CoverLetter userId={userId} profile={profile} jd={clJd} setJd={setClJd} company={clCompany} setCompany={setClCompany} role={clRole} setRole={setClRole} result={clResult} setResult={setClResult} />
-            </div>
-            <div style={{ display: tab === "gap" ? "block" : "none" }}>
-              <GapAnalysis userId={userId} role={gapRole} setRole={setGapRole} result={gapResult} setResult={setGapResult} error={gapError} setError={setGapError} />
             </div>
           </div>
         </div>
@@ -1628,38 +1658,139 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
   );
 }
 
+// ─── CANDIDATE EVALUATOR (for recruiter) ─────────────────────────────────────
+function CandidateEvaluator({ candidate: c, onRemove }) {
+  const [tab, setTab] = useState("portfolio");
+  const [jd, setJd] = useState("");
+  const [fitResult, setFitResult] = useState(null);
+  const [fitLoading, setFitLoading] = useState(false);
+  const [fitError, setFitError] = useState(null);
+  const slug = `${nameToSlug(c.name)}-${c.user_id}`;
+  const portfolioUrl = `${window.location.origin}${window.location.pathname}#/portfolio/${slug}`;
+
+  const runFit = async () => {
+    if (!jd.trim()) return;
+    setFitLoading(true); setFitError(null);
+    try {
+      const res = await axios.post(`${API}/gap-analysis`, { user_id: c.user_id, target_role: jd.trim() });
+      setFitResult(res.data);
+    } catch { setFitError("Analysis failed. Please try again."); }
+    finally { setFitLoading(false); }
+  };
+
+  return (
+    <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", overflow: "hidden", animation: "fadeUp 0.3s ease" }}>
+      <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>{c.name}</div>
+            {c.experience?.[0] && <div style={{ fontSize: 12, color: "var(--text3)" }}>{c.experience[0].title} at {c.experience[0].company}</div>}
+          </div>
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+            {c.skills?.slice(0, 4).map((s, i) => <Pill key={i} color="var(--accent)">{s}</Pill>)}
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", gap: 2, background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", padding: "3px" }}>
+            {[{ id: "portfolio", label: "View Portfolio" }, { id: "fit", label: "JD Fit" }].map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{ background: tab === t.id ? "var(--bg3)" : "transparent", color: tab === t.id ? "var(--text)" : "var(--text3)", padding: "5px 13px", borderRadius: 8, fontSize: 12, fontWeight: tab === t.id ? 600 : 400, border: "none", cursor: "pointer" }}>{t.label}</button>
+            ))}
+          </div>
+          <button onClick={onRemove} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: 8, color: "var(--text3)", padding: "5px 8px", cursor: "pointer", fontSize: 11 }}>✕</button>
+        </div>
+      </div>
+      {tab === "portfolio" && (
+        <div style={{ padding: "18px 20px" }}>
+          <a href={portfolioUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--accent)", fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 12 }}>
+            Open full portfolio <Icon name="external" size={13} color="var(--accent)" />
+          </a>
+          {c.tagline && <div style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic", marginBottom: 12 }}>{c.tagline}</div>}
+          {c.skills?.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{c.skills.slice(0, 14).map((s, i) => <Pill key={i} color="var(--accent)">{s}</Pill>)}</div>}
+        </div>
+      )}
+      {tab === "fit" && (
+        <div style={{ padding: "18px 20px" }}>
+          <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 12 }}>Paste a job description to see how well {c.name} fits.</div>
+          <textarea value={jd} onChange={e => setJd(e.target.value)} placeholder="Paste job description or role requirements…" rows={5} style={{ width: "100%", marginBottom: 12, resize: "vertical" }} />
+          <Btn onClick={runFit} disabled={fitLoading || !jd.trim()} style={{ marginBottom: 16 }}>
+            {fitLoading ? <><Spinner size={14} color="#fff" /> Analyzing…</> : <><Icon name="target" size={14} color="#fff" /> Analyze Fit</>}
+          </Btn>
+          {fitError && <div style={{ color: "var(--red)", fontSize: 13 }}>{fitError}</div>}
+          {fitResult && !fitResult.error && (
+            <div style={{ animation: "fadeUp 0.3s ease" }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: fitResult.overall_fit === "Strong" ? "var(--teal)" : fitResult.overall_fit === "Moderate" ? "var(--amber)" : "var(--red)", marginBottom: 10 }}>
+                {fitResult.overall_fit} Fit
+              </div>
+              <div style={{ fontSize: 13.5, color: "var(--text2)", lineHeight: 1.7, marginBottom: 16 }}>{fitResult.summary}</div>
+              {fitResult.matching_skills?.length > 0 && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Matching Skills</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{fitResult.matching_skills.map((s, i) => <Pill key={i} color="var(--teal)">{s}</Pill>)}</div>
+                </div>
+              )}
+              {fitResult.missing_skills?.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Gaps</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                    {fitResult.missing_skills.slice(0, 6).map((s, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Pill color={s.importance === "Must Have" ? "var(--red)" : "var(--amber)"}>{s.importance}</Pill>
+                        <span style={{ fontSize: 13, color: "var(--text2)" }}>{s.skill}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── RECRUITER DASHBOARD ──────────────────────────────────────────────────────
 function RecruiterDashboard({ auth, onLogout }) {
   const [profiles, setProfiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [poolLoading, setPoolLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [candidates, setCandidates] = useState([]);
+  const [candidateUrl, setCandidateUrl] = useState("");
+  const [candidateLoading, setCandidateLoading] = useState(false);
+  const [candidateError, setCandidateError] = useState("");
 
   useEffect(() => {
     axios.get(`${API}/profiles/list`)
       .then(r => setProfiles(r.data.profiles || []))
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => setPoolLoading(false));
   }, []);
+
+  const addCandidate = async () => {
+    setCandidateError("");
+    const idMatch = candidateUrl.match(/([0-9a-f]{8})(?:[^0-9a-f]|$)/);
+    const id = idMatch ? idMatch[1] : candidateUrl.trim();
+    if (!id || id.length !== 8) return setCandidateError("Paste a valid portfolio URL.");
+    if (candidates.some(c => c.user_id === id)) return setCandidateError("Already added.");
+    setCandidateLoading(true);
+    try {
+      const r = await axios.get(`${API}/profile/${id}`);
+      setCandidates(prev => [...prev, r.data]);
+      setCandidateUrl("");
+    } catch { setCandidateError("Could not find that portfolio. Check the URL."); }
+    finally { setCandidateLoading(false); }
+  };
 
   const filtered = profiles.filter(p => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
-    return (
-      p.name?.toLowerCase().includes(q) ||
-      p.title?.toLowerCase().includes(q) ||
-      p.tagline?.toLowerCase().includes(q) ||
-      p.current_role?.toLowerCase().includes(q) ||
-      p.skills?.some(s => s.toLowerCase().includes(q))
-    );
+    return p.name?.toLowerCase().includes(q) || p.title?.toLowerCase().includes(q) || p.tagline?.toLowerCase().includes(q) || p.current_role?.toLowerCase().includes(q) || p.skills?.some(s => s.toLowerCase().includes(q));
   });
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      {/* Top bar */}
       <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>
-          preznt<span style={{ color: "var(--accent)" }}>.</span>
-        </div>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>preznt<span style={{ color: "var(--accent)" }}>.</span></div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ fontSize: 13, color: "var(--text3)" }}>{auth.email}</div>
           <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
@@ -1669,64 +1800,67 @@ function RecruiterDashboard({ auth, onLogout }) {
       </div>
 
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px" }}>
-        {/* Header */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 26, fontWeight: 700, color: "var(--text)", fontFamily: "var(--serif)", marginBottom: 8 }}>Talent Pool</div>
-          <div style={{ fontSize: 14, color: "var(--text3)" }}>Browse AI-powered portfolios from job seekers</div>
+        {/* Evaluate a Candidate */}
+        <div style={{ marginBottom: 52 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", fontFamily: "var(--serif)", marginBottom: 6 }}>Evaluate a Candidate</div>
+          <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 20 }}>Paste a preznt portfolio link to add a candidate and run a JD fit analysis.</div>
+          <div style={{ display: "flex", gap: 10, maxWidth: 640, marginBottom: 8 }}>
+            <input value={candidateUrl} onChange={e => setCandidateUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && addCandidate()}
+              placeholder="Paste portfolio URL, e.g. preznt-phi.vercel.app/#/portfolio/name-id" style={{ flex: 1 }} />
+            <Btn onClick={addCandidate} disabled={candidateLoading || !candidateUrl.trim()}>
+              {candidateLoading ? <Spinner size={14} color="#fff" /> : "Add Candidate"}
+            </Btn>
+          </div>
+          {candidateError && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{candidateError}</div>}
+          {candidates.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 24 }}>
+              {candidates.map(c => (
+                <CandidateEvaluator key={c.user_id} candidate={c} onRemove={() => setCandidates(prev => prev.filter(x => x.user_id !== c.user_id))} />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Search */}
-        <div style={{ position: "relative", maxWidth: 480, marginBottom: 32 }}>
-          <div style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}>
-            <Icon name="search" size={15} color="var(--text3)" />
-          </div>
-          <input
-            value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name, role, or skill…"
-            style={{ paddingLeft: 40 }}
-          />
-        </div>
+        <Divider my={0} />
 
-        {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: 60 }}><Spinner size={28} /></div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 60, color: "var(--text3)", fontSize: 14 }}>
-            {search ? "No candidates match your search." : "No profiles available yet."}
+        {/* Talent Pool */}
+        <div style={{ marginTop: 40 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", fontFamily: "var(--serif)", marginBottom: 6 }}>Talent Pool</div>
+          <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 24 }}>Browse AI-powered portfolios from registered job seekers.</div>
+          <div style={{ position: "relative", maxWidth: 480, marginBottom: 28 }}>
+            <div style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}><Icon name="search" size={15} color="var(--text3)" /></div>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, role, or skill…" style={{ paddingLeft: 40 }} />
           </div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
-            {filtered.map(p => (
-              <ProfileCard key={p.user_id} profile={p} />
-            ))}
-          </div>
-        )}
+          {poolLoading ? (
+            <div style={{ display: "flex", justifyContent: "center", padding: 60 }}><Spinner size={28} /></div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 60, color: "var(--text3)", fontSize: 14 }}>{search ? "No candidates match your search." : "No profiles available yet."}</div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
+              {filtered.map(p => <ProfileCard key={p.user_id} profile={p} />)}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
+// ─── PROFILE CARD (talent pool) ───────────────────────────────────────────────
 function ProfileCard({ profile: p }) {
   const slug = `${nameToSlug(p.name)}-${p.user_id}`;
   const url = `${window.location.origin}${window.location.pathname}#/portfolio/${slug}`;
-
   return (
-    <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "24px", display: "flex", flexDirection: "column", gap: 14, transition: "border-color 0.2s" }}
+    <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px", display: "flex", flexDirection: "column", gap: 12, transition: "border-color 0.2s" }}
       onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent)"}
       onMouseLeave={e => e.currentTarget.style.borderColor = "var(--line2)"}
     >
-      {/* Name + title */}
       <div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>{p.name}</div>
-        {p.current_role && <div style={{ fontSize: 13, color: "var(--text3)" }}>{p.current_role}</div>}
-        {p.tagline && <div style={{ fontSize: 12.5, color: "var(--text3)", marginTop: 2, fontStyle: "italic" }}>{p.tagline}</div>}
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 3 }}>{p.name}</div>
+        {p.current_role && <div style={{ fontSize: 12.5, color: "var(--text3)" }}>{p.current_role}</div>}
+        {p.tagline && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 3, fontStyle: "italic" }}>{p.tagline}</div>}
       </div>
-      {/* Skills */}
-      {p.skills?.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {p.skills.slice(0, 6).map((s, i) => <Pill key={i} color="var(--accent)">{s}</Pill>)}
-        </div>
-      )}
-      {/* View button */}
+      {p.skills?.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{p.skills.slice(0, 6).map((s, i) => <Pill key={i} color="var(--accent)">{s}</Pill>)}</div>}
       <a href={url} target="_blank" rel="noreferrer" style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 6, color: "var(--accent)", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
         View portfolio <Icon name="external" size={13} color="var(--accent)" />
       </a>
@@ -1734,97 +1868,163 @@ function ProfileCard({ profile: p }) {
   );
 }
 
-// ─── SEEKER DASHBOARD WRAPPER ────────────────────────────────────────────────
-// If no portfolio linked yet → run setup. If linked → show portfolio with top bar.
-function SeekerDashboard({ auth, setAuth, onLogout }) {
-  // Always derive from auth prop so it updates when /auth/me resolves
-  const portfolioId = auth.portfolio_id || null;
-  const shareSlug = auth.profile_name
-    ? `${nameToSlug(auth.profile_name)}-${portfolioId}`
-    : portfolioId;
-
+// ─── MINIMAL PROFILE SETUP ───────────────────────────────────────────────────
+function MinimalProfileSetup({ auth, setAuth, onLogout }) {
+  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
+  const [bio, setBio] = useState("");
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [reconnectUrl, setReconnectUrl] = useState("");
   const [reconnectError, setReconnectError] = useState("");
+  const [showReconnect, setShowReconnect] = useState(false);
 
-  const handleSetupComplete = async (id, name) => {
+  const handlePhoto = (file) => { setPhoto(file); setPhotoPreview(URL.createObjectURL(file)); };
+
+  const submit = async () => {
+    if (!name.trim()) return setError("Name is required");
+    setLoading(true); setError(null);
     try {
-      await axios.post(`${API}/auth/link-portfolio`,
-        { portfolio_id: id },
-        { headers: { Authorization: `Bearer ${auth.token}` } }
-      );
-    } catch (e) {
-      console.error("Failed to link portfolio", e);
-    }
-    const updated = { ...auth, portfolio_id: id, profile_name: name };
-    saveAuth(updated);
-    setAuth(updated);
+      const res = await axios.post(`${API}/setup/profile`, { name: name.trim(), title: title.trim(), bio: bio.trim(), github_urls: [], github_username: "", target_roles: [] });
+      const uid = res.data.user_id;
+      if (photo) { const f = new FormData(); f.append("file", photo); await axios.post(`${API}/upload/photo/${uid}`, f); }
+      await axios.post(`${API}/auth/link-portfolio`, { portfolio_id: uid }, { headers: { Authorization: `Bearer ${auth.token}` } });
+      const updated = { ...auth, portfolio_id: uid, profile_name: name.trim() };
+      saveAuth(updated); setAuth(updated);
+    } catch { setError("Something went wrong. Please try again."); }
+    finally { setLoading(false); }
   };
 
   const handleReconnect = async () => {
     setReconnectError("");
-    // Accept full URL like "#/portfolio/ansh-dasrapuria-62ce3b34" or just the 8-char id
     const idMatch = reconnectUrl.match(/([0-9a-f]{8})(?:[^0-9a-f]|$)/);
     const id = idMatch ? idMatch[1] : reconnectUrl.trim();
-    if (!id || id.length !== 8) {
-      setReconnectError("Paste your full portfolio URL or the 8-character ID from it.");
-      return;
-    }
+    if (!id || id.length !== 8) return setReconnectError("Paste your full portfolio URL.");
     try {
-      // Verify the profile exists
-      await axios.get(`${API}/profile/${id}`);
-      await axios.post(`${API}/auth/link-portfolio`,
-        { portfolio_id: id },
-        { headers: { Authorization: `Bearer ${auth.token}` } }
-      );
-      const updated = { ...auth, portfolio_id: id };
-      saveAuth(updated);
-      setAuth(updated);
-    } catch {
-      setReconnectError("Could not find that portfolio. Check the URL and try again.");
-    }
+      const r = await axios.get(`${API}/profile/${id}`);
+      await axios.post(`${API}/auth/link-portfolio`, { portfolio_id: id }, { headers: { Authorization: `Bearer ${auth.token}` } });
+      const updated = { ...auth, portfolio_id: id, profile_name: r.data.name };
+      saveAuth(updated); setAuth(updated);
+    } catch { setReconnectError("Could not find that portfolio."); }
   };
 
-  const shareUrl = portfolioId
-    ? `${window.location.origin}${window.location.pathname}#/portfolio/${shareSlug}`
-    : null;
-
-  const [copied, setCopied] = useState(false);
-  const copyLink = () => {
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true); setTimeout(() => setCopied(false), 2000);
-  };
-
-  if (!portfolioId) {
-    return (
-      <div style={{ minHeight: "100vh" }}>
-        <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
-          <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>preznt<span style={{ color: "var(--accent)" }}>.</span></div>
-          <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-            <Icon name="logout" size={13} color="var(--text3)" /> Sign out
+  return (
+    <div style={{ minHeight: "100vh" }}>
+      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>preznt<span style={{ color: "var(--accent)" }}>.</span></div>
+        <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+          <Icon name="logout" size={13} color="var(--text3)" /> Sign out
+        </button>
+      </div>
+      <div style={{ maxWidth: 480, margin: "60px auto", padding: "0 24px" }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 28, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Set up your profile</div>
+        <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 32, lineHeight: 1.6 }}>You can add your resume, LinkedIn and GitHub repos from your dashboard after this.</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+          <label htmlFor="mps-photo" style={{ cursor: "pointer" }}>
+            <div style={{ width: 80, height: 80, borderRadius: "50%", background: "var(--bg3)", border: "2px dashed var(--line2)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              {photoPreview ? <img src={photoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon name="camera" size={22} color="var(--text3)" />}
+            </div>
+            <input id="mps-photo" type="file" accept="image/*" style={{ display: "none" }} onChange={e => e.target.files[0] && handlePhoto(e.target.files[0])} />
+          </label>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Full name *" onKeyDown={e => e.key === "Enter" && submit()} />
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Professional title (optional)" />
+          <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short bio (optional)" rows={3} style={{ resize: "vertical" }} />
+        </div>
+        {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 12 }}>{error}</div>}
+        <Btn onClick={submit} disabled={loading || !name.trim()} style={{ width: "100%", justifyContent: "center", marginBottom: 24 }}>
+          {loading ? <><Spinner size={14} color="#fff" /> Creating profile…</> : "Continue to Dashboard"}
+        </Btn>
+        <div style={{ textAlign: "center" }}>
+          <button onClick={() => setShowReconnect(v => !v)} style={{ background: "transparent", border: "none", color: "var(--text3)", fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}>
+            Already have a portfolio? Reconnect it
           </button>
         </div>
-        {/* Reconnect banner for users who already built a portfolio */}
-        <div style={{ maxWidth: 560, margin: "32px auto 0", padding: "0 24px" }}>
-          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 24px", marginBottom: 24 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>Already built your portfolio?</div>
-            <div style={{ fontSize: 12.5, color: "var(--text3)", marginBottom: 12 }}>Paste your portfolio URL or share link to reconnect it to your account.</div>
+        {showReconnect && (
+          <div style={{ marginTop: 16, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "16px" }}>
+            <div style={{ fontSize: 12.5, color: "var(--text3)", marginBottom: 10 }}>Paste your portfolio URL to link it to this account.</div>
             <div style={{ display: "flex", gap: 8 }}>
-              <input
-                value={reconnectUrl}
-                onChange={e => setReconnectUrl(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleReconnect()}
-                placeholder="e.g. preznt-phi.vercel.app/#/portfolio/ansh-dasrapuria-62ce3b34"
-                style={{ flex: 1, fontSize: 12.5 }}
-              />
-              <Btn onClick={handleReconnect} disabled={!reconnectUrl.trim()} style={{ flexShrink: 0, padding: "10px 16px" }}>Reconnect</Btn>
+              <input value={reconnectUrl} onChange={e => setReconnectUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && handleReconnect()} placeholder="e.g. preznt-phi.vercel.app/#/portfolio/..." style={{ flex: 1, fontSize: 12 }} />
+              <Btn onClick={handleReconnect} disabled={!reconnectUrl.trim()} style={{ flexShrink: 0, padding: "10px 14px" }}>Reconnect</Btn>
             </div>
             {reconnectError && <div style={{ color: "var(--red)", fontSize: 12, marginTop: 8 }}>{reconnectError}</div>}
           </div>
-        </div>
-        <SetupPage onComplete={(id, name) => handleSetupComplete(id, name)} />
+        )}
       </div>
-    );
-  }
+    </div>
+  );
+}
+
+// ─── SEEKER PROFILE DASHBOARD ────────────────────────────────────────────────
+function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [tab, setTab] = useState("build");
+  const [addingGithub, setAddingGithub] = useState(false);
+  const [githubUrl, setGithubUrl] = useState("");
+  const [githubLoading, setGithubLoading] = useState(false);
+  const [building, setBuilding] = useState(false);
+  const [buildError, setBuildError] = useState(null);
+  const [built, setBuilt] = useState(false);
+  const [copied, setCopied] = useState(false);
+  // Lifted AI tab state
+  const [gapRole, setGapRole] = useState(""); const [gapResult, setGapResult] = useState(null); const [gapError, setGapError] = useState(null);
+  const [clJd, setClJd] = useState(""); const [clCompany, setClCompany] = useState(""); const [clRole, setClRole] = useState(""); const [clResult, setClResult] = useState(null);
+
+  const loadProfile = async () => {
+    try {
+      const r = await axios.get(`${API}/profile/${portfolioId}`);
+      setProfile(r.data);
+      setBuilt(r.data.indexed);
+    } catch {} finally { setProfileLoading(false); }
+  };
+
+  useEffect(() => { loadProfile(); }, [portfolioId]);
+
+  const shareSlug = auth.profile_name ? `${nameToSlug(auth.profile_name)}-${portfolioId}` : portfolioId;
+  const shareUrl = `${window.location.origin}${window.location.pathname}#/portfolio/${shareSlug}`;
+
+  const addGithubRepo = async () => {
+    if (!githubUrl.trim()) return;
+    setGithubLoading(true);
+    try {
+      await axios.post(`${API}/profile/${portfolioId}/github`, { github_url: githubUrl.trim() });
+      setGithubUrl(""); setAddingGithub(false);
+      await loadProfile();
+    } catch {} finally { setGithubLoading(false); }
+  };
+
+  const uploadFile = async (file, type) => {
+    const f = new FormData(); f.append("file", file);
+    const ep = type === "linkedin" ? `/upload/linkedin/${portfolioId}` : `/upload/document/${portfolioId}`;
+    await axios.post(`${API}${ep}`, f);
+    await loadProfile();
+  };
+
+  const buildPortfolio = async () => {
+    setBuilding(true); setBuildError(null);
+    try {
+      await axios.post(`${API}/index/${portfolioId}`);
+      setBuilt(true); await loadProfile();
+    } catch { setBuildError("Build failed. Please try again."); }
+    finally { setBuilding(false); }
+  };
+
+  if (profileLoading) return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}><Spinner size={32} /></div>;
+
+  const hasLinkedin = (profile?.experience?.length > 0) || !!profile?.linkedin_summary;
+  const hasResume = profile?.resume_projects?.length > 0;
+  const hasGithub = profile?.github_urls?.length > 0;
+
+  const SEEKER_TABS = [
+    { id: "build", label: "Build Portfolio", icon: "zap" },
+    { id: "gap", label: "Gap Analysis", icon: "target" },
+    { id: "cover", label: "Cover Letter", icon: "file" },
+    { id: "analytics", label: "Analytics", icon: "chart" },
+  ];
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -1832,10 +2032,11 @@ function SeekerDashboard({ auth, setAuth, onLogout }) {
       <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>preznt<span style={{ color: "var(--accent)" }}>.</span></div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {shareUrl && (
-            <button onClick={copyLink} style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: copied ? "var(--teal)" : "var(--text2)", padding: "6px 14px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+          {built && (
+            <button onClick={() => { navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+              style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: copied ? "var(--teal)" : "var(--text2)", padding: "6px 14px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
               <Icon name={copied ? "check" : "link"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
-              {copied ? "Copied!" : "Share portfolio"}
+              {copied ? "Copied!" : "Share Portfolio"}
             </button>
           )}
           <div style={{ fontSize: 13, color: "var(--text3)" }}>{auth.email}</div>
@@ -1844,9 +2045,153 @@ function SeekerDashboard({ auth, setAuth, onLogout }) {
           </button>
         </div>
       </div>
-      <PortfolioPage userId={portfolioId} onBack={null} isOwner={true} />
+
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", display: "flex", gap: 24, alignItems: "flex-start" }}>
+        {/* LEFT SIDEBAR */}
+        <div style={{ width: 260, flexShrink: 0 }}>
+          {/* Profile card */}
+          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px", marginBottom: 14 }}>
+            <div style={{ marginBottom: 14 }}><ProfilePhoto userId={portfolioId} name={profile?.name} size={72} /></div>
+            <div style={{ textAlign: "center", marginBottom: 14 }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 3 }}>{profile?.name}</div>
+              {profile?.title && <div style={{ fontSize: 12.5, color: "var(--text3)" }}>{profile.title}</div>}
+              {profile?.tagline && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 5, fontStyle: "italic", lineHeight: 1.5 }}>{profile.tagline}</div>}
+            </div>
+            {profile?.skills?.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5, justifyContent: "center" }}>
+                {profile.skills.slice(0, 8).map((s, i) => <Pill key={i} color="var(--accent)">{s}</Pill>)}
+              </div>
+            )}
+          </div>
+
+          {/* Data sources */}
+          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "18px 20px" }}>
+            <SecHead style={{ marginBottom: 14 }}>Data Sources</SecHead>
+            <UploadRow label="LinkedIn PDF" icon="user" done={hasLinkedin} accept=".pdf" onFile={f => uploadFile(f, "linkedin")} />
+            <UploadRow label="Resume / CV" icon="file" done={hasResume} accept=".pdf,.docx,.pptx,.txt" onFile={f => uploadFile(f, "resume")} />
+            {/* GitHub */}
+            <div style={{ marginTop: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: hasGithub ? "rgba(45,212,191,0.1)" : "var(--bg3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Icon name="github" size={14} color={hasGithub ? "var(--teal)" : "var(--text3)"} />
+                  </div>
+                  <span style={{ fontSize: 13, color: hasGithub ? "var(--text2)" : "var(--text3)", fontWeight: 500 }}>GitHub Repos</span>
+                </div>
+                <button onClick={() => setAddingGithub(v => !v)} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: "var(--accent)", padding: "3px 8px", fontSize: 11, cursor: "pointer" }}>+ Add</button>
+              </div>
+              {hasGithub && <div style={{ fontSize: 12, color: "var(--text3)", paddingLeft: 36, marginBottom: 6 }}>{profile.github_urls.length} repo{profile.github_urls.length !== 1 ? "s" : ""} added</div>}
+              {addingGithub && (
+                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                  <input value={githubUrl} onChange={e => setGithubUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && addGithubRepo()} placeholder="github.com/user/repo" style={{ flex: 1, fontSize: 12, padding: "7px 10px" }} />
+                  <button onClick={addGithubRepo} disabled={githubLoading} style={{ background: "var(--accent)", color: "#fff", border: "none", borderRadius: 6, padding: "0 10px", cursor: "pointer", fontSize: 12 }}>
+                    {githubLoading ? <Spinner size={12} color="#fff" /> : "Add"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT MAIN */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", gap: 2, marginBottom: 20, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content" }}>
+            {SEEKER_TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{
+                background: tab === t.id ? "var(--bg3)" : "transparent", color: tab === t.id ? "var(--text)" : "var(--text3)",
+                padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400,
+                border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent",
+                boxShadow: tab === t.id ? "0 1px 3px rgba(0,0,0,0.3)" : "none",
+                display: "flex", alignItems: "center", gap: 7, cursor: "pointer", transition: "all 0.15s"
+              }}>
+                <Icon name={t.icon} size={14} color={tab === t.id ? "var(--accent)" : "var(--text3)"} /> {t.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "28px 30px", minHeight: 480 }}>
+            {/* Build Portfolio */}
+            <div style={{ display: tab === "build" ? "block" : "none" }}>
+              <SecHead>Build Portfolio</SecHead>
+              <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
+                Your portfolio is generated from your LinkedIn, resume, and GitHub data. Add your sources in the sidebar, then click Build.
+              </div>
+              <div style={{ display: "flex", gap: 10, marginBottom: 28, flexWrap: "wrap" }}>
+                {[{ label: "LinkedIn", done: hasLinkedin }, { label: "Resume", done: hasResume }, { label: "GitHub", done: hasGithub }].map(s => (
+                  <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--bg2)", border: `1px solid ${s.done ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 13 }}>
+                    <Icon name={s.done ? "check" : "plus"} size={13} color={s.done ? "var(--teal)" : "var(--text3)"} />
+                    <span style={{ color: s.done ? "var(--teal)" : "var(--text3)" }}>{s.label}</span>
+                  </div>
+                ))}
+              </div>
+              {!hasLinkedin && !hasResume && !hasGithub ? (
+                <div style={{ color: "var(--text3)", fontSize: 13 }}>Add at least one data source from the sidebar to build your portfolio.</div>
+              ) : (
+                <Btn onClick={buildPortfolio} disabled={building}>
+                  {building ? <><Spinner size={14} color="#fff" /> Building…</> : <><Icon name="zap" size={14} color="#fff" /> {built ? "Rebuild Portfolio" : "Build Portfolio"}</>}
+                </Btn>
+              )}
+              {buildError && <div style={{ color: "var(--red)", fontSize: 13, marginTop: 12 }}>{buildError}</div>}
+              {built && !building && (
+                <div style={{ marginTop: 20, background: "var(--teal-d)", border: "1px solid var(--teal)", borderRadius: "var(--r-lg)", padding: "16px 20px" }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--teal)", marginBottom: 8 }}>Portfolio is live!</div>
+                  <a href={shareUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: "var(--teal)", wordBreak: "break-all" }}>{shareUrl}</a>
+                </div>
+              )}
+            </div>
+
+            {/* Gap Analysis */}
+            <div style={{ display: tab === "gap" ? "block" : "none" }}>
+              <GapAnalysis userId={portfolioId} role={gapRole} setRole={setGapRole} result={gapResult} setResult={setGapResult} error={gapError} setError={setGapError} />
+            </div>
+
+            {/* Cover Letter */}
+            <div style={{ display: tab === "cover" ? "block" : "none" }}>
+              <CoverLetter userId={portfolioId} profile={profile} jd={clJd} setJd={setClJd} company={clCompany} setCompany={setClCompany} role={clRole} setRole={setClRole} result={clResult} setResult={setClResult} />
+            </div>
+
+            {/* Analytics */}
+            <div style={{ display: tab === "analytics" ? "block" : "none" }}>
+              <SecHead>Profile Analytics</SecHead>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14, marginBottom: 28 }}>
+                {[
+                  { label: "Skills Identified", value: profile?.skills?.length || 0, color: "var(--accent)" },
+                  { label: "Work Experience", value: profile?.experience?.length || 0, color: "var(--teal)" },
+                  { label: "Projects", value: (profile?.github_repos?.length || 0) + (profile?.resume_projects?.length || 0), color: "var(--rose)" },
+                  { label: "Education", value: profile?.education?.length || 0, color: "var(--amber)" },
+                ].map(s => (
+                  <div key={s.label} style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px" }}>
+                    <div style={{ fontSize: 30, fontWeight: 700, color: s.color, marginBottom: 4 }}>{s.value}</div>
+                    <div style={{ fontSize: 12.5, color: "var(--text3)" }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {profile?.skill_clusters && Object.keys(profile.skill_clusters).length > 0 && (
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 16 }}>Skill Breakdown</div>
+                  {Object.entries(profile.skill_clusters).map(([cat, skills]) => (
+                    <div key={cat} style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{cat}</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {skills.map((s, i) => <Pill key={i} color="var(--accent)">{s}</Pill>)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
+}
+
+// ─── SEEKER DASHBOARD ─────────────────────────────────────────────────────────
+function SeekerDashboard({ auth, setAuth, onLogout }) {
+  const portfolioId = auth.portfolio_id || null;
+  if (!portfolioId) return <MinimalProfileSetup auth={auth} setAuth={setAuth} onLogout={onLogout} />;
+  return <SeekerProfileDashboard auth={auth} setAuth={setAuth} onLogout={onLogout} portfolioId={portfolioId} />;
 }
 
 // ─── APP ─────────────────────────────────────────────────────────────────────
