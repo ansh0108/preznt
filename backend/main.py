@@ -58,6 +58,13 @@ class GapRequest(BaseModel):
     target_role: str
 
 
+class CoverLetterRequest(BaseModel):
+    user_id: str
+    job_description: str
+    company_name: str = ""
+    role_name: str = ""
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
@@ -582,6 +589,42 @@ async def gap_analysis_endpoint(req: GapRequest):
         raise HTTPException(status_code=400, detail="Profile not indexed yet.")
     result = analyze_gap(req.target_role, req.user_id, profile["name"], profile)
     return result
+
+
+@app.post("/cover-letter")
+async def cover_letter_endpoint(req: CoverLetterRequest):
+    profile = load_profile(req.user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    from gap_analysis import build_profile_context
+    profile_context = build_profile_context(profile)
+
+    company = req.company_name or "the company"
+    role = req.role_name or "this role"
+
+    prompt = f"""Write a professional, personalized cover letter for {profile['name']} applying to {role} at {company}.
+
+Candidate Profile:
+{profile_context}
+
+Job Description:
+{req.job_description[:3000]}
+
+Instructions:
+- Write in first person as {profile['name']}
+- 3-4 paragraphs: opening hook, relevant experience, specific value add, closing
+- Reference specific projects, tools, and achievements from the profile that match the JD
+- Sound human and confident — not generic or template-like
+- Do NOT include placeholder text like [Your Name] or [Date]
+- End with a strong call to action
+- Keep it under 400 words"""
+
+    try:
+        letter = call_groq([{"role": "user", "content": prompt}], max_tokens=800, temperature=0.4)
+        return {"cover_letter": letter}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/resume/{user_id}")

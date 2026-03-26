@@ -1061,17 +1061,81 @@ function GapAnalysis({ userId, role, setRole, result, setResult, error, setError
   );
 }
 
+// ─── COVER LETTER ────────────────────────────────────────────────────────────
+function CoverLetter({ userId, jd, setJd, company, setCompany, role, setRole, result, setResult }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const generate = async () => {
+    if (!jd.trim()) return;
+    setLoading(true); setError(null); setResult(null);
+    try {
+      const res = await axios.post(`${API}/cover-letter`, {
+        user_id: userId, job_description: jd, company_name: company, role_name: role
+      });
+      setResult(res.data.cover_letter);
+    } catch { setError("Failed to generate. Please try again."); }
+    finally { setLoading(false); }
+  };
+
+  const copy = () => {
+    navigator.clipboard.writeText(result);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div>
+      <SecHead>Cover Letter Generator</SecHead>
+      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 18 }}>
+        Paste a job description and get a tailored cover letter based on your full portfolio
+      </div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+        <input value={company} onChange={e => setCompany(e.target.value)} placeholder="Company name (optional)" style={{ flex: 1 }} />
+        <input value={role} onChange={e => setRole(e.target.value)} placeholder="Role title (optional)" style={{ flex: 1 }} />
+      </div>
+      <textarea
+        value={jd} onChange={e => setJd(e.target.value)}
+        placeholder="Paste the job description here..."
+        rows={7} style={{ width: "100%", marginBottom: 12, resize: "vertical" }}
+      />
+      <Btn onClick={generate} disabled={loading || !jd.trim()} style={{ marginBottom: 24 }}>
+        {loading ? <><Spinner size={14} color="#fff" /> Generating…</> : <><Icon name="zap" size={14} color="#fff" /> Generate Cover Letter</>}
+      </Btn>
+      {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+      {result && (
+        <div style={{ animation: "fadeUp 0.3s ease" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text)" }}>Your Cover Letter</div>
+            <button onClick={copy} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", color: copied ? "var(--teal)" : "var(--text2)", borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+              <Icon name={copied ? "check" : "copy"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
+              {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "24px 28px", fontSize: 14, lineHeight: 1.85, color: "var(--text2)", whiteSpace: "pre-wrap" }}>
+            {result}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── PORTFOLIO PAGE ───────────────────────────────────────────────────────────
 function PortfolioPage({ userId, onBack }) {
   const [profile, setProfile] = useState(null);
   const [tab, setTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  // Lifted state so switching tabs doesn't reset chat/gap analysis
-  const [chatMessages, setChatMessages] = useState(null); // null = not yet initialised
+  // Lifted state so switching tabs doesn't reset anything
+  const [chatMessages, setChatMessages] = useState(null);
   const [gapRole, setGapRole] = useState("");
   const [gapResult, setGapResult] = useState(null);
   const [gapError, setGapError] = useState(null);
+  const [clJd, setClJd] = useState("");
+  const [clCompany, setClCompany] = useState("");
+  const [clRole, setClRole] = useState("");
+  const [clResult, setClResult] = useState(null);
 
   useEffect(() => {
     axios.get(`${API}/profile/${userId}`)
@@ -1090,6 +1154,7 @@ function PortfolioPage({ userId, onBack }) {
     { id: "overview", label: "Overview", icon: "user" },
     { id: "projects", label: "Projects", icon: "code" },
     { id: "chat", label: "Ask AI", icon: "chat" },
+    { id: "cover", label: "Cover Letter", icon: "file" },
     { id: "gap", label: "Gap Analysis", icon: "target" },
   ];
 
@@ -1227,6 +1292,9 @@ function PortfolioPage({ userId, onBack }) {
             <div style={{ display: tab === "projects" ? "block" : "none" }}><Projects profile={profile} /></div>
             <div style={{ display: tab === "chat" ? "block" : "none", height: 540, margin: "-28px -30px" }}>
               <Chatbot userId={userId} userName={profile.name} messages={chatMessages} setMessages={setChatMessages} />
+            </div>
+            <div style={{ display: tab === "cover" ? "block" : "none" }}>
+              <CoverLetter userId={userId} jd={clJd} setJd={setClJd} company={clCompany} setCompany={setClCompany} role={clRole} setRole={setClRole} result={clResult} setResult={setClResult} />
             </div>
             <div style={{ display: tab === "gap" ? "block" : "none" }}>
               <GapAnalysis userId={userId} role={gapRole} setRole={setGapRole} result={gapResult} setResult={setGapResult} error={gapError} setError={setGapError} />
