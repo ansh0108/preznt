@@ -1439,7 +1439,6 @@ function PortfolioPage({ userId, onBack }) {
   const [tab, setTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  // Lifted state so switching tabs doesn't reset anything
   const [chatMessages, setChatMessages] = useState(null);
 
   useEffect(() => {
@@ -1447,6 +1446,33 @@ function PortfolioPage({ userId, onBack }) {
       .then(res => { setProfile(res.data); axios.post(`${API}/analytics/${userId}/view`).catch(() => {}); })
       .catch(() => setProfile(null)).finally(() => setLoading(false));
   }, [userId]);
+
+  // Must be before any conditional returns — Rules of Hooks
+  useEffect(() => {
+    if (!profile) return;
+    const prefs = profile.preferences || {};
+    const accent = prefs.accent || "#818cf8";
+    const darkMode = prefs.dark_mode !== false;
+    const root = document.documentElement;
+    if (!darkMode) {
+      root.style.setProperty("--bg", "#f8f8fb");
+      root.style.setProperty("--bg1", "#ffffff");
+      root.style.setProperty("--bg2", "#f1f1f5");
+      root.style.setProperty("--bg3", "#e8e8ef");
+      root.style.setProperty("--line", "rgba(0,0,0,0.07)");
+      root.style.setProperty("--line2", "rgba(0,0,0,0.12)");
+      root.style.setProperty("--text", "#0d0d14");
+      root.style.setProperty("--text2", "#3a3a50");
+      root.style.setProperty("--text3", "#7a7a96");
+    }
+    root.style.setProperty("--accent", accent);
+    root.style.setProperty("--accent-d", accent + "1a");
+    root.style.setProperty("--accent-b", accent + "40");
+    return () => {
+      ["--bg","--bg1","--bg2","--bg3","--line","--line2","--text","--text2","--text3","--accent","--accent-d","--accent-b"]
+        .forEach(v => root.style.removeProperty(v));
+    };
+  }, [profile]);
 
   const switchTab = (t) => {
     setTab(t);
@@ -1469,41 +1495,12 @@ function PortfolioPage({ userId, onBack }) {
 
   const portfolioUrl = `${window.location.origin}${window.location.pathname}#/portfolio/${nameToSlug(profile.name)}-${userId}`;
   const totalProjects = (profile.github_repos?.length || 0) + (profile.resume_projects?.length || 0);
-
-  const prefs = profile?.preferences || {};
+  const prefs = profile.preferences || {};
   const accent = prefs.accent || "#818cf8";
   const darkMode = prefs.dark_mode !== false;
   const template = prefs.template || "sidebar";
   const hideSections = prefs.hide_sections || [];
   const featuredRepos = prefs.featured_repos || [];
-
-  // Apply light/dark mode + accent to document root so body background also updates
-  useEffect(() => {
-    const root = document.documentElement;
-    if (!darkMode) {
-      document.body.classList.add("light-mode");
-      root.style.setProperty("--bg", "#f8f8fb");
-      root.style.setProperty("--bg1", "#ffffff");
-      root.style.setProperty("--bg2", "#f1f1f5");
-      root.style.setProperty("--bg3", "#e8e8ef");
-      root.style.setProperty("--line", "rgba(0,0,0,0.07)");
-      root.style.setProperty("--line2", "rgba(0,0,0,0.12)");
-      root.style.setProperty("--text", "#0d0d14");
-      root.style.setProperty("--text2", "#3a3a50");
-      root.style.setProperty("--text3", "#7a7a96");
-    } else {
-      document.body.classList.remove("light-mode");
-      ["--bg","--bg1","--bg2","--bg3","--line","--line2","--text","--text2","--text3"].forEach(v => root.style.removeProperty(v));
-    }
-    root.style.setProperty("--accent", accent);
-    // Derive accent variants from hex
-    root.style.setProperty("--accent-d", accent + "1a");
-    root.style.setProperty("--accent-b", accent + "40");
-    return () => {
-      document.body.classList.remove("light-mode");
-      ["--bg","--bg1","--bg2","--bg3","--line","--line2","--text","--text2","--text3","--accent","--accent-d","--accent-b"].forEach(v => root.style.removeProperty(v));
-    };
-  }, [darkMode, accent]);
 
   const copyLink = () => {
     navigator.clipboard.writeText(portfolioUrl);
@@ -2564,7 +2561,6 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
     { id: "gap", label: "Gap Analysis", icon: "target" },
     { id: "cover", label: "Cover Letter", icon: "file" },
     { id: "analytics", label: "Analytics", icon: "chart" },
-    { id: "customize", label: "Customize", icon: "wrench" },
   ];
 
   return (
@@ -2694,6 +2690,11 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
                   <a href={shareUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: "var(--teal)", wordBreak: "break-all" }}>{shareUrl}</a>
                 </div>
               )}
+
+              {/* Customize section inline */}
+              <div style={{ marginTop: 36, borderTop: "1px solid var(--line)", paddingTop: 28 }}>
+                <CustomizeTab portfolioId={portfolioId} auth={auth} profile={profile} onPrefsChange={(p) => setProfile(prev => ({ ...prev, preferences: p }))} />
+              </div>
             </div>
 
             {/* Gap Analysis */}
@@ -2711,8 +2712,6 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
               <PortfolioAnalytics portfolioId={portfolioId} token={auth.token} />
             )}
 
-            {/* Customize */}
-            {tab === "customize" && <CustomizeTab portfolioId={portfolioId} auth={auth} profile={profile} onPrefsChange={(p) => setProfile(prev => ({ ...prev, preferences: p }))} />}
           </div>
         </div>
       </div>
