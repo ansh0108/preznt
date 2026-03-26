@@ -603,7 +603,7 @@ async def cover_letter_endpoint(req: CoverLetterRequest):
     company = req.company_name or "the company"
     role = req.role_name or "this role"
 
-    prompt = f"""Write a professional, personalized cover letter for {profile['name']} applying to {role} at {company}.
+    prompt = f"""Write a cover letter for {profile['name']} applying to {role} at {company}.
 
 Candidate Profile:
 {profile_context}
@@ -611,14 +611,24 @@ Candidate Profile:
 Job Description:
 {req.job_description[:3000]}
 
-Instructions:
-- Write in first person as {profile['name']}
-- 3-4 paragraphs: opening hook, relevant experience, specific value add, closing
-- Reference specific projects, tools, and achievements from the profile that match the JD
-- Sound human and confident — not generic or template-like
-- Do NOT include placeholder text like [Your Name] or [Date]
-- End with a strong call to action
-- Keep it under 400 words"""
+Format it EXACTLY like this structure:
+Dear Hiring Manager,
+
+[Opening paragraph — 2-3 sentences. Why this role, why this company. Be specific.]
+
+[Middle paragraph — 3-4 sentences. One or two concrete examples from their actual experience or projects that directly match the JD. Name real projects/companies/tools.]
+
+[Closing paragraph — 2 sentences. Express enthusiasm, mention you'd love to discuss further.]
+
+Sincerely,
+{profile['name']}
+
+Rules:
+- STRICT maximum 200 words total
+- Do not use filler phrases like "I am excited to apply", "I am confident that", "passionate about"
+- Sound like a real human wrote it, not a template
+- Only reference things actually in the profile — no invented experience
+- No placeholder text like [Date] or [Address]"""
 
     try:
         letter = call_groq([{"role": "user", "content": prompt}], max_tokens=800, temperature=0.4)
