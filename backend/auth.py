@@ -11,7 +11,7 @@ load_dotenv()
 
 DATA_DIR = os.getenv("DATA_DIR", ".")
 DB_PATH = os.path.join(DATA_DIR, "auth.db")
-SECRET_KEY = os.getenv("JWT_SECRET", "preznt-secret-key-change-in-production")
+SECRET_KEY = os.getenv("JWT_SECRET", "prolio-secret-key-change-in-production")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 30
 

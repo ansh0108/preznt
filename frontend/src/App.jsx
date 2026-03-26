@@ -24,10 +24,10 @@ function nameToSlug(name) {
 
 // ─── AUTH HELPERS ─────────────────────────────────────────────────────────────
 function loadAuth() {
-  try { return JSON.parse(localStorage.getItem("preznt_auth")) || null; } catch { return null; }
+  try { return JSON.parse(localStorage.getItem("prolio_auth")) || null; } catch { return null; }
 }
-function saveAuth(data) { localStorage.setItem("preznt_auth", JSON.stringify(data)); }
-function clearAuth() { localStorage.removeItem("preznt_auth"); }
+function saveAuth(data) { localStorage.setItem("prolio_auth", JSON.stringify(data)); }
+function clearAuth() { localStorage.removeItem("prolio_auth"); }
 
 // ─── ICONS (clean SVGs, no emojis) ───────────────────────────────────────────
 const Icon = ({ name, size = 16, color = "currentColor", style: s = {} }) => {
@@ -561,7 +561,7 @@ function SetupPage({ onComplete }) {
       {/* Brand */}
       <div style={{ marginBottom: 52, textAlign: "center", animation: "fadeUp 0.5s ease" }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 36, fontWeight: 500, letterSpacing: "-0.02em", color: "var(--text)" }}>
-          preznt<span style={{ color: "var(--accent)", fontStyle: "italic" }}>.ai</span>
+          prolio<span style={{ color: "var(--accent)", fontStyle: "italic" }}>.co</span>
         </div>
         <div style={{ color: "var(--text3)", fontSize: 13.5, marginTop: 8, fontWeight: 400, letterSpacing: "0.01em" }}>
           Your AI portfolio, built from everything you've created
@@ -1559,7 +1559,7 @@ function PortfolioPage({ userId, onBack }) {
       {/* Header */}
       <header style={{ background: "var(--bg1)", borderBottom: "1px solid var(--line)", padding: "14px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 20, backdropFilter: "blur(12px)" }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 19, fontWeight: 500, letterSpacing: "-0.01em" }}>
-          preznt<span style={{ color: "var(--accent)", fontStyle: "italic" }}>.ai</span>
+          prolio<span style={{ color: "var(--accent)", fontStyle: "italic" }}>.co</span>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <Btn variant="subtle" onClick={copyLink}>
@@ -1735,7 +1735,7 @@ function LandingPage({ onSeeker, onRecruiter, onLogin }) {
       {/* Logo / brand */}
       <div style={{ marginBottom: 48, textAlign: "center" }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 36, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em", marginBottom: 12 }}>
-          preznt<span style={{ color: "var(--accent)" }}>.</span>
+          prolio<span style={{ color: "var(--accent)" }}>.</span>
         </div>
         <div style={{ fontSize: 17, color: "var(--text3)", maxWidth: 420, lineHeight: 1.6 }}>
           Your AI-powered portfolio — built from your resume, LinkedIn, and GitHub.
@@ -1835,7 +1835,7 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
           {isLogin ? "Welcome back" : "Create your account"}
         </div>
         <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 32 }}>
-          {isLogin ? "Sign in to your preznt account." : "Join preznt and start building your AI portfolio."}
+          {isLogin ? "Sign in to your prolio account." : "Join prolio and start building your AI portfolio."}
         </div>
 
         {/* User type selector — only for signup */}
@@ -1943,7 +1943,7 @@ function CandidateEvaluator({ candidate: c, onRemove }) {
       {tab === "portfolio" && (
         <div style={{ padding: "18px 20px" }}>
           {c.is_temp ? (
-            <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 12, fontStyle: "italic" }}>Evaluated from uploaded files — no preznt portfolio.</div>
+            <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 12, fontStyle: "italic" }}>Evaluated from uploaded files — no prolio portfolio.</div>
           ) : (
             <a href={portfolioUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--accent)", fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 12 }}>
               Open full portfolio <Icon name="external" size={13} color="var(--accent)" />
@@ -2061,7 +2061,7 @@ function RecruiterDashboard({ auth, onLogout }) {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>preznt<span style={{ color: "var(--accent)" }}>.</span></div>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>prolio<span style={{ color: "var(--accent)" }}>.</span></div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ fontSize: 13, color: "var(--text3)" }}>{auth.email}</div>
           <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
@@ -2074,7 +2074,7 @@ function RecruiterDashboard({ auth, onLogout }) {
         {/* Evaluate a Candidate */}
         <div style={{ marginBottom: 52 }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", fontFamily: "var(--serif)", marginBottom: 6 }}>Evaluate a Candidate</div>
-          <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 20 }}>Add a candidate via their preznt portfolio link, or upload their resume / LinkedIn / GitHub directly.</div>
+          <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 20 }}>Add a candidate via their prolio portfolio link, or upload their resume / LinkedIn / GitHub directly.</div>
 
           {/* Mode toggle */}
           <div style={{ display: "flex", gap: 2, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content", marginBottom: 20 }}>
@@ -2090,7 +2090,7 @@ function RecruiterDashboard({ auth, onLogout }) {
             <>
               <div style={{ display: "flex", gap: 10, maxWidth: 640, marginBottom: 8 }}>
                 <input value={candidateUrl} onChange={e => setCandidateUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && addCandidate()}
-                  placeholder="Paste portfolio URL, e.g. preznt-phi.vercel.app/#/portfolio/name-id" style={{ flex: 1 }} />
+                  placeholder="Paste portfolio URL, e.g. prolio.co/#/portfolio/name-id" style={{ flex: 1 }} />
                 <Btn onClick={addCandidate} disabled={candidateLoading || !candidateUrl.trim()}>
                   {candidateLoading ? <Spinner size={14} color="#fff" /> : "Add Candidate"}
                 </Btn>
@@ -2232,7 +2232,7 @@ function MinimalProfileSetup({ auth, setAuth, onLogout }) {
   return (
     <div style={{ minHeight: "100vh" }}>
       <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>preznt<span style={{ color: "var(--accent)" }}>.</span></div>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>prolio<span style={{ color: "var(--accent)" }}>.</span></div>
         <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
           <Icon name="logout" size={13} color="var(--text3)" /> Sign out
         </button>
@@ -2266,7 +2266,7 @@ function MinimalProfileSetup({ auth, setAuth, onLogout }) {
           <div style={{ marginTop: 16, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "16px" }}>
             <div style={{ fontSize: 12.5, color: "var(--text3)", marginBottom: 10 }}>Paste your portfolio URL to link it to this account.</div>
             <div style={{ display: "flex", gap: 8 }}>
-              <input value={reconnectUrl} onChange={e => setReconnectUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && handleReconnect()} placeholder="e.g. preznt-phi.vercel.app/#/portfolio/..." style={{ flex: 1, fontSize: 12 }} />
+              <input value={reconnectUrl} onChange={e => setReconnectUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && handleReconnect()} placeholder="e.g. prolio.co/#/portfolio/..." style={{ flex: 1, fontSize: 12 }} />
               <Btn onClick={handleReconnect} disabled={!reconnectUrl.trim()} style={{ flexShrink: 0, padding: "10px 14px" }}>Reconnect</Btn>
             </div>
             {reconnectError && <div style={{ color: "var(--red)", fontSize: 12, marginTop: 8 }}>{reconnectError}</div>}
@@ -2626,7 +2626,7 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
     <div style={{ minHeight: "100vh" }}>
       {/* Top bar */}
       <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>preznt<span style={{ color: "var(--accent)" }}>.</span></div>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>prolio<span style={{ color: "var(--accent)" }}>.</span></div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {built && (
             <button onClick={() => { navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
