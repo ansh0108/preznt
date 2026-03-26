@@ -606,18 +606,27 @@ async def cover_letter_endpoint(req: CoverLetterRequest):
     role = req.role_name or "this role"
 
     if req.refinement and req.existing_letter:
-        prompt = f"""Revise this cover letter based on the user's instructions. Keep the same structure and length.
+        prompt = f"""You are carefully editing a cover letter based on a specific instruction. Think through the change before making it.
 
 Current cover letter:
 {req.existing_letter}
 
-User's instruction: {req.refinement}
+Candidate's instruction: "{req.refinement}"
+
+How to approach this:
+1. Read the instruction carefully — understand exactly what they want changed
+2. Identify only the sentences or phrases that need to change
+3. Make surgical edits — do not rewrite the whole letter
+4. If the instruction asks to emphasise something, weave it naturally into the existing flow
+5. If the instruction asks to remove something, cut it cleanly without leaving gaps
+6. Preserve everything else exactly as written
 
 Rules:
-- Keep the Dear/Sincerely structure
 - Stay under 200 words
-- Only use real information from the original letter — do not invent new experience
-- Return only the revised cover letter, nothing else"""
+- Keep the Dear/Sincerely structure
+- Do not invent new experience not in the original letter
+- Do not change the tone or voice — just apply the specific edit
+- Return only the final revised cover letter, no explanation"""
     else:
         prompt = f"""Write a cover letter for {profile['name']} applying to {role} at {company}.
 
