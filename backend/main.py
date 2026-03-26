@@ -740,7 +740,12 @@ async def chat_endpoint(req: ChatRequest):
         raise HTTPException(status_code=404, detail="Profile not found")
     if not index_exists(req.user_id, INDEXES_DIR):
         raise HTTPException(status_code=400, detail="Profile not indexed yet.")
-    answer = chat(req.question, req.user_id, profile["name"], req.history, profile)
+    try:
+        answer = chat(req.question, req.user_id, profile["name"], req.history, profile)
+    except Exception as e:
+        if "rate_limited" in str(e):
+            raise HTTPException(status_code=503, detail="I'm getting a lot of questions right now — please try again in a few seconds!")
+        raise
     log_event(req.user_id, "chat", req.question)
     return {"answer": answer}
 

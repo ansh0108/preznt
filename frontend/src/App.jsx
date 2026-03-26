@@ -945,7 +945,10 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
       const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
       const res = await axios.post(`${API}/chat`, { user_id: userId, question: q, history });
       setMessages(p => [...p, { role: "assistant", content: res.data.answer }]);
-    } catch { setMessages(p => [...p, { role: "assistant", content: "• Sorry, I couldn't process that right now." }]); }
+    } catch (err) {
+      const msg = err?.response?.data?.detail || "I'm having trouble connecting right now — please try again in a moment.";
+      setMessages(p => [...p, { role: "assistant", content: msg, isError: true }]);
+    }
     finally { setLoading(false); }
   };
 
@@ -967,11 +970,11 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
             )}
             <div style={{
               maxWidth: "78%",
-              background: msg.role === "user" ? "var(--accent)" : "var(--bg2)",
-              color: msg.role === "user" ? "#fff" : "var(--text2)",
+              background: msg.isError ? "rgba(248,113,113,0.08)" : msg.role === "user" ? "var(--accent)" : "var(--bg2)",
+              color: msg.isError ? "var(--red)" : msg.role === "user" ? "#fff" : "var(--text2)",
               padding: "11px 15px",
               borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-              fontSize: 13.5, border: msg.role === "assistant" ? "1px solid var(--line2)" : "none"
+              fontSize: 13.5, border: msg.isError ? "1px solid rgba(248,113,113,0.25)" : msg.role === "assistant" ? "1px solid var(--line2)" : "none"
             }}>{renderMsg(msg.content)}</div>
           </div>
         ))}
