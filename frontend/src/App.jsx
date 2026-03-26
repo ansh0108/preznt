@@ -2094,11 +2094,17 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
   const shareSlug = auth.profile_name ? `${nameToSlug(auth.profile_name)}-${portfolioId}` : portfolioId;
   const shareUrl = `${window.location.origin}${window.location.pathname}#/portfolio/${shareSlug}`;
 
-  const addGithubRepo = async () => {
+  const addAllGithubRepos = async () => {
     if (!githubUrl.trim()) return;
     setGithubLoading(true);
     try {
-      await axios.post(`${API}/profile/${portfolioId}/github`, { github_url: githubUrl.trim() });
+      const m = githubUrl.trim().match(/github\.com\/([^/\s]+)/);
+      const username = m ? m[1] : githubUrl.trim();
+      const res = await axios.get(`${API}/github/repos?username=${username}`);
+      const repos = res.data.repos || [];
+      for (const repo of repos) {
+        await axios.post(`${API}/profile/${portfolioId}/github`, { github_url: repo.url });
+      }
       setGithubUrl(""); setAddingGithub(false);
       await loadProfile();
     } catch {} finally { setGithubLoading(false); }
@@ -2155,20 +2161,15 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
 
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", display: "flex", gap: 24, alignItems: "flex-start" }}>
         {/* LEFT SIDEBAR */}
-        <div style={{ width: 260, flexShrink: 0 }}>
+        <div style={{ width: 300, flexShrink: 0 }}>
           {/* Profile card */}
           <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px", marginBottom: 14 }}>
             <div style={{ marginBottom: 14 }}><ProfilePhoto userId={portfolioId} name={profile?.name} size={72} /></div>
-            <div style={{ textAlign: "center", marginBottom: 14 }}>
+            <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 3 }}>{profile?.name}</div>
               {profile?.title && <div style={{ fontSize: 12.5, color: "var(--text3)" }}>{profile.title}</div>}
               {profile?.tagline && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 5, fontStyle: "italic", lineHeight: 1.5 }}>{profile.tagline}</div>}
             </div>
-            {profile?.skills?.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5, justifyContent: "center" }}>
-                {profile.skills.slice(0, 8).map((s, i) => <Pill key={i} color="var(--accent)">{s}</Pill>)}
-              </div>
-            )}
           </div>
 
           {/* Data sources */}
@@ -2185,15 +2186,20 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
                   </div>
                   <span style={{ fontSize: 13, color: hasGithub ? "var(--text2)" : "var(--text3)", fontWeight: 500 }}>GitHub Repos</span>
                 </div>
-                <button onClick={() => setAddingGithub(v => !v)} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: "var(--accent)", padding: "3px 8px", fontSize: 11, cursor: "pointer" }}>+ Add</button>
+                <button onClick={() => setAddingGithub(v => !v)} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: "var(--accent)", padding: "3px 8px", fontSize: 11, cursor: "pointer" }}>
+                  {addingGithub ? "Cancel" : "+ Add"}
+                </button>
               </div>
               {hasGithub && <div style={{ fontSize: 12, color: "var(--text3)", paddingLeft: 36, marginBottom: 6 }}>{profile.github_urls.length} repo{profile.github_urls.length !== 1 ? "s" : ""} added</div>}
               {addingGithub && (
-                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                  <input value={githubUrl} onChange={e => setGithubUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && addGithubRepo()} placeholder="github.com/user/repo" style={{ flex: 1, fontSize: 12, padding: "7px 10px" }} />
-                  <button onClick={addGithubRepo} disabled={githubLoading} style={{ background: "var(--accent)", color: "#fff", border: "none", borderRadius: 6, padding: "0 10px", cursor: "pointer", fontSize: 12 }}>
-                    {githubLoading ? <Spinner size={12} color="#fff" /> : "Add"}
-                  </button>
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input value={githubUrl} onChange={e => setGithubUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && addAllGithubRepos()} placeholder="github.com/username" style={{ flex: 1, fontSize: 12, padding: "7px 10px" }} />
+                    <button onClick={addAllGithubRepos} disabled={githubLoading || !githubUrl.trim()} style={{ background: "var(--accent)", color: "#fff", border: "none", borderRadius: 6, padding: "0 12px", cursor: "pointer", fontSize: 12, flexShrink: 0, opacity: githubLoading || !githubUrl.trim() ? 0.5 : 1 }}>
+                      {githubLoading ? <Spinner size={12} color="#fff" /> : "Add All"}
+                    </button>
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 6 }}>Imports all public repos from your profile</div>
                 </div>
               )}
             </div>
@@ -2221,15 +2227,27 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
             <div style={{ display: tab === "build" ? "block" : "none" }}>
               <SecHead>Build Portfolio</SecHead>
               <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
-                Your portfolio is generated from your LinkedIn, resume, and GitHub data. Add your sources in the sidebar, then click Build.
+                Your portfolio is generated from your LinkedIn, resume, and GitHub data. Click each source below to upload, or use the sidebar.
               </div>
               <div style={{ display: "flex", gap: 10, marginBottom: 28, flexWrap: "wrap" }}>
-                {[{ label: "LinkedIn", done: hasLinkedin }, { label: "Resume", done: hasResume }, { label: "GitHub", done: hasGithub }].map(s => (
-                  <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--bg2)", border: `1px solid ${s.done ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 13 }}>
-                    <Icon name={s.done ? "check" : "plus"} size={13} color={s.done ? "var(--teal)" : "var(--text3)"} />
-                    <span style={{ color: s.done ? "var(--teal)" : "var(--text3)" }}>{s.label}</span>
-                  </div>
+                {[
+                  { label: "LinkedIn", done: hasLinkedin, accept: ".pdf", type: "linkedin", inputId: "build-li" },
+                  { label: "Resume", done: hasResume, accept: ".pdf,.docx,.pptx,.txt", type: "resume", inputId: "build-cv" },
+                ].map(s => (
+                  <label key={s.label} htmlFor={s.inputId} style={{ cursor: "pointer" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--bg2)", border: `1px solid ${s.done ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 13, transition: "border-color 0.15s" }}
+                      onMouseEnter={e => { if (!s.done) e.currentTarget.style.borderColor = "var(--accent)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = s.done ? "var(--teal)" : "var(--line2)"; }}>
+                      <Icon name={s.done ? "check" : "plus"} size={13} color={s.done ? "var(--teal)" : "var(--accent)"} />
+                      <span style={{ color: s.done ? "var(--teal)" : "var(--text2)" }}>{s.label}</span>
+                    </div>
+                    <input id={s.inputId} type="file" accept={s.accept} style={{ display: "none" }} onChange={e => e.target.files[0] && uploadFile(e.target.files[0], s.type)} />
+                  </label>
                 ))}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--bg2)", border: `1px solid ${hasGithub ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 13 }}>
+                  <Icon name={hasGithub ? "check" : "plus"} size={13} color={hasGithub ? "var(--teal)" : "var(--text3)"} />
+                  <span style={{ color: hasGithub ? "var(--teal)" : "var(--text3)" }}>GitHub</span>
+                </div>
               </div>
               {!hasLinkedin && !hasResume && !hasGithub ? (
                 <div style={{ color: "var(--text3)", fontSize: 13 }}>Add at least one data source from the sidebar to build your portfolio.</div>
