@@ -868,10 +868,14 @@ function Projects({ profile }) {
 }
 
 // ─── CHATBOT ─────────────────────────────────────────────────────────────────
-function Chatbot({ userId, userName }) {
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: `Hi — I'm ${userName}'s portfolio assistant. Ask me anything about their background, projects, or skills.` }
-  ]);
+function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMessagesProp }) {
+  const defaultMsg = [{ role: "assistant", content: `Hi — I'm ${userName}'s portfolio assistant. Ask me anything about their background, projects, or skills.` }];
+  const [localMessages, setLocalMessages] = useState(defaultMsg);
+  const messages = messagesProp ?? localMessages;
+  const setMessages = setMessagesProp ? (v) => { setMessagesProp(typeof v === "function" ? v(messages) : v); } : setLocalMessages;
+
+  // Initialise lifted state on first render
+  useEffect(() => { if (setMessagesProp && messagesProp === null) setMessagesProp(defaultMsg); }, []);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const chatContainerRef = useRef(null);
@@ -961,11 +965,8 @@ function Chatbot({ userId, userName }) {
 }
 
 // ─── GAP ANALYSIS ─────────────────────────────────────────────────────────────
-function GapAnalysis({ userId }) {
-  const [role, setRole] = useState("");
+function GapAnalysis({ userId, role, setRole, result, setResult, error, setError }) {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
 
   const analyze = async () => {
     if (!role.trim()) return;
@@ -1066,6 +1067,11 @@ function PortfolioPage({ userId, onBack }) {
   const [tab, setTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  // Lifted state so switching tabs doesn't reset chat/gap analysis
+  const [chatMessages, setChatMessages] = useState(null); // null = not yet initialised
+  const [gapRole, setGapRole] = useState("");
+  const [gapResult, setGapResult] = useState(null);
+  const [gapError, setGapError] = useState(null);
 
   useEffect(() => {
     axios.get(`${API}/profile/${userId}`)
@@ -1215,12 +1221,16 @@ function PortfolioPage({ userId, onBack }) {
             ))}
           </div>
 
-          {/* Content panel */}
+          {/* Content panel — all tabs stay mounted to preserve state */}
           <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "28px 30px", minHeight: 520 }}>
-            {tab === "overview" && <Overview profile={profile} />}
-            {tab === "projects" && <Projects profile={profile} />}
-            {tab === "chat" && <div style={{ height: 540, margin: "-28px -30px" }}><Chatbot userId={userId} userName={profile.name} /></div>}
-            {tab === "gap" && <GapAnalysis userId={userId} />}
+            <div style={{ display: tab === "overview" ? "block" : "none" }}><Overview profile={profile} /></div>
+            <div style={{ display: tab === "projects" ? "block" : "none" }}><Projects profile={profile} /></div>
+            <div style={{ display: tab === "chat" ? "block" : "none", height: 540, margin: "-28px -30px" }}>
+              <Chatbot userId={userId} userName={profile.name} messages={chatMessages} setMessages={setChatMessages} />
+            </div>
+            <div style={{ display: tab === "gap" ? "block" : "none" }}>
+              <GapAnalysis userId={userId} role={gapRole} setRole={setGapRole} result={gapResult} setResult={setGapResult} error={gapError} setError={setGapError} />
+            </div>
           </div>
         </div>
       </div>
