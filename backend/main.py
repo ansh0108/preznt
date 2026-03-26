@@ -103,6 +103,19 @@ class PreferencesRequest(BaseModel):
     featured_repos: list[str] = []
 
 
+class LinkItem(BaseModel):
+    type: str = "other"   # "publication" | "certificate" | "award" | "other"
+    title: str
+    url: str = ""
+    issuer: str = ""
+    date: str = ""
+    description: str = ""
+
+
+class LinksRequest(BaseModel):
+    links: list[LinkItem] = []
+
+
 # ─── ANALYTICS ENDPOINTS ──────────────────────────────────────────────────────
 @app.post("/analytics/{user_id}/view")
 async def track_view(user_id: str):
@@ -158,6 +171,19 @@ async def link_portfolio_endpoint(req: LinkPortfolioRequest, authorization: str 
     user = get_current_user(authorization)
     link_portfolio(user["id"], req.portfolio_id)
     return {"message": "Portfolio linked"}
+
+
+@app.patch("/profile/{user_id}/links")
+async def update_links(user_id: str, req: LinksRequest, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    if user.get("portfolio_id") != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    profile = load_profile(user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    profile["links"] = [l.dict() for l in req.links]
+    save_profile(user_id, profile)
+    return {"message": "Links saved", "count": len(req.links)}
 
 
 @app.patch("/profile/{user_id}/preferences")
@@ -971,4 +997,5 @@ async def get_profile(user_id: str):
         "has_photo": bool(profile.get("photo_ext")),
         "has_resume": bool(profile.get("resume_filename") and os.path.exists(os.path.join(UPLOADS_DIR, profile.get("resume_filename", "")))),
         "preferences": profile.get("preferences", {}),
+        "links": profile.get("links", []),
     }

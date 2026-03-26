@@ -44,6 +44,15 @@ def build_profile_summary(profile: dict) -> str:
             line += f" | Tech: {', '.join(proj['tech_stack'])}"
         parts.append(line)
 
+    for link in profile.get("links", []):
+        t = link.get("type", "other").capitalize()
+        line = f"{t}: {link.get('title', '')}"
+        if link.get("issuer"):
+            line += f" (by {link['issuer']})"
+        if link.get("date"):
+            line += f" — {link['date']}"
+        parts.append(line)
+
     return "\n".join(parts)
 
 

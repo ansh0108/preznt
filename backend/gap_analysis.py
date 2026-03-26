@@ -49,6 +49,17 @@ def build_profile_context(profile: dict) -> str:
             parts.append("Tech: " + ", ".join(proj["tech_stack"]))
         sections.append("\n".join(parts))
 
+    for link in profile.get("links", []):
+        t = link.get("type", "other").upper()
+        parts = [f"{t}: {link.get('title', '')}"]
+        if link.get("issuer"):
+            parts.append(f"by {link['issuer']}")
+        if link.get("date"):
+            parts.append(f"({link['date']})")
+        if link.get("description"):
+            parts.append(link["description"])
+        sections.append(" ".join(parts))
+
     return "\n\n".join(sections)
 
 

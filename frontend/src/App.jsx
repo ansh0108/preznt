@@ -821,6 +821,53 @@ function Overview({ profile, hideSections = [] }) {
           </div>
         </div>
       )}
+
+      {profile.links?.length > 0 && !hideSections.includes("links") && (() => {
+        const TYPE_META = {
+          publication: { label: "Publications", color: "var(--rose)", icon: "file" },
+          certificate: { label: "Certifications", color: "var(--teal)", icon: "check" },
+          award:       { label: "Awards", color: "var(--amber)", icon: "star" },
+          other:       { label: "Other Links", color: "var(--accent)", icon: "link" },
+        };
+        const grouped = {};
+        for (const l of profile.links) {
+          const t = l.type || "other";
+          if (!grouped[t]) grouped[t] = [];
+          grouped[t].push(l);
+        }
+        return (
+          <div>
+            <SecHead>Publications & Credentials</SecHead>
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {["publication", "certificate", "award", "other"].filter(t => grouped[t]).map(type => {
+                const meta = TYPE_META[type];
+                return (
+                  <div key={type}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>{meta.label}</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {grouped[type].map((l, i) => (
+                        <div key={i} style={{ display: "flex", gap: 14, padding: "14px 16px", background: "var(--bg2)", borderRadius: "var(--r-md)", borderLeft: `2px solid ${meta.color}` }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text)" }}>{l.title}</div>
+                            {l.issuer && <div style={{ fontSize: 12.5, color: meta.color, marginTop: 3 }}>{l.issuer}</div>}
+                            {l.date && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 2 }}>{l.date}</div>}
+                            {l.description && <div style={{ fontSize: 13, color: "var(--text2)", marginTop: 6, lineHeight: 1.6 }}>{l.description}</div>}
+                          </div>
+                          {l.url && (
+                            <a href={l.url} target="_blank" rel="noreferrer" style={{ flexShrink: 0, alignSelf: "flex-start", paddingTop: 2, textDecoration: "none" }}>
+                              <span style={{ fontSize: 11, color: meta.color, background: meta.color + "18", border: `1px solid ${meta.color}40`, padding: "3px 10px", borderRadius: 100, fontWeight: 600, whiteSpace: "nowrap" }}>↗ View</span>
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -2381,6 +2428,7 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange }) {
     { id: "education", label: "Education" },
     { id: "github", label: "GitHub Projects" },
     { id: "resume_projects", label: "Resume Projects" },
+    { id: "links", label: "Publications & Credentials" },
   ];
 
   const Row = ({ label, children }) => (
@@ -2497,6 +2545,9 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
   const [addingGithub, setAddingGithub] = useState(false);
   const [githubUrl, setGithubUrl] = useState("");
   const [githubLoading, setGithubLoading] = useState(false);
+  const [addingLink, setAddingLink] = useState(false);
+  const [newLink, setNewLink] = useState({ type: "certificate", title: "", url: "", issuer: "", date: "" });
+  const [linkSaving, setLinkSaving] = useState(false);
   const [building, setBuilding] = useState(false);
   const [buildError, setBuildError] = useState(null);
   const [built, setBuilt] = useState(false);
@@ -2539,6 +2590,14 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
     const ep = type === "linkedin" ? `/upload/linkedin/${portfolioId}` : `/upload/document/${portfolioId}`;
     await axios.post(`${API}${ep}`, f);
     await loadProfile();
+  };
+
+  const saveLinks = async (updatedLinks) => {
+    setLinkSaving(true);
+    try {
+      await axios.patch(`${API}/profile/${portfolioId}/links`, { links: updatedLinks }, { headers: { Authorization: `Bearer ${auth.token}` } });
+      await loadProfile();
+    } catch {} finally { setLinkSaving(false); }
   };
 
   const buildPortfolio = async () => {
@@ -2630,6 +2689,70 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
                 </div>
               )}
             </div>
+
+            {/* Links & Credentials */}
+            {(() => {
+              const links = profile?.links || [];
+              const linkInputSt = { width: "100%", background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text)", fontSize: 12, padding: "7px 10px", outline: "none" };
+              return (
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: links.length > 0 ? "rgba(45,212,191,0.1)" : "var(--bg3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Icon name="link" size={14} color={links.length > 0 ? "var(--teal)" : "var(--text3)"} />
+                      </div>
+                      <span style={{ fontSize: 13, color: links.length > 0 ? "var(--text2)" : "var(--text3)", fontWeight: 500 }}>Links & Credentials</span>
+                    </div>
+                    <button onClick={() => setAddingLink(v => !v)} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: "var(--accent)", padding: "3px 8px", fontSize: 11, cursor: "pointer" }}>
+                      {addingLink ? "Cancel" : "+ Add"}
+                    </button>
+                  </div>
+                  {links.length > 0 && (
+                    <div style={{ paddingLeft: 36, display: "flex", flexDirection: "column", gap: 5, marginBottom: addingLink ? 8 : 0 }}>
+                      {links.map((l, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                          <div style={{ fontSize: 12, color: "var(--text2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                            <span style={{ color: "var(--accent)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", marginRight: 5 }}>{l.type === "certificate" ? "cert" : l.type}</span>
+                            {l.title}
+                          </div>
+                          <button onClick={() => saveLinks(links.filter((_, j) => j !== i))} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text3)", padding: "0 2px", fontSize: 16, lineHeight: 1 }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {addingLink && (
+                    <div style={{ marginTop: 10, background: "var(--bg2)", borderRadius: "var(--r-md)", border: "1px solid var(--line2)", padding: "14px" }}>
+                      <div style={{ display: "flex", gap: 5, marginBottom: 10, flexWrap: "wrap" }}>
+                        {["certificate", "publication", "award", "other"].map(t => (
+                          <button key={t} onClick={() => setNewLink(p => ({ ...p, type: t }))}
+                            style={{ padding: "3px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                              background: newLink.type === t ? "var(--accent-d)" : "var(--bg3)",
+                              border: `1px solid ${newLink.type === t ? "var(--accent-b)" : "var(--line2)"}`,
+                              color: newLink.type === t ? "var(--accent)" : "var(--text3)" }}>
+                            {t.charAt(0).toUpperCase() + t.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                      <input value={newLink.title} onChange={e => setNewLink(p => ({ ...p, title: e.target.value }))} placeholder="Title *" style={linkInputSt} />
+                      <input value={newLink.issuer} onChange={e => setNewLink(p => ({ ...p, issuer: e.target.value }))}
+                        placeholder={newLink.type === "publication" ? "Published in (optional)" : "Issued by (optional)"}
+                        style={{ ...linkInputSt, marginTop: 6 }} />
+                      <input value={newLink.url} onChange={e => setNewLink(p => ({ ...p, url: e.target.value }))} placeholder="URL (optional)" style={{ ...linkInputSt, marginTop: 6 }} />
+                      <input value={newLink.date} onChange={e => setNewLink(p => ({ ...p, date: e.target.value }))} placeholder="e.g. March 2024 (optional)" style={{ ...linkInputSt, marginTop: 6 }} />
+                      <button disabled={!newLink.title.trim() || linkSaving}
+                        onClick={async () => {
+                          await saveLinks([...(profile?.links || []), { ...newLink }]);
+                          setNewLink({ type: "certificate", title: "", url: "", issuer: "", date: "" });
+                          setAddingLink(false);
+                        }}
+                        style={{ marginTop: 10, width: "100%", padding: "8px", borderRadius: "var(--r-md)", background: "var(--accent)", border: "none", color: "#fff", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: (!newLink.title.trim() || linkSaving) ? 0.5 : 1 }}>
+                        {linkSaving ? "Saving…" : "Add"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
