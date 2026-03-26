@@ -1739,10 +1739,12 @@ function ProfileCard({ profile: p }) {
 function SeekerDashboard({ auth, setAuth, onLogout }) {
   // Always derive from auth prop so it updates when /auth/me resolves
   const portfolioId = auth.portfolio_id || null;
-  // profile_name is stored in auth localStorage after setup to build the slug
   const shareSlug = auth.profile_name
     ? `${nameToSlug(auth.profile_name)}-${portfolioId}`
     : portfolioId;
+
+  const [reconnectUrl, setReconnectUrl] = useState("");
+  const [reconnectError, setReconnectError] = useState("");
 
   const handleSetupComplete = async (id, name) => {
     try {
@@ -1758,6 +1760,30 @@ function SeekerDashboard({ auth, setAuth, onLogout }) {
     setAuth(updated);
   };
 
+  const handleReconnect = async () => {
+    setReconnectError("");
+    // Accept full URL like "#/portfolio/ansh-dasrapuria-62ce3b34" or just the 8-char id
+    const idMatch = reconnectUrl.match(/([0-9a-f]{8})(?:[^0-9a-f]|$)/);
+    const id = idMatch ? idMatch[1] : reconnectUrl.trim();
+    if (!id || id.length !== 8) {
+      setReconnectError("Paste your full portfolio URL or the 8-character ID from it.");
+      return;
+    }
+    try {
+      // Verify the profile exists
+      await axios.get(`${API}/profile/${id}`);
+      await axios.post(`${API}/auth/link-portfolio`,
+        { portfolio_id: id },
+        { headers: { Authorization: `Bearer ${auth.token}` } }
+      );
+      const updated = { ...auth, portfolio_id: id };
+      saveAuth(updated);
+      setAuth(updated);
+    } catch {
+      setReconnectError("Could not find that portfolio. Check the URL and try again.");
+    }
+  };
+
   const shareUrl = portfolioId
     ? `${window.location.origin}${window.location.pathname}#/portfolio/${shareSlug}`
     : null;
@@ -1771,12 +1797,29 @@ function SeekerDashboard({ auth, setAuth, onLogout }) {
   if (!portfolioId) {
     return (
       <div style={{ minHeight: "100vh" }}>
-        {/* Minimal top bar */}
         <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
           <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>preznt<span style={{ color: "var(--accent)" }}>.</span></div>
           <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
             <Icon name="logout" size={13} color="var(--text3)" /> Sign out
           </button>
+        </div>
+        {/* Reconnect banner for users who already built a portfolio */}
+        <div style={{ maxWidth: 560, margin: "32px auto 0", padding: "0 24px" }}>
+          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 24px", marginBottom: 24 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>Already built your portfolio?</div>
+            <div style={{ fontSize: 12.5, color: "var(--text3)", marginBottom: 12 }}>Paste your portfolio URL or share link to reconnect it to your account.</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                value={reconnectUrl}
+                onChange={e => setReconnectUrl(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleReconnect()}
+                placeholder="e.g. preznt-phi.vercel.app/#/portfolio/ansh-dasrapuria-62ce3b34"
+                style={{ flex: 1, fontSize: 12.5 }}
+              />
+              <Btn onClick={handleReconnect} disabled={!reconnectUrl.trim()} style={{ flexShrink: 0, padding: "10px 16px" }}>Reconnect</Btn>
+            </div>
+            {reconnectError && <div style={{ color: "var(--red)", fontSize: 12, marginTop: 8 }}>{reconnectError}</div>}
+          </div>
         </div>
         <SetupPage onComplete={(id, name) => handleSetupComplete(id, name)} />
       </div>
