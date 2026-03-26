@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { jsPDF } from "jspdf";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8004";
 
@@ -1129,15 +1130,27 @@ function CoverLetter({ userId, jd, setJd, company, setCompany, role, setRole, re
   };
 
   const download = () => {
-    const filename = `Cover_Letter${company ? `_${company.replace(/\s+/g, "_")}` : ""}`;
-    const win = window.open("", "_blank");
-    win.document.write(`<!DOCTYPE html><html><head><title>${filename}</title><style>
-      body { font-family: Georgia, serif; font-size: 13pt; line-height: 1.9; max-width: 680px; margin: 60px auto; color: #111; }
-      @media print { body { margin: 40px; } }
-    </style></head><body><pre style="font-family:inherit;white-space:pre-wrap;">${result}</pre>
-    <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
-    </body></html>`);
-    win.document.close();
+    const filename = `Cover_Letter${company ? `_${company.replace(/\s+/g, "_")}` : ""}.pdf`;
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 72;
+    const maxW = pageW - margin * 2;
+    doc.setFont("times", "normal");
+    doc.setFontSize(13);
+    doc.setTextColor(17, 17, 17);
+    const lineHeight = 13 * 1.9;
+    const lines = doc.splitTextToSize(result, maxW);
+    let y = margin;
+    for (const line of lines) {
+      if (y + lineHeight > pageH - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += lineHeight;
+    }
+    doc.save(filename);
   };
 
   return (
