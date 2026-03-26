@@ -19,10 +19,12 @@ from chatbot import chat
 from gap_analysis import analyze_gap
 from groq_client import call_groq
 from auth import init_db, create_user, get_user_by_email, get_user_by_id, verify_password, make_token, get_current_user, link_portfolio
+from analytics import init_analytics_db, log_event, get_analytics as get_analytics_data
 
 load_dotenv()
 app = FastAPI()
 init_db()
+init_analytics_db()
 
 app.add_middleware(CORSMiddleware, allow_origins=[
                    "*"], allow_methods=["*"], allow_headers=["*"])
@@ -86,6 +88,31 @@ class LinkPortfolioRequest(BaseModel):
 
 class AddGithubRequest(BaseModel):
     github_url: str
+
+
+class TabEventRequest(BaseModel):
+    tab: str
+
+
+# ─── ANALYTICS ENDPOINTS ──────────────────────────────────────────────────────
+@app.post("/analytics/{user_id}/view")
+async def track_view(user_id: str):
+    log_event(user_id, "view")
+    return {"ok": True}
+
+
+@app.post("/analytics/{user_id}/tab")
+async def track_tab(user_id: str, req: TabEventRequest):
+    log_event(user_id, "tab", req.tab)
+    return {"ok": True}
+
+
+@app.get("/analytics/{user_id}")
+async def get_user_analytics(user_id: str, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    if user.get("portfolio_id") != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return get_analytics_data(user_id)
 
 
 @app.post("/auth/signup")
@@ -714,6 +741,7 @@ async def chat_endpoint(req: ChatRequest):
     if not index_exists(req.user_id, INDEXES_DIR):
         raise HTTPException(status_code=400, detail="Profile not indexed yet.")
     answer = chat(req.question, req.user_id, profile["name"], req.history, profile)
+    log_event(req.user_id, "chat", req.question)
     return {"answer": answer}
 
 

@@ -1328,8 +1328,14 @@ function PortfolioPage({ userId, onBack }) {
 
   useEffect(() => {
     axios.get(`${API}/profile/${userId}`)
-      .then(res => setProfile(res.data)).catch(() => setProfile(null)).finally(() => setLoading(false));
+      .then(res => { setProfile(res.data); axios.post(`${API}/analytics/${userId}/view`).catch(() => {}); })
+      .catch(() => setProfile(null)).finally(() => setLoading(false));
   }, [userId]);
+
+  const switchTab = (t) => {
+    setTab(t);
+    axios.post(`${API}/analytics/${userId}/tab`, { tab: t }).catch(() => {});
+  };
 
   if (loading) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}><Spinner size={24} /></div>;
   if (!profile) return (
@@ -1459,7 +1465,7 @@ function PortfolioPage({ userId, onBack }) {
           {/* Tab bar */}
           <div style={{ display: "flex", gap: 2, marginBottom: 22, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content" }}>
             {TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{
+              <button key={t.id} onClick={() => switchTab(t.id)} style={{
                 background: tab === t.id ? "var(--bg3)" : "transparent",
                 color: tab === t.id ? "var(--text)" : "var(--text3)",
                 padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400,
@@ -1958,6 +1964,107 @@ function MinimalProfileSetup({ auth, setAuth, onLogout }) {
   );
 }
 
+// ─── PORTFOLIO ANALYTICS ─────────────────────────────────────────────────────
+function PortfolioAnalytics({ portfolioId, token }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    axios.get(`${API}/analytics/${portfolioId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => setData(r.data))
+      .catch(() => setError("Could not load analytics."))
+      .finally(() => setLoading(false));
+  }, [portfolioId]);
+
+  if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: 60 }}><Spinner size={28} /></div>;
+  if (error) return <div style={{ color: "var(--red)", fontSize: 13, padding: 20 }}>{error}</div>;
+
+  const maxViews = data.views_by_day.length > 0 ? Math.max(...data.views_by_day.map(d => d.count), 1) : 1;
+
+  const fmtDate = (iso) => {
+    const d = new Date(iso + "T00:00:00");
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
+  const fmtTime = (iso) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " · " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  };
+
+  const tabLabels = { overview: "Overview", projects: "Projects", chat: "Ask AI" };
+
+  return (
+    <div style={{ animation: "fadeUp 0.25s ease" }}>
+      <SecHead>Portfolio Analytics</SecHead>
+
+      {/* Stat cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 14, marginBottom: 32 }}>
+        {[
+          { label: "Total Views", value: data.total_views, color: "var(--accent)" },
+          { label: "AI Questions Asked", value: data.recent_questions.length, color: "var(--teal)" },
+          { label: "Tab Interactions", value: Object.values(data.tab_clicks).reduce((a, b) => a + b, 0), color: "var(--rose)" },
+        ].map(s => (
+          <div key={s.label} style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px" }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: s.color, marginBottom: 4 }}>{s.value}</div>
+            <div style={{ fontSize: 12.5, color: "var(--text3)" }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Views over time */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 16 }}>Views — last 14 days</div>
+        {data.views_by_day.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--text3)" }}>No views recorded yet. Share your portfolio to get started.</div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
+            {data.views_by_day.map((d, i) => (
+              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flex: 1 }}>
+                <div style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>{d.count}</div>
+                <div title={fmtDate(d.date)} style={{ width: "100%", background: "var(--accent)", borderRadius: "4px 4px 0 0", height: `${Math.max(4, (d.count / maxViews) * 52)}px`, transition: "height 0.3s ease", cursor: "default", opacity: 0.85 }} />
+                <div style={{ fontSize: 9, color: "var(--text3)", whiteSpace: "nowrap" }}>{fmtDate(d.date).split(" ")[1]}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Tab breakdown */}
+      {Object.keys(data.tab_clicks).length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 14 }}>Tab Breakdown</div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {Object.entries(data.tab_clicks).map(([tab, count]) => (
+              <div key={tab} style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 13, color: "var(--text2)", fontWeight: 500 }}>{tabLabels[tab] || tab}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: "var(--accent)" }}>{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent AI questions */}
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 14 }}>Recent AI Questions</div>
+        {data.recent_questions.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--text3)" }}>No questions asked yet.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {data.recent_questions.slice(0, 15).map((q, i) => (
+              <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                <span style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.5 }}>{q.question}</span>
+                <span style={{ fontSize: 11, color: "var(--text3)", whiteSpace: "nowrap", flexShrink: 0, marginTop: 2 }}>{fmtTime(q.time)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── SEEKER PROFILE DASHBOARD ────────────────────────────────────────────────
 function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
   const [profile, setProfile] = useState(null);
@@ -2151,35 +2258,9 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
             </div>
 
             {/* Analytics */}
-            <div style={{ display: tab === "analytics" ? "block" : "none" }}>
-              <SecHead>Profile Analytics</SecHead>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14, marginBottom: 28 }}>
-                {[
-                  { label: "Skills Identified", value: profile?.skills?.length || 0, color: "var(--accent)" },
-                  { label: "Work Experience", value: profile?.experience?.length || 0, color: "var(--teal)" },
-                  { label: "Projects", value: (profile?.github_repos?.length || 0) + (profile?.resume_projects?.length || 0), color: "var(--rose)" },
-                  { label: "Education", value: profile?.education?.length || 0, color: "var(--amber)" },
-                ].map(s => (
-                  <div key={s.label} style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px" }}>
-                    <div style={{ fontSize: 30, fontWeight: 700, color: s.color, marginBottom: 4 }}>{s.value}</div>
-                    <div style={{ fontSize: 12.5, color: "var(--text3)" }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-              {profile?.skill_clusters && Object.keys(profile.skill_clusters).length > 0 && (
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 16 }}>Skill Breakdown</div>
-                  {Object.entries(profile.skill_clusters).map(([cat, skills]) => (
-                    <div key={cat} style={{ marginBottom: 16 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{cat}</div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {skills.map((s, i) => <Pill key={i} color="var(--accent)">{s}</Pill>)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {tab === "analytics" && (
+              <PortfolioAnalytics portfolioId={portfolioId} token={auth.token} />
+            )}
           </div>
         </div>
       </div>
