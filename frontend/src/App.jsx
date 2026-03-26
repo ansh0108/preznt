@@ -1101,12 +1101,15 @@ function CoverLetter({ userId, jd, setJd, company, setCompany, role, setRole, re
   };
 
   const download = () => {
-    const filename = `Cover_Letter${company ? `_${company.replace(/\s+/g, "_")}` : ""}.txt`;
-    const blob = new Blob([result], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
+    const filename = `Cover_Letter${company ? `_${company.replace(/\s+/g, "_")}` : ""}`;
+    const win = window.open("", "_blank");
+    win.document.write(`<!DOCTYPE html><html><head><title>${filename}</title><style>
+      body { font-family: Georgia, serif; font-size: 13pt; line-height: 1.9; max-width: 680px; margin: 60px auto; color: #111; }
+      @media print { body { margin: 40px; } }
+    </style></head><body><pre style="font-family:inherit;white-space:pre-wrap;">${result}</pre>
+    <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+    </body></html>`);
+    win.document.close();
   };
 
   return (
