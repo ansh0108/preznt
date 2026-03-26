@@ -1477,13 +1477,41 @@ function PortfolioPage({ userId, onBack }) {
   const hideSections = prefs.hide_sections || [];
   const featuredRepos = prefs.featured_repos || [];
 
+  // Apply light/dark mode + accent to document root so body background also updates
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!darkMode) {
+      document.body.classList.add("light-mode");
+      root.style.setProperty("--bg", "#f8f8fb");
+      root.style.setProperty("--bg1", "#ffffff");
+      root.style.setProperty("--bg2", "#f1f1f5");
+      root.style.setProperty("--bg3", "#e8e8ef");
+      root.style.setProperty("--line", "rgba(0,0,0,0.07)");
+      root.style.setProperty("--line2", "rgba(0,0,0,0.12)");
+      root.style.setProperty("--text", "#0d0d14");
+      root.style.setProperty("--text2", "#3a3a50");
+      root.style.setProperty("--text3", "#7a7a96");
+    } else {
+      document.body.classList.remove("light-mode");
+      ["--bg","--bg1","--bg2","--bg3","--line","--line2","--text","--text2","--text3"].forEach(v => root.style.removeProperty(v));
+    }
+    root.style.setProperty("--accent", accent);
+    // Derive accent variants from hex
+    root.style.setProperty("--accent-d", accent + "1a");
+    root.style.setProperty("--accent-b", accent + "40");
+    return () => {
+      document.body.classList.remove("light-mode");
+      ["--bg","--bg1","--bg2","--bg3","--line","--line2","--text","--text2","--text3","--accent","--accent-d","--accent-b"].forEach(v => root.style.removeProperty(v));
+    };
+  }, [darkMode, accent]);
+
   const copyLink = () => {
     navigator.clipboard.writeText(portfolioUrl);
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className={darkMode ? "" : "light-mode"} style={{ minHeight: "100vh", background: "var(--bg)", "--accent": accent, "--accent-d": accent + "1a", "--accent-b": accent + "40" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
       {/* Header */}
       <header style={{ background: "var(--bg1)", borderBottom: "1px solid var(--line)", padding: "14px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 20, backdropFilter: "blur(12px)" }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 19, fontWeight: 500, letterSpacing: "-0.01em" }}>

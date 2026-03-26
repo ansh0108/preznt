@@ -969,5 +969,6 @@ async def get_profile(user_id: str):
         "phone": profile.get("phone", ""),
         "indexed": profile.get("indexed", False),
         "has_photo": bool(profile.get("photo_ext")),
-        "has_resume": bool(profile.get("resume_filename") and os.path.exists(os.path.join(UPLOADS_DIR, profile.get("resume_filename", ""))))
+        "has_resume": bool(profile.get("resume_filename") and os.path.exists(os.path.join(UPLOADS_DIR, profile.get("resume_filename", "")))),
+        "preferences": profile.get("preferences", {}),
     }
