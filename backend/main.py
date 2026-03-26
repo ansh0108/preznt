@@ -428,7 +428,20 @@ README: {readme[:1500]}
 # ── Photo endpoints ───────────────────────────────────────────────────────────
 @app.get("/profiles/list")
 async def list_profiles():
-    """Return all indexed seeker profiles for recruiter browsing."""
+    """Return only profiles linked to a verified seeker auth account."""
+    # Get portfolio_ids that belong to real seeker accounts
+    linked_ids = set()
+    try:
+        import sqlite3 as _sq3
+        con = _sq3.connect(os.path.join(DATA_DIR, "auth.db"))
+        rows = con.execute(
+            "SELECT portfolio_id FROM users WHERE user_type='seeker' AND portfolio_id IS NOT NULL"
+        ).fetchall()
+        con.close()
+        linked_ids = {r[0] for r in rows}
+    except Exception:
+        pass
+
     profiles = []
     for fname in os.listdir(PROFILES_DIR):
         if not fname.endswith(".json"):
@@ -437,6 +450,8 @@ async def list_profiles():
             with open(os.path.join(PROFILES_DIR, fname)) as f:
                 p = json.load(f)
             if not p.get("indexed"):
+                continue
+            if p["user_id"] not in linked_ids:
                 continue
             exp = p.get("experience", [])
             current_role = f"{exp[0].get('title','')} at {exp[0].get('company','')}" if exp else ""
