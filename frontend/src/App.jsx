@@ -350,6 +350,35 @@ const LANG_COLORS = {
   Go: "#00ADD8", Rust: "#dea584", Java: "#b07219", Shell: "#89e051",
 };
 
+// Extract recognisable tech keywords from free text to show as tags on project cards
+const TECH_KEYWORDS = [
+  "Python","JavaScript","TypeScript","React","FastAPI","Flask","Django","Node.js","Node",
+  "Next.js","Vue","Angular","Vite","Express","Streamlit","Gradio",
+  "SQL","PostgreSQL","MySQL","MongoDB","DuckDB","Snowflake","SQLite","Redis","BigQuery",
+  "Pandas","NumPy","Scikit-learn","TensorFlow","PyTorch","Keras","XGBoost","LightGBM",
+  "FAISS","Sentence Transformers","HuggingFace","LangChain","OpenAI","Groq",
+  "ARIMA","Prophet","LSTM","RAG","NLP","LLM",
+  "AWS","Azure","GCP","Docker","Kubernetes","Git","CI/CD","Terraform",
+  "Tableau","Power BI","Excel","dbt","Airflow","Spark","Kafka",
+  "R","MATLAB","Scala","Java","Go","Rust","C++","C#","Bash",
+  "Salesforce","SAP","Figma","Notion",
+];
+
+function extractTechTags(text = "", topics = [], language = "") {
+  const found = new Set();
+  const lower = text.toLowerCase();
+  for (const kw of TECH_KEYWORDS) {
+    if (lower.includes(kw.toLowerCase())) found.add(kw);
+  }
+  // Add topics that look like tech (not generic words)
+  for (const t of topics) {
+    if (t.length > 1) found.add(t.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "));
+  }
+  // Always include the primary language
+  if (language) found.add(language);
+  return [...found].slice(0, 6);
+}
+
 function GithubRepoPicker({ onConfirm }) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -827,13 +856,9 @@ function Projects({ profile }) {
                 </div>
                 {repo.description && <div style={{ color: "var(--text2)", fontSize: 13.5, lineHeight: 1.7, marginBottom: 14 }}>{repo.description}</div>}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  {repo.language && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "var(--text2)" }}>
-                      <div style={{ width: 10, height: 10, borderRadius: "50%", background: LANG_COLORS[repo.language] || "var(--accent)" }} />
-                      {repo.language}
-                    </div>
-                  )}
-                  {repo.topics?.slice(0, 4).map((t, j) => <Pill key={j} color="var(--teal)" size="sm">{t}</Pill>)}
+                  {extractTechTags(repo.description, repo.topics, repo.language).map((tag, j) => (
+                    <Pill key={j} color="var(--teal)" size="sm">{tag}</Pill>
+                  ))}
                 </div>
               </div>
             </a>
