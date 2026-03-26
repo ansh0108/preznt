@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Query
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -18,9 +18,11 @@ from embeddings import build_index, index_exists
 from chatbot import chat
 from gap_analysis import analyze_gap
 from groq_client import call_groq
+from auth import init_db, create_user, get_user_by_email, get_user_by_id, verify_password, make_token, get_current_user, link_portfolio
 
 load_dotenv()
 app = FastAPI()
+init_db()
 
 app.add_middleware(CORSMiddleware, allow_origins=[
                    "*"], allow_methods=["*"], allow_headers=["*"])
@@ -65,6 +67,52 @@ class CoverLetterRequest(BaseModel):
     role_name: str = ""
     existing_letter: str = ""
     refinement: str = ""
+
+
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    user_type: str  # "seeker" or "recruiter"
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class LinkPortfolioRequest(BaseModel):
+    portfolio_id: str
+
+
+@app.post("/auth/signup")
+async def signup(req: SignupRequest):
+    if req.user_type not in ("seeker", "recruiter"):
+        raise HTTPException(status_code=400, detail="user_type must be 'seeker' or 'recruiter'")
+    user = create_user(req.email, req.password, req.user_type)
+    token = make_token(user["id"])
+    return {"token": token, "user_type": user["user_type"], "user_id": user["id"], "portfolio_id": None}
+
+
+@app.post("/auth/login")
+async def login(req: LoginRequest):
+    user = get_user_by_email(req.email)
+    if not user or not verify_password(req.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    token = make_token(user["id"])
+    return {"token": token, "user_type": user["user_type"], "user_id": user["id"], "portfolio_id": user.get("portfolio_id")}
+
+
+@app.get("/auth/me")
+async def me(authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    return {"user_id": user["id"], "email": user["email"], "user_type": user["user_type"], "portfolio_id": user.get("portfolio_id")}
+
+
+@app.post("/auth/link-portfolio")
+async def link_portfolio_endpoint(req: LinkPortfolioRequest, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    link_portfolio(user["id"], req.portfolio_id)
+    return {"message": "Portfolio linked"}
 
 
 @app.get("/health")
@@ -373,6 +421,34 @@ README: {readme[:1500]}
 
 
 # ── Photo endpoints ───────────────────────────────────────────────────────────
+@app.get("/profiles/list")
+async def list_profiles():
+    """Return all indexed seeker profiles for recruiter browsing."""
+    profiles = []
+    for fname in os.listdir(PROFILES_DIR):
+        if not fname.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(PROFILES_DIR, fname)) as f:
+                p = json.load(f)
+            if not p.get("indexed"):
+                continue
+            exp = p.get("experience", [])
+            current_role = f"{exp[0].get('title','')} at {exp[0].get('company','')}" if exp else ""
+            profiles.append({
+                "user_id": p["user_id"],
+                "name": p.get("name", ""),
+                "title": p.get("title", ""),
+                "tagline": p.get("tagline", ""),
+                "skills": p.get("skills", [])[:8],
+                "current_role": current_role,
+                "has_photo": bool(p.get("photo_ext")),
+            })
+        except Exception:
+            continue
+    return {"profiles": profiles}
+
+
 @app.post("/upload/photo/{user_id}")
 async def upload_photo(user_id: str, file: UploadFile = File(...)):
     profile = load_profile(user_id)

@@ -5,20 +5,29 @@ import { jsPDF } from "jspdf";
 const API = import.meta.env.VITE_API_URL || "http://localhost:8004";
 
 function getRouteFromHash() {
-  const match = window.location.hash.match(/^#\/portfolio\/(.+)$/);
-  if (match) {
-    const slug = match[1];
-    // user_id is always the last 8-char hex segment: "ansh-dasrapuria-62ce3b34"
+  const hash = window.location.hash;
+  if (hash.startsWith("#/portfolio/")) {
+    const slug = hash.replace("#/portfolio/", "");
     const idMatch = slug.match(/([0-9a-f]{8})$/);
     const userId = idMatch ? idMatch[1] : slug;
     return { page: "portfolio", userId };
   }
-  return { page: "setup", userId: null };
+  if (hash === "#/login") return { page: "login", userId: null };
+  if (hash === "#/signup") return { page: "signup", userId: null };
+  if (hash === "#/dashboard") return { page: "dashboard", userId: null };
+  return { page: "landing", userId: null };
 }
 
 function nameToSlug(name) {
   return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
+
+// ─── AUTH HELPERS ─────────────────────────────────────────────────────────────
+function loadAuth() {
+  try { return JSON.parse(localStorage.getItem("preznt_auth")) || null; } catch { return null; }
+}
+function saveAuth(data) { localStorage.setItem("preznt_auth", JSON.stringify(data)); }
+function clearAuth() { localStorage.removeItem("preznt_auth"); }
 
 // ─── ICONS (clean SVGs, no emojis) ───────────────────────────────────────────
 const Icon = ({ name, size = 16, color = "currentColor", style: s = {} }) => {
@@ -44,6 +53,13 @@ const Icon = ({ name, size = 16, color = "currentColor", style: s = {} }) => {
     camera: <><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></>,
     zap: <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></>,
     trending: <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></>,
+    search: <><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></>,
+    logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></>,
+    eye: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>,
+    mail: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></>,
+    lock: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>,
+    people: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+    external: <><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", flexShrink: 0, ...s }}>
@@ -690,7 +706,7 @@ function SetupPage({ onComplete }) {
                 </div>
                 <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                   <Btn onClick={() => window.open(portfolioUrl, "_blank")}><Icon name="link" size={14} color="#fff" /> Open in new tab</Btn>
-                  <Btn variant="ghost" onClick={() => onComplete(userId)}>View here</Btn>
+                  <Btn variant="ghost" onClick={() => onComplete(userId, profile.name)}>View here</Btn>
                 </div>
               </div>
             )}
@@ -1441,25 +1457,468 @@ function PortfolioPage({ userId, onBack }) {
   );
 }
 
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+function LandingPage({ onSeeker, onRecruiter, onLogin }) {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
+      {/* Logo / brand */}
+      <div style={{ marginBottom: 48, textAlign: "center" }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 36, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em", marginBottom: 12 }}>
+          preznt<span style={{ color: "var(--accent)" }}>.</span>
+        </div>
+        <div style={{ fontSize: 17, color: "var(--text3)", maxWidth: 420, lineHeight: 1.6 }}>
+          Your AI-powered portfolio — built from your resume, LinkedIn, and GitHub.
+        </div>
+      </div>
+
+      {/* Two paths */}
+      <div style={{ display: "flex", gap: 20, marginBottom: 32, flexWrap: "wrap", justifyContent: "center" }}>
+        {/* Job Seeker card */}
+        <button onClick={onSeeker} style={{
+          background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)",
+          padding: "32px 36px", width: 260, textAlign: "left", cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
+          display: "flex", flexDirection: "column", gap: 12,
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line2)"; e.currentTarget.style.transform = "translateY(0)"; }}
+        >
+          <div style={{ width: 44, height: 44, borderRadius: "var(--r-md)", background: "var(--accent-d)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="user" size={20} color="var(--accent)" />
+          </div>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>I'm a Job Seeker</div>
+            <div style={{ fontSize: 13, color: "var(--text3)", lineHeight: 1.55 }}>Build your AI portfolio, generate cover letters, and analyze skill gaps.</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--accent)", fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+            Get started <Icon name="arrow" size={14} color="var(--accent)" />
+          </div>
+        </button>
+
+        {/* Recruiter card */}
+        <button onClick={onRecruiter} style={{
+          background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)",
+          padding: "32px 36px", width: 260, textAlign: "left", cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
+          display: "flex", flexDirection: "column", gap: 12,
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--rose)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line2)"; e.currentTarget.style.transform = "translateY(0)"; }}
+        >
+          <div style={{ width: 44, height: 44, borderRadius: "var(--r-md)", background: "var(--rose-d)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="people" size={20} color="var(--rose)" />
+          </div>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>I'm a Recruiter</div>
+            <div style={{ fontSize: 13, color: "var(--text3)", lineHeight: 1.55 }}>Browse AI-powered portfolios and find the right candidates fast.</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--rose)", fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+            Browse talent <Icon name="arrow" size={14} color="var(--rose)" />
+          </div>
+        </button>
+      </div>
+
+      <button onClick={onLogin} style={{ background: "transparent", border: "none", color: "var(--text3)", fontSize: 13, cursor: "pointer" }}>
+        Already have an account? <span style={{ color: "var(--accent)", textDecoration: "underline" }}>Sign in</span>
+      </button>
+    </div>
+  );
+}
+
+// ─── AUTH PAGE (login / signup) ───────────────────────────────────────────────
+function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [userType, setUserType] = useState(defaultType);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const isLogin = mode === "login";
+
+  const submit = async () => {
+    setError(null);
+    if (!email.trim() || !password) return setError("Please fill in all fields.");
+    if (!isLogin && password !== confirm) return setError("Passwords do not match.");
+    if (!isLogin && password.length < 6) return setError("Password must be at least 6 characters.");
+    setLoading(true);
+    try {
+      const endpoint = isLogin ? "/auth/login" : "/auth/signup";
+      const body = isLogin ? { email, password } : { email, password, user_type: userType };
+      const res = await axios.post(`${API}${endpoint}`, body);
+      saveAuth(res.data);
+      onSuccess(res.data);
+    } catch (e) {
+      setError(e.response?.data?.detail || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
+      <div style={{ width: "100%", maxWidth: 400 }}>
+        {/* Back button */}
+        <button onClick={onBack} style={{ background: "transparent", border: "none", color: "var(--text3)", fontSize: 13, cursor: "pointer", marginBottom: 32, display: "flex", alignItems: "center", gap: 6 }}>
+          <Icon name="arrow" size={13} color="var(--text3)" style={{ transform: "rotate(180deg)" }} /> Back
+        </button>
+
+        <div style={{ fontFamily: "var(--serif)", fontSize: 28, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>
+          {isLogin ? "Welcome back" : "Create your account"}
+        </div>
+        <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 32 }}>
+          {isLogin ? "Sign in to your preznt account." : "Join preznt and start building your AI portfolio."}
+        </div>
+
+        {/* User type selector — only for signup */}
+        {!isLogin && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+            {[["seeker", "Job Seeker"], ["recruiter", "Recruiter"]].map(([val, label]) => (
+              <button key={val} onClick={() => setUserType(val)} style={{
+                flex: 1, padding: "10px 0", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: 600,
+                background: userType === val ? "var(--accent)" : "var(--bg2)",
+                color: userType === val ? "#fff" : "var(--text3)",
+                border: userType === val ? "1px solid var(--accent)" : "1px solid var(--line2)",
+                cursor: "pointer", transition: "all 0.15s"
+              }}>{label}</button>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}>
+              <Icon name="mail" size={15} color="var(--text3)" />
+            </div>
+            <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email"
+              onKeyDown={e => e.key === "Enter" && submit()}
+              style={{ paddingLeft: 38 }} />
+          </div>
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}>
+              <Icon name="lock" size={15} color="var(--text3)" />
+            </div>
+            <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" type="password"
+              onKeyDown={e => e.key === "Enter" && submit()}
+              style={{ paddingLeft: 38 }} />
+          </div>
+          {!isLogin && (
+            <div style={{ position: "relative" }}>
+              <div style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}>
+                <Icon name="lock" size={15} color="var(--text3)" />
+              </div>
+              <input value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Confirm password" type="password"
+                onKeyDown={e => e.key === "Enter" && submit()}
+                style={{ paddingLeft: 38 }} />
+            </div>
+          )}
+        </div>
+
+        {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+
+        <Btn onClick={submit} disabled={loading} style={{ width: "100%", justifyContent: "center", marginBottom: 20 }}>
+          {loading ? <><Spinner size={14} color="#fff" /> {isLogin ? "Signing in…" : "Creating account…"}</> : isLogin ? "Sign in" : "Create account"}
+        </Btn>
+
+        <div style={{ textAlign: "center", fontSize: 13, color: "var(--text3)" }}>
+          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+          <button onClick={onSwitch} style={{ background: "transparent", border: "none", color: "var(--accent)", cursor: "pointer", fontSize: 13, textDecoration: "underline" }}>
+            {isLogin ? "Sign up" : "Sign in"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── RECRUITER DASHBOARD ──────────────────────────────────────────────────────
+function RecruiterDashboard({ auth, onLogout }) {
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    axios.get(`${API}/profiles/list`)
+      .then(r => setProfiles(r.data.profiles || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = profiles.filter(p => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      p.name?.toLowerCase().includes(q) ||
+      p.title?.toLowerCase().includes(q) ||
+      p.tagline?.toLowerCase().includes(q) ||
+      p.current_role?.toLowerCase().includes(q) ||
+      p.skills?.some(s => s.toLowerCase().includes(q))
+    );
+  });
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      {/* Top bar */}
+      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>
+          preznt<span style={{ color: "var(--accent)" }}>.</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ fontSize: 13, color: "var(--text3)" }}>{auth.email}</div>
+          <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            <Icon name="logout" size={13} color="var(--text3)" /> Sign out
+          </button>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px" }}>
+        {/* Header */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ fontSize: 26, fontWeight: 700, color: "var(--text)", fontFamily: "var(--serif)", marginBottom: 8 }}>Talent Pool</div>
+          <div style={{ fontSize: 14, color: "var(--text3)" }}>Browse AI-powered portfolios from job seekers</div>
+        </div>
+
+        {/* Search */}
+        <div style={{ position: "relative", maxWidth: 480, marginBottom: 32 }}>
+          <div style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}>
+            <Icon name="search" size={15} color="var(--text3)" />
+          </div>
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name, role, or skill…"
+            style={{ paddingLeft: 40 }}
+          />
+        </div>
+
+        {loading ? (
+          <div style={{ display: "flex", justifyContent: "center", padding: 60 }}><Spinner size={28} /></div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 60, color: "var(--text3)", fontSize: 14 }}>
+            {search ? "No candidates match your search." : "No profiles available yet."}
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
+            {filtered.map(p => (
+              <ProfileCard key={p.user_id} profile={p} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProfileCard({ profile: p }) {
+  const slug = `${nameToSlug(p.name)}-${p.user_id}`;
+  const url = `${window.location.origin}${window.location.pathname}#/portfolio/${slug}`;
+
+  return (
+    <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "24px", display: "flex", flexDirection: "column", gap: 14, transition: "border-color 0.2s" }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent)"}
+      onMouseLeave={e => e.currentTarget.style.borderColor = "var(--line2)"}
+    >
+      {/* Name + title */}
+      <div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>{p.name}</div>
+        {p.current_role && <div style={{ fontSize: 13, color: "var(--text3)" }}>{p.current_role}</div>}
+        {p.tagline && <div style={{ fontSize: 12.5, color: "var(--text3)", marginTop: 2, fontStyle: "italic" }}>{p.tagline}</div>}
+      </div>
+      {/* Skills */}
+      {p.skills?.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {p.skills.slice(0, 6).map((s, i) => <Pill key={i} color="var(--accent)">{s}</Pill>)}
+        </div>
+      )}
+      {/* View button */}
+      <a href={url} target="_blank" rel="noreferrer" style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 6, color: "var(--accent)", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+        View portfolio <Icon name="external" size={13} color="var(--accent)" />
+      </a>
+    </div>
+  );
+}
+
+// ─── SEEKER DASHBOARD WRAPPER ────────────────────────────────────────────────
+// If no portfolio linked yet → run setup. If linked → show portfolio with top bar.
+function SeekerDashboard({ auth, setAuth, onLogout }) {
+  const [portfolioId, setPortfolioId] = useState(auth.portfolio_id || null);
+  const [profileSlug, setProfileSlug] = useState(null);
+
+  const handleSetupComplete = async (id, name) => {
+    // Link the new portfolio to the auth user
+    try {
+      await axios.post(`${API}/auth/link-portfolio`,
+        { portfolio_id: id },
+        { headers: { Authorization: `Bearer ${auth.token}` } }
+      );
+      const updated = { ...auth, portfolio_id: id };
+      saveAuth(updated);
+      setAuth(updated);
+    } catch (e) {
+      console.error("Failed to link portfolio", e);
+    }
+    const slug = `${nameToSlug(name)}-${id}`;
+    setProfileSlug(slug);
+    setPortfolioId(id);
+  };
+
+  const shareUrl = portfolioId
+    ? `${window.location.origin}${window.location.pathname}#/portfolio/${profileSlug || portfolioId}`
+    : null;
+
+  const [copied, setCopied] = useState(false);
+  const copyLink = () => {
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (!portfolioId) {
+    return (
+      <div style={{ minHeight: "100vh" }}>
+        {/* Minimal top bar */}
+        <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
+          <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>preznt<span style={{ color: "var(--accent)" }}>.</span></div>
+          <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            <Icon name="logout" size={13} color="var(--text3)" /> Sign out
+          </button>
+        </div>
+        <SetupPage onComplete={(id, name) => handleSetupComplete(id, name)} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: "100vh" }}>
+      {/* Top bar */}
+      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>preznt<span style={{ color: "var(--accent)" }}>.</span></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {shareUrl && (
+            <button onClick={copyLink} style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: copied ? "var(--teal)" : "var(--text2)", padding: "6px 14px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+              <Icon name={copied ? "check" : "link"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
+              {copied ? "Copied!" : "Share portfolio"}
+            </button>
+          )}
+          <div style={{ fontSize: 13, color: "var(--text3)" }}>{auth.email}</div>
+          <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            <Icon name="logout" size={13} color="var(--text3)" /> Sign out
+          </button>
+        </div>
+      </div>
+      <PortfolioPage userId={portfolioId} onBack={null} isOwner={true} />
+    </div>
+  );
+}
+
 // ─── APP ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const initial = getRouteFromHash();
   const [page, setPage] = useState(initial.page);
   const [userId, setUserId] = useState(initial.userId);
+  const [auth, setAuth] = useState(loadAuth);
+  const [authMode, setAuthMode] = useState("signup"); // "login" | "signup"
+  const [defaultUserType, setDefaultUserType] = useState("seeker");
 
   useEffect(() => {
-    const h = () => { const r = getRouteFromHash(); setPage(r.page); setUserId(r.userId); };
+    const h = () => {
+      const r = getRouteFromHash();
+      setPage(r.page);
+      setUserId(r.userId);
+    };
     window.addEventListener("hashchange", h);
     return () => window.removeEventListener("hashchange", h);
   }, []);
 
-  const goToPortfolio = (id) => { window.location.hash = `#/portfolio/${id}`; setUserId(id); setPage("portfolio"); };
+  // Verify token on load
+  useEffect(() => {
+    if (!auth?.token) return;
+    axios.get(`${API}/auth/me`, { headers: { Authorization: `Bearer ${auth.token}` } })
+      .then(r => {
+        const updated = { ...auth, ...r.data };
+        saveAuth(updated);
+        setAuth(updated);
+      })
+      .catch(() => { clearAuth(); setAuth(null); });
+  }, []);
 
+  const logout = () => { clearAuth(); setAuth(null); window.location.hash = ""; setPage("landing"); };
+
+  const goToPortfolio = (id) => {
+    window.location.hash = `#/portfolio/${id}`;
+    setUserId(id);
+    setPage("portfolio");
+  };
+
+  // Public portfolio view — no auth required
+  if (page === "portfolio") {
+    return (
+      <>
+        <GlobalStyle />
+        <PortfolioPage userId={userId} onBack={() => { window.location.hash = ""; setPage("landing"); }} />
+      </>
+    );
+  }
+
+  // Auth pages (login/signup) — only if not logged in
+  if ((page === "login" || page === "signup") && !auth) {
+    return (
+      <>
+        <GlobalStyle />
+        <AuthPage
+          mode={page}
+          defaultType={defaultUserType}
+          onSuccess={(data) => {
+            setAuth(data);
+            window.location.hash = "#/dashboard";
+            setPage("dashboard");
+          }}
+          onSwitch={() => {
+            const next = page === "login" ? "signup" : "login";
+            window.location.hash = `#/${next}`;
+            setPage(next);
+          }}
+          onBack={() => { window.location.hash = ""; setPage("landing"); }}
+        />
+      </>
+    );
+  }
+
+  // Dashboard — requires auth
+  if (page === "dashboard" || (auth && page === "landing")) {
+    if (!auth) {
+      return (
+        <>
+          <GlobalStyle />
+          <LandingPage
+            onSeeker={() => { setDefaultUserType("seeker"); setAuthMode("signup"); window.location.hash = "#/signup"; setPage("signup"); }}
+            onRecruiter={() => { setDefaultUserType("recruiter"); setAuthMode("signup"); window.location.hash = "#/signup"; setPage("signup"); }}
+            onLogin={() => { window.location.hash = "#/login"; setPage("login"); }}
+          />
+        </>
+      );
+    }
+    if (auth.user_type === "recruiter") {
+      return (
+        <>
+          <GlobalStyle />
+          <RecruiterDashboard auth={auth} onLogout={logout} />
+        </>
+      );
+    }
+    // seeker
+    return (
+      <>
+        <GlobalStyle />
+        <SeekerDashboard auth={auth} setAuth={setAuth} onLogout={logout} />
+      </>
+    );
+  }
+
+  // Default landing page
   return (
     <>
       <GlobalStyle />
-      {page === "setup" && <SetupPage onComplete={goToPortfolio} />}
-      {page === "portfolio" && <PortfolioPage userId={userId} onBack={() => { window.location.hash = ""; setPage("setup"); setUserId(null); }} />}
+      <LandingPage
+        onSeeker={() => { setDefaultUserType("seeker"); window.location.hash = "#/signup"; setPage("signup"); }}
+        onRecruiter={() => { setDefaultUserType("recruiter"); window.location.hash = "#/signup"; setPage("signup"); }}
+        onLogin={() => { window.location.hash = "#/login"; setPage("login"); }}
+      />
     </>
   );
 }
