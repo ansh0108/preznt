@@ -63,6 +63,8 @@ class CoverLetterRequest(BaseModel):
     job_description: str
     company_name: str = ""
     role_name: str = ""
+    existing_letter: str = ""
+    refinement: str = ""
 
 
 @app.get("/health")
@@ -603,7 +605,21 @@ async def cover_letter_endpoint(req: CoverLetterRequest):
     company = req.company_name or "the company"
     role = req.role_name or "this role"
 
-    prompt = f"""Write a cover letter for {profile['name']} applying to {role} at {company}.
+    if req.refinement and req.existing_letter:
+        prompt = f"""Revise this cover letter based on the user's instructions. Keep the same structure and length.
+
+Current cover letter:
+{req.existing_letter}
+
+User's instruction: {req.refinement}
+
+Rules:
+- Keep the Dear/Sincerely structure
+- Stay under 200 words
+- Only use real information from the original letter — do not invent new experience
+- Return only the revised cover letter, nothing else"""
+    else:
+        prompt = f"""Write a cover letter for {profile['name']} applying to {role} at {company}.
 
 Candidate Profile:
 {profile_context}

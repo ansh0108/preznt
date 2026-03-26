@@ -1066,6 +1066,8 @@ function CoverLetter({ userId, jd, setJd, company, setCompany, role, setRole, re
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [refinement, setRefinement] = useState("");
+  const [refining, setRefining] = useState(false);
 
   const generate = async () => {
     if (!jd.trim()) return;
@@ -1079,9 +1081,32 @@ function CoverLetter({ userId, jd, setJd, company, setCompany, role, setRole, re
     finally { setLoading(false); }
   };
 
+  const refine = async () => {
+    if (!refinement.trim() || !result) return;
+    setRefining(true); setError(null);
+    try {
+      const res = await axios.post(`${API}/cover-letter`, {
+        user_id: userId, job_description: jd, company_name: company, role_name: role,
+        existing_letter: result, refinement: refinement.trim()
+      });
+      setResult(res.data.cover_letter);
+      setRefinement("");
+    } catch { setError("Refinement failed. Please try again."); }
+    finally { setRefining(false); }
+  };
+
   const copy = () => {
     navigator.clipboard.writeText(result);
     setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  const download = () => {
+    const filename = `Cover_Letter${company ? `_${company.replace(/\s+/g, "_")}` : ""}.txt`;
+    const blob = new Blob([result], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -1107,13 +1132,34 @@ function CoverLetter({ userId, jd, setJd, company, setCompany, role, setRole, re
         <div style={{ animation: "fadeUp 0.3s ease" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text)" }}>Your Cover Letter</div>
-            <button onClick={copy} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", color: copied ? "var(--teal)" : "var(--text2)", borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-              <Icon name={copied ? "check" : "copy"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
-              {copied ? "Copied!" : "Copy"}
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={copy} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", color: copied ? "var(--teal)" : "var(--text2)", borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                <Icon name={copied ? "check" : "copy"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
+                {copied ? "Copied!" : "Copy"}
+              </button>
+              <button onClick={download} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", color: "var(--text2)", borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                <Icon name="file" size={13} color="var(--text2)" /> Download
+              </button>
+            </div>
           </div>
-          <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "24px 28px", fontSize: 14, lineHeight: 1.85, color: "var(--text2)", whiteSpace: "pre-wrap" }}>
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "24px 28px", fontSize: 14, lineHeight: 1.85, color: "var(--text2)", whiteSpace: "pre-wrap", marginBottom: 16 }}>
             {result}
+          </div>
+          {/* Refinement input */}
+          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "16px 18px" }}>
+            <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 10 }}>Want changes? Tell me what to adjust…</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                value={refinement}
+                onChange={e => setRefinement(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && refine()}
+                placeholder='e.g. "Make it more concise" or "Emphasise my SQL skills more"'
+                style={{ flex: 1 }}
+              />
+              <Btn onClick={refine} disabled={refining || !refinement.trim()} style={{ flexShrink: 0 }}>
+                {refining ? <Spinner size={14} color="#fff" /> : "Refine"}
+              </Btn>
+            </div>
           </div>
         </div>
       )}
