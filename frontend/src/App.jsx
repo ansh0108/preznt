@@ -1091,12 +1091,32 @@ function GapAnalysis({ userId, role, setRole, result, setResult, error, setError
 }
 
 // ─── COVER LETTER ────────────────────────────────────────────────────────────
-function CoverLetter({ userId, jd, setJd, company, setCompany, role, setRole, result, setResult }) {
+function CoverLetter({ userId, profile, jd, setJd, company, setCompany, role, setRole, result, setResult }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [refinement, setRefinement] = useState("");
   const [refining, setRefining] = useState(false);
+  const editorRef = useRef(null);
+
+  // Build contact footer from profile
+  const contactLine = [profile?.email, profile?.phone].filter(Boolean).join("  |  ");
+
+  // When result arrives from API, push it into the contentEditable editor
+  useEffect(() => {
+    if (!editorRef.current || !result) return;
+    // Convert plain text to paragraphs so contentEditable works naturally
+    const html = result
+      .split(/\n\n+/)
+      .map(block => `<p style="margin:0 0 1em 0">${block.replace(/\n/g, "<br>")}</p>`)
+      .join("");
+    editorRef.current.innerHTML = html;
+  }, [result]);
+
+  const getEditorText = () => editorRef.current?.innerText || result || "";
+  const getEditorHTML = () => editorRef.current?.innerHTML || "";
+
+  const fmt = (cmd) => { document.execCommand(cmd, false, null); editorRef.current?.focus(); };
 
   const generate = async () => {
     if (!jd.trim()) return;
@@ -1111,12 +1131,13 @@ function CoverLetter({ userId, jd, setJd, company, setCompany, role, setRole, re
   };
 
   const refine = async () => {
-    if (!refinement.trim() || !result) return;
+    if (!refinement.trim()) return;
     setRefining(true); setError(null);
+    const current = getEditorText();
     try {
       const res = await axios.post(`${API}/cover-letter`, {
         user_id: userId, job_description: jd, company_name: company, role_name: role,
-        existing_letter: result, refinement: refinement.trim()
+        existing_letter: current, refinement: refinement.trim()
       });
       setResult(res.data.cover_letter);
       setRefinement("");
@@ -1125,33 +1146,43 @@ function CoverLetter({ userId, jd, setJd, company, setCompany, role, setRole, re
   };
 
   const copy = () => {
-    navigator.clipboard.writeText(result);
+    const text = getEditorText() + (contactLine ? `\n${contactLine}` : "");
+    navigator.clipboard.writeText(text);
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
 
   const download = () => {
     const filename = `Cover_Letter${company ? `_${company.replace(/\s+/g, "_")}` : ""}.pdf`;
+    const editorHTML = getEditorHTML();
+    const contactHTML = contactLine
+      ? `<p style="margin:0">${contactLine}</p>`
+      : "";
+
+    const el = document.createElement("div");
+    el.style.cssText = "position:fixed;left:-9999px;top:0;width:451pt;font-family:Georgia,serif;font-size:13pt;line-height:1.9;color:#111;background:#fff;";
+    el.innerHTML = editorHTML + contactHTML;
+    document.body.appendChild(el);
+
     const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 72;
-    const maxW = pageW - margin * 2;
-    doc.setFont("times", "normal");
-    doc.setFontSize(13);
-    doc.setTextColor(17, 17, 17);
-    const lineHeight = 13 * 1.9;
-    const lines = doc.splitTextToSize(result, maxW);
-    let y = margin;
-    for (const line of lines) {
-      if (y + lineHeight > pageH - margin) {
-        doc.addPage();
-        y = margin;
-      }
-      doc.text(line, margin, y);
-      y += lineHeight;
-    }
-    doc.save(filename);
+    doc.html(el, {
+      callback(pdf) {
+        document.body.removeChild(el);
+        pdf.save(filename);
+      },
+      x: 72,
+      y: 72,
+      width: 451,
+      windowWidth: 600,
+      autoPaging: "text",
+    });
   };
+
+  const FmtBtn = ({ cmd, label }) => (
+    <button
+      onMouseDown={e => { e.preventDefault(); fmt(cmd); }}
+      style={{ background: "var(--bg3)", border: "1px solid var(--line2)", color: "var(--text2)", borderRadius: "var(--r-sm)", padding: "4px 10px", fontSize: 12, cursor: "pointer", fontWeight: cmd === "bold" ? 700 : 400, fontStyle: cmd === "italic" ? "italic" : "normal", textDecoration: cmd === "underline" ? "underline" : "none" }}
+    >{label}</button>
+  );
 
   return (
     <div>
@@ -1174,21 +1205,35 @@ function CoverLetter({ userId, jd, setJd, company, setCompany, role, setRole, re
       {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
       {result && (
         <div style={{ animation: "fadeUp 0.3s ease" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text)" }}>Your Cover Letter</div>
+          {/* Toolbar */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text)", marginRight: 8 }}>Your Cover Letter</div>
+              <FmtBtn cmd="bold" label="B" />
+              <FmtBtn cmd="italic" label="I" />
+              <FmtBtn cmd="underline" label="U" />
+            </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={copy} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", color: copied ? "var(--teal)" : "var(--text2)", borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                 <Icon name={copied ? "check" : "copy"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
                 {copied ? "Copied!" : "Copy"}
               </button>
               <button onClick={download} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", color: "var(--text2)", borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                <Icon name="file" size={13} color="var(--text2)" /> Download
+                <Icon name="file" size={13} color="var(--text2)" /> Download PDF
               </button>
             </div>
           </div>
-          <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "24px 28px", fontSize: 14, lineHeight: 1.85, color: "var(--text2)", whiteSpace: "pre-wrap", marginBottom: 16 }}>
-            {result}
-          </div>
+          {/* Editable letter body */}
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "24px 28px", fontSize: 14, lineHeight: 1.85, color: "var(--text2)", marginBottom: 8, outline: "none", minHeight: 260 }}
+          />
+          {/* Contact info (read-only, below letter) */}
+          {contactLine && (
+            <div style={{ fontSize: 13, color: "var(--text3)", paddingLeft: 2, marginBottom: 16 }}>{contactLine}</div>
+          )}
           {/* Refinement input */}
           <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "16px 18px" }}>
             <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 10 }}>Want changes? Tell me what to adjust…</div>
@@ -1384,7 +1429,7 @@ function PortfolioPage({ userId, onBack }) {
               <Chatbot userId={userId} userName={profile.name} messages={chatMessages} setMessages={setChatMessages} />
             </div>
             <div style={{ display: tab === "cover" ? "block" : "none" }}>
-              <CoverLetter userId={userId} jd={clJd} setJd={setClJd} company={clCompany} setCompany={setClCompany} role={clRole} setRole={setClRole} result={clResult} setResult={setClResult} />
+              <CoverLetter userId={userId} profile={profile} jd={clJd} setJd={setClJd} company={clCompany} setCompany={setClCompany} role={clRole} setRole={setClRole} result={clResult} setResult={setClResult} />
             </div>
             <div style={{ display: tab === "gap" ? "block" : "none" }}>
               <GapAnalysis userId={userId} role={gapRole} setRole={setGapRole} result={gapResult} setResult={setGapResult} error={gapError} setError={setGapError} />

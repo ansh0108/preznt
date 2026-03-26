@@ -272,6 +272,17 @@ Return ONLY valid JSON: {{"Category Name": ["skill1", "skill2"]}}"""
     return clusters
 
 
+def extract_contact_info(text: str) -> dict:
+    """Extract email and phone from raw resume text using regex."""
+    email_match = re.search(r'\b[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}\b', text)
+    phone_match = re.search(
+        r'(\+?\d[\d\s\-\(\)\.]{8,14}\d)', text)
+    return {
+        "email": email_match.group(0).strip() if email_match else "",
+        "phone": phone_match.group(0).strip() if phone_match else ""
+    }
+
+
 def extract_resume_data(text: str, filename: str) -> dict:
     if not text or len(text) < 100:
         return {"projects": [], "skills": []}
@@ -505,6 +516,13 @@ async def upload_document(user_id: str, file: UploadFile = File(...)):
 
     if not profile.get("resume_filename"):
         profile["resume_filename"] = f"{user_id}_{file.filename}"
+    # Extract contact info if not already set
+    if not profile.get("email") or not profile.get("phone"):
+        contact = extract_contact_info(parsed.get("raw_text", ""))
+        if contact["email"] and not profile.get("email"):
+            profile["email"] = contact["email"]
+        if contact["phone"] and not profile.get("phone"):
+            profile["phone"] = contact["phone"]
     profile["indexed"] = False
     save_profile(user_id, profile)
     return {"message": f"{file.filename} uploaded", "extracted": {"projects": len(new_projects), "skills": len(new_skills)}}
@@ -702,6 +720,8 @@ async def get_profile(user_id: str):
         "skill_clusters": profile.get("skill_clusters", {}),
         "target_roles": profile.get("target_roles", []),
         "tagline": profile.get("tagline", ""),
+        "email": profile.get("email", ""),
+        "phone": profile.get("phone", ""),
         "indexed": profile.get("indexed", False),
         "has_photo": bool(profile.get("photo_ext")),
         "has_resume": bool(profile.get("resume_filename") and os.path.exists(os.path.join(UPLOADS_DIR, profile.get("resume_filename", ""))))
