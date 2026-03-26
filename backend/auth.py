@@ -1,8 +1,8 @@
 import os
 import sqlite3
 import uuid
+import bcrypt
 from datetime import datetime, timedelta
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 from fastapi import HTTPException
 from dotenv import load_dotenv
@@ -14,8 +14,6 @@ DB_PATH = os.path.join(DATA_DIR, "auth.db")
 SECRET_KEY = os.getenv("JWT_SECRET", "preznt-secret-key-change-in-production")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 30
-
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def init_db():
@@ -52,7 +50,7 @@ def get_user_by_id(user_id: str):
 
 def create_user(email: str, password: str, user_type: str) -> dict:
     uid = str(uuid.uuid4())
-    password_hash = pwd_ctx.hash(password)
+    password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     now = datetime.utcnow().isoformat()
     con = sqlite3.connect(DB_PATH)
     try:
@@ -76,7 +74,7 @@ def link_portfolio(user_id: str, portfolio_id: str):
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_ctx.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
 def make_token(user_id: str) -> str:
