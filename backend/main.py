@@ -105,7 +105,12 @@ async def login(req: LoginRequest):
 @app.get("/auth/me")
 async def me(authorization: str = Header(None)):
     user = get_current_user(authorization)
-    return {"user_id": user["id"], "email": user["email"], "user_type": user["user_type"], "portfolio_id": user.get("portfolio_id")}
+    profile_name = None
+    if user.get("portfolio_id"):
+        p = load_profile(user["portfolio_id"])
+        if p:
+            profile_name = p.get("name")
+    return {"user_id": user["id"], "email": user["email"], "user_type": user["user_type"], "portfolio_id": user.get("portfolio_id"), "profile_name": profile_name}
 
 
 @app.post("/auth/link-portfolio")

@@ -1737,29 +1737,29 @@ function ProfileCard({ profile: p }) {
 // ─── SEEKER DASHBOARD WRAPPER ────────────────────────────────────────────────
 // If no portfolio linked yet → run setup. If linked → show portfolio with top bar.
 function SeekerDashboard({ auth, setAuth, onLogout }) {
-  const [portfolioId, setPortfolioId] = useState(auth.portfolio_id || null);
-  const [profileSlug, setProfileSlug] = useState(null);
+  // Always derive from auth prop so it updates when /auth/me resolves
+  const portfolioId = auth.portfolio_id || null;
+  // profile_name is stored in auth localStorage after setup to build the slug
+  const shareSlug = auth.profile_name
+    ? `${nameToSlug(auth.profile_name)}-${portfolioId}`
+    : portfolioId;
 
   const handleSetupComplete = async (id, name) => {
-    // Link the new portfolio to the auth user
     try {
       await axios.post(`${API}/auth/link-portfolio`,
         { portfolio_id: id },
         { headers: { Authorization: `Bearer ${auth.token}` } }
       );
-      const updated = { ...auth, portfolio_id: id };
-      saveAuth(updated);
-      setAuth(updated);
     } catch (e) {
       console.error("Failed to link portfolio", e);
     }
-    const slug = `${nameToSlug(name)}-${id}`;
-    setProfileSlug(slug);
-    setPortfolioId(id);
+    const updated = { ...auth, portfolio_id: id, profile_name: name };
+    saveAuth(updated);
+    setAuth(updated);
   };
 
   const shareUrl = portfolioId
-    ? `${window.location.origin}${window.location.pathname}#/portfolio/${profileSlug || portfolioId}`
+    ? `${window.location.origin}${window.location.pathname}#/portfolio/${shareSlug}`
     : null;
 
   const [copied, setCopied] = useState(false);
