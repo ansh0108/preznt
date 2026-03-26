@@ -2192,14 +2192,17 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
               </div>
               {hasGithub && <div style={{ fontSize: 12, color: "var(--text3)", paddingLeft: 36, marginBottom: 6 }}>{profile.github_urls.length} repo{profile.github_urls.length !== 1 ? "s" : ""} added</div>}
               {addingGithub && (
-                <div style={{ marginTop: 8 }}>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <input value={githubUrl} onChange={e => setGithubUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && addAllGithubRepos()} placeholder="github.com/username" style={{ flex: 1, fontSize: 12, padding: "7px 10px" }} />
-                    <button onClick={addAllGithubRepos} disabled={githubLoading || !githubUrl.trim()} style={{ background: "var(--accent)", color: "#fff", border: "none", borderRadius: 6, padding: "0 12px", cursor: "pointer", fontSize: 12, flexShrink: 0, opacity: githubLoading || !githubUrl.trim() ? 0.5 : 1 }}>
-                      {githubLoading ? <Spinner size={12} color="#fff" /> : "Add All"}
-                    </button>
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 6 }}>Imports all public repos from your profile</div>
+                <div style={{ marginTop: 12 }}>
+                  <GithubRepoPicker onConfirm={async (urls) => {
+                    setGithubLoading(true);
+                    try {
+                      for (const url of urls) {
+                        await axios.post(`${API}/profile/${portfolioId}/github`, { github_url: url });
+                      }
+                      setAddingGithub(false);
+                      await loadProfile();
+                    } catch {} finally { setGithubLoading(false); }
+                  }} />
                 </div>
               )}
             </div>
