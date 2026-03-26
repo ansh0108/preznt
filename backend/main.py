@@ -59,7 +59,8 @@ class ChatRequest(BaseModel):
 
 class GapRequest(BaseModel):
     user_id: str
-    target_role: str
+    target_role: str = ""       # legacy
+    job_description: str = ""   # new — full JD text takes priority
 
 
 class CoverLetterRequest(BaseModel):
@@ -829,7 +830,8 @@ async def gap_analysis_endpoint(req: GapRequest):
         raise HTTPException(status_code=404, detail="Profile not found")
     if not index_exists(req.user_id, INDEXES_DIR):
         raise HTTPException(status_code=400, detail="Profile not indexed yet.")
-    result = analyze_gap(req.target_role, req.user_id, profile["name"], profile)
+    jd = req.job_description.strip() or req.target_role.strip()
+    result = analyze_gap(jd, req.user_id, profile["name"], profile)
     return result
 
 
