@@ -358,23 +358,26 @@ const TECH_KEYWORDS = [
   "Pandas","NumPy","Scikit-learn","TensorFlow","PyTorch","Keras","XGBoost","LightGBM",
   "FAISS","Sentence Transformers","HuggingFace","LangChain","OpenAI","Groq",
   "ARIMA","Prophet","LSTM","RAG","NLP","LLM",
-  "AWS","Azure","GCP","Docker","Kubernetes","Git","CI/CD","Terraform",
+  "AWS","Azure","GCP","Docker","Kubernetes","CI/CD","Terraform",
   "Tableau","Power BI","Excel","dbt","Airflow","Spark","Kafka",
-  "R","MATLAB","Scala","Java","Go","Rust","C++","C#","Bash",
+  "MATLAB","Scala","Java","Rust","C++","C#","Bash",
   "Salesforce","SAP","Figma","Notion",
 ];
 
 function extractTechTags(text = "", topics = [], language = "") {
   const found = new Set();
-  const lower = text.toLowerCase();
   for (const kw of TECH_KEYWORDS) {
-    if (lower.includes(kw.toLowerCase())) found.add(kw);
+    // Use word boundary so "R" doesn't match "GitHub", "Git" doesn't match "GitHub", etc.
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`\\b${escaped}\\b`, "i");
+    if (regex.test(text)) found.add(kw);
   }
-  // Add topics that look like tech (not generic words)
+  // Topics are already discrete tags — include them directly
   for (const t of topics) {
-    if (t.length > 1) found.add(t.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "));
+    const label = t.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    if (label.length > 1) found.add(label);
   }
-  // Always include the primary language
+  // Primary language from GitHub is always accurate
   if (language) found.add(language);
   return [...found].slice(0, 6);
 }
