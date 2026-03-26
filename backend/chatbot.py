@@ -1,7 +1,11 @@
 import os
+import hashlib
 from dotenv import load_dotenv
 from embeddings import search_index
-from groq_client import call_groq
+from groq_client import call_groq_chat
+
+# Simple in-memory cache: (user_id, question_hash) -> answer
+_chat_cache: dict = {}
 
 load_dotenv()
 INDEXES_DIR = os.path.join(os.getenv("DATA_DIR", "."), "indexes")
@@ -44,6 +48,13 @@ def build_profile_summary(profile: dict) -> str:
 
 
 def chat(question: str, user_id: str, user_name: str, chat_history: list = [], profile: dict | None = None) -> str:
+    # Cache hit: same question + same user, no chat history context needed
+    if not chat_history:
+        cache_key = (user_id, hashlib.md5(question.strip().lower().encode()).hexdigest())
+        if cache_key in _chat_cache:
+            print(f"[Chat] Cache hit for user {user_id}")
+            return _chat_cache[cache_key]
+
     # Vector search for relevant chunks
     results = search_index(question, user_id, top_k=6, index_dir=INDEXES_DIR)
     vector_context = "\n\n".join([f"[From {r['source']}]\n{r['text']}" for r in results])
@@ -80,4 +91,8 @@ Full profile context (LinkedIn + resume + GitHub):
 
     messages.append({"role": "user", "content": question})
 
-    return call_groq(messages, max_tokens=300, temperature=0.3)
+    answer = call_groq_chat(messages)
+    if not chat_history:
+        cache_key = (user_id, hashlib.md5(question.strip().lower().encode()).hexdigest())
+        _chat_cache[cache_key] = answer
+    return answer

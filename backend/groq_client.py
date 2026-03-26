@@ -3,8 +3,10 @@ import requests
 
 _key_index = 0
 
-PRIMARY_MODEL = "llama-3.3-70b-versatile"
-FALLBACK_MODEL = "llama-3.1-8b-instant"
+# For cover letters / gap analysis — quality matters, lower volume
+QUALITY_MODEL = "llama-3.3-70b-versatile"
+# For chatbot Q&A — 14,400 RPD vs 1,000 RPD on free tier; still great quality
+CHAT_MODEL = "llama-3.1-8b-instant"
 
 
 def _get_keys():
@@ -46,21 +48,25 @@ def _try_keys(keys, model, messages, max_tokens, temperature):
     return None
 
 
-def call_groq(messages: list, max_tokens: int = 500, temperature: float = 0.2) -> str:
-    """Call Groq API with round-robin key rotation. Falls back to smaller model if rate limited."""
+def _call_with_fallback(primary: str, fallback: str, messages: list, max_tokens: int, temperature: float) -> str:
     keys = _get_keys()
     if not keys:
         raise Exception("No Groq API keys configured")
-
-    # Try primary model first
-    result = _try_keys(keys, PRIMARY_MODEL, messages, max_tokens, temperature)
+    result = _try_keys(keys, primary, messages, max_tokens, temperature)
     if result is not None:
         return result
-
-    # All keys rate limited on primary — try faster/lighter fallback model
-    print(f"[Groq] All keys rate limited on {PRIMARY_MODEL}, falling back to {FALLBACK_MODEL}")
-    result = _try_keys(keys, FALLBACK_MODEL, messages, max_tokens, temperature)
+    print(f"[Groq] All keys rate limited on {primary}, falling back to {fallback}")
+    result = _try_keys(keys, fallback, messages, max_tokens, temperature)
     if result is not None:
         return result
-
     raise Exception("rate_limited")
+
+
+def call_groq(messages: list, max_tokens: int = 500, temperature: float = 0.2) -> str:
+    """For cover letters / gap analysis — use quality model, fall back to chat model."""
+    return _call_with_fallback(QUALITY_MODEL, CHAT_MODEL, messages, max_tokens, temperature)
+
+
+def call_groq_chat(messages: list, max_tokens: int = 300, temperature: float = 0.3) -> str:
+    """For chatbot Q&A — use fast model (14,400 RPD) first, fall back to quality model."""
+    return _call_with_fallback(CHAT_MODEL, QUALITY_MODEL, messages, max_tokens, temperature)

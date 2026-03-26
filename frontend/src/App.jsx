@@ -923,6 +923,7 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
   useEffect(() => { if (setMessagesProp && messagesProp === null) setMessagesProp(defaultMsg); }, []);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
   const chatContainerRef = useRef(null);
   const isFirstRender = useRef(true);
 
@@ -937,10 +938,11 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
 
   const send = async (text) => {
     const q = text || input;
-    if (!q.trim() || loading) return;
+    if (!q.trim() || loading || cooldown) return;
     setInput("");
     setMessages(p => [...p, { role: "user", content: q }]);
     setLoading(true);
+    setCooldown(true);
     try {
       const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
       const res = await axios.post(`${API}/chat`, { user_id: userId, question: q, history });
@@ -948,8 +950,10 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
     } catch (err) {
       const msg = err?.response?.data?.detail || "I'm having trouble connecting right now — please try again in a moment.";
       setMessages(p => [...p, { role: "assistant", content: msg, isError: true }]);
+    } finally {
+      setLoading(false);
+      setTimeout(() => setCooldown(false), 2000);
     }
-    finally { setLoading(false); }
   };
 
   const renderMsg = (content) => {
@@ -1004,7 +1008,7 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
 
       <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)", display: "flex", gap: 8 }}>
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder="Ask anything..." style={{ flex: 1, borderRadius: 100, padding: "10px 18px" }} />
-        <button onClick={() => send()} disabled={loading || !input.trim()} style={{ background: "var(--accent)", color: "#fff", borderRadius: "50%", width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", opacity: loading || !input.trim() ? 0.35 : 1, flexShrink: 0 }}>
+        <button onClick={() => send()} disabled={loading || cooldown || !input.trim()} style={{ background: "var(--accent)", color: "#fff", borderRadius: "50%", width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", opacity: loading || cooldown || !input.trim() ? 0.35 : 1, flexShrink: 0 }}>
           <Icon name="arrow" size={16} color="#fff" />
         </button>
       </div>
