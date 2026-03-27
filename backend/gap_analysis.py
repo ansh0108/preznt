@@ -141,8 +141,9 @@ IMPORTANT:
 - suggested_skills: ONLY short skill/tool keyword names (e.g. "Tableau", "Power BI", "dbt") from the JD that are absent from the profile — never full sentences
 - Be specific — reference actual companies, projects, tools from their profile
 - Do NOT give generic advice. Every item must be tied to their actual profile and this specific JD
-- missing_keywords: only include things actually mentioned in the JD that are absent from the profile
-- Provide at least 2 bullet_improvements (Experience/Project only), 3 strengths, 3 missing keywords (if any), and 3 quick wins"""
+- missing_keywords and suggested_skills: before marking ANYTHING as missing, scan ALL sections — Skills list, Experience descriptions, RESUME RAW TEXT, GITHUB PROJECT names/descriptions/topics, and RESUME PROJECT tech stacks. A skill found ANYWHERE in the profile is NOT missing. Only flag it if it is genuinely absent from every section.
+- quick_wins: do NOT suggest adding a skill or tool that already appears anywhere in the profile (Skills, GitHub repos, resume projects, experience). Focus quick wins on visibility, framing, and positioning instead.
+- Provide at least 2 bullet_improvements (Experience/Project only), 3 strengths, and 3 quick wins"""
 
     jd_short = job_description[:2000]  # type: ignore[index]
     user_message = f"""JOB DESCRIPTION:
