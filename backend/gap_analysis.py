@@ -88,10 +88,13 @@ def analyze_gap(job_description: str, user_id: str, user_name: str, profile: dic
 
     structured_context = build_profile_context(profile) if profile else ""
 
-    results = search_index(job_description[:500], user_id, top_k=5, index_dir=INDEXES_DIR)
+    jd_query = job_description[:500]  # type: ignore[index]
+    results = search_index(jd_query, user_id, top_k=3, index_dir=INDEXES_DIR)
     vector_context = "\n\n".join([r["text"] for r in results])
 
-    profile_context = f"{structured_context}\n\n--- Relevant Profile Chunks ---\n{vector_context}".strip()
+    # Trim structured context to avoid exceeding Groq's context limit
+    ctx_short = structured_context[:3000]  # type: ignore[index]
+    profile_context = f"{ctx_short}\n\n--- Relevant Profile Chunks ---\n{vector_context}".strip()
 
     # Detect role type from JD to tailor advice
     jd_lower = job_description.lower()
@@ -141,8 +144,9 @@ IMPORTANT:
 - missing_keywords: only include things actually mentioned in the JD that are absent from the profile
 - Provide at least 2 bullet_improvements (Experience/Project only), 3 strengths, 3 missing keywords (if any), and 3 quick wins"""
 
+    jd_short = job_description[:2000]  # type: ignore[index]
     user_message = f"""JOB DESCRIPTION:
-{job_description}
+{jd_short}
 
 ---
 
@@ -151,10 +155,16 @@ CANDIDATE PROFILE (LinkedIn + resume + GitHub combined):
 
 Analyze this candidate against the job description above. Be specific, constructive, and ATS-aware."""
 
-    raw = call_groq([
-        {"role": "system", "content": system},
-        {"role": "user", "content": user_message}
-    ], max_tokens=3000, temperature=0.2)
+    try:
+        raw = call_groq([
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_message}
+        ], max_tokens=3000, temperature=0.2)
+    except Exception as e:
+        if "payload_too_large" in str(e):
+            return {"error": "Your profile or job description is too large to analyse in one request. Try pasting a shorter job description (under 2000 characters)."}
+        raise
+
     raw = raw.replace("```json", "").replace("```", "").strip()
 
     try:
@@ -164,7 +174,8 @@ Analyze this candidate against the job description above. Be specific, construct
                 b["improved"] = _enforce_length(b["improved"], b["original"])
         return result
     except Exception as e:
+        raw_short = raw[:1000]  # type: ignore[index]
         return {
             "error": f"Could not parse analysis: {str(e)}",
-            "raw": raw[:1000]
+            "raw": raw_short
         }

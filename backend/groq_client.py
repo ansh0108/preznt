@@ -44,6 +44,8 @@ def _try_keys(keys, model, messages, max_tokens, temperature):
         except requests.exceptions.HTTPError:
             if resp.status_code == 429:
                 continue
+            if resp.status_code == 413:
+                raise Exception("payload_too_large")
             raise
     return None
 
