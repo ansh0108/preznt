@@ -1058,10 +1058,18 @@ CANDIDATE PROFILE:
 
 Generate {total_q} interview questions ({distribution_str}) with talking points tailored to this candidate and role."""
 
-    raw = call_groq([
-        {"role": "system", "content": system},
-        {"role": "user", "content": user_message}
-    ], max_tokens=2500, temperature=0.3)
+    try:
+        raw = call_groq([
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_message}
+        ], max_tokens=2500, temperature=0.3)
+    except Exception as e:
+        err = str(e)
+        if "rate_limited" in err:
+            raise HTTPException(status_code=429, detail="All API keys are currently rate limited. Please try again in a minute.")
+        if "payload_too_large" in err:
+            raise HTTPException(status_code=400, detail="Job description is too large. Please shorten it and try again.")
+        raise
     raw = raw.replace("```json", "").replace("```", "").strip()
 
     try:
