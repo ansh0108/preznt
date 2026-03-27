@@ -2541,6 +2541,26 @@ function PortfolioAnalytics({ portfolioId, token }) {
 }
 
 // ─── CUSTOMIZE TAB ────────────────────────────────────────────────────────────
+function CustomizeRow({ label, children }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingBottom: 22, borderBottom: "1px solid var(--line)", marginBottom: 22, gap: 24, flexWrap: "wrap" }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", minWidth: 140 }}>{label}</div>
+      <div style={{ flex: 1, minWidth: 220 }}>{children}</div>
+    </div>
+  );
+}
+
+function CustomizeToggle({ on, onClick, label }) {
+  return (
+    <button onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
+      <div style={{ width: 40, height: 22, borderRadius: 100, background: on ? "var(--accent)" : "var(--bg3)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+        <div style={{ position: "absolute", top: 3, left: on ? 21 : 3, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+      </div>
+      <span style={{ fontSize: 13, color: "var(--text2)" }}>{label}</span>
+    </button>
+  );
+}
+
 function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChange }) {
   const DEFAULT_PREFS = { accent: "#818cf8", dark_mode: true, template: "sidebar", hide_sections: [], featured_repos: [] };
   const [prefs, setPrefs] = useState(profile?.preferences || DEFAULT_PREFS);
@@ -2607,22 +2627,6 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
     { id: "links", label: "Publications & Credentials" },
   ];
 
-  const Row = ({ label, children }) => (
-    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", paddingBottom: 22, borderBottom: "1px solid var(--line)", marginBottom: 22, gap: 24, flexWrap: "wrap" }}>
-      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", minWidth: 140 }}>{label}</div>
-      <div style={{ flex: 1, minWidth: 220 }}>{children}</div>
-    </div>
-  );
-
-  const Toggle = ({ on, onClick, label }) => (
-    <button onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
-      <div style={{ width: 40, height: 22, borderRadius: 100, background: on ? "var(--accent)" : "var(--bg3)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
-        <div style={{ position: "absolute", top: 3, left: on ? 21 : 3, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
-      </div>
-      <span style={{ fontSize: 13, color: "var(--text2)" }}>{label}</span>
-    </button>
-  );
-
   const githubRepos = profile?.github_repos || [];
 
   return (
@@ -2635,7 +2639,7 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
       </div>
 
       {/* Headline */}
-      <Row label="Headline">
+      <CustomizeRow label="Headline">
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <input type="text" value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.stopPropagation()} placeholder="e.g. AI Engineer · ML & LLM Systems"
             style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", padding: "9px 12px", fontSize: 13, color: "var(--text)", outline: "none", boxSizing: "border-box" }} />
@@ -2651,20 +2655,20 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
             {headlineSaved && <span style={{ fontSize: 12, color: "var(--teal)", fontWeight: 600 }}>Saved!</span>}
           </div>
         </div>
-      </Row>
+      </CustomizeRow>
 
       {/* Accent color */}
-      <Row label="Accent Color">
+      <CustomizeRow label="Accent Color">
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           {COLORS.map(c => (
             <button key={c.value} onClick={() => update("accent", c.value)} title={c.label}
               style={{ width: 32, height: 32, borderRadius: "50%", background: c.value, border: prefs.accent === c.value ? "3px solid var(--text)" : "3px solid transparent", cursor: "pointer", transition: "transform 0.15s, border 0.15s", transform: prefs.accent === c.value ? "scale(1.2)" : "scale(1)" }} />
           ))}
         </div>
-      </Row>
+      </CustomizeRow>
 
       {/* Mode */}
-      <Row label="Appearance">
+      <CustomizeRow label="Appearance">
         <div style={{ display: "flex", gap: 10 }}>
           {[{ id: true, label: "Dark" }, { id: false, label: "Light" }].map(m => (
             <button key={String(m.id)} onClick={() => update("dark_mode", m.id)}
@@ -2673,10 +2677,10 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
             </button>
           ))}
         </div>
-      </Row>
+      </CustomizeRow>
 
       {/* Template */}
-      <Row label="Layout">
+      <CustomizeRow label="Layout">
         <div style={{ display: "flex", gap: 12 }}>
           {[
             { id: "sidebar", label: "Sidebar", desc: "Profile sidebar + tabbed main area" },
@@ -2695,20 +2699,20 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
             </button>
           ))}
         </div>
-      </Row>
+      </CustomizeRow>
 
       {/* Sections */}
-      <Row label="Visible Sections">
+      <CustomizeRow label="Visible Sections">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px" }}>
           {SECTIONS.map(s => (
-            <Toggle key={s.id} on={!(prefs.hide_sections || []).includes(s.id)} onClick={() => toggleSection(s.id)} label={s.label} />
+            <CustomizeToggle key={s.id} on={!(prefs.hide_sections || []).includes(s.id)} onClick={() => toggleSection(s.id)} label={s.label} />
           ))}
         </div>
-      </Row>
+      </CustomizeRow>
 
       {/* Featured repos */}
       {githubRepos.length > 0 && (
-        <Row label="Featured Projects">
+        <CustomizeRow label="Featured Projects">
           <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 10 }}>Pinned repos appear first in your portfolio.</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             {githubRepos.map(r => {
@@ -2726,7 +2730,7 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
               );
             })}
           </div>
-        </Row>
+        </CustomizeRow>
       )}
     </div>
   );
