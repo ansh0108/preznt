@@ -123,6 +123,7 @@ class CreatePortfolioRequest(BaseModel):
 class InterviewPrepRequest(BaseModel):
     user_id: str
     job_description: str
+    interview_types: list[str] = ["behavioral", "technical"]
 
 
 def owns_portfolio(user: dict, portfolio_id: str) -> bool:
@@ -1013,23 +1014,39 @@ async def interview_prep(req: InterviewPrepRequest):
     from gap_analysis import build_profile_context
     profile_context = build_profile_context(profile)
 
-    system = """You are an expert interview coach preparing a candidate for a specific role.
+    types = req.interview_types if req.interview_types else ["behavioral", "technical"]
+    type_labels = {
+        "behavioral": "Behavioral",
+        "technical": "Technical / Coding",
+        "case_study": "Case Study",
+        "system_design": "System Design",
+        "hr_culture": "HR / Culture",
+    }
+    n_per_type = max(2, round(8 / len(types)))
+    total_q = n_per_type * len(types)
+    type_list_str = ", ".join(type_labels.get(t, t) for t in types)
+    distribution_str = " + ".join(f"{n_per_type} {type_labels.get(t, t)}" for t in types)
 
-Given the job description and candidate profile, generate 8 targeted interview questions they are likely to face — a mix of behavioral, technical, and situational. Focus especially on areas where their profile has gaps vs the JD.
+    system = f"""You are an expert interview coach preparing a candidate for a specific role.
+
+The candidate has selected these interview types: {type_list_str}
+Generate exactly {total_q} questions total — distributed as: {distribution_str}.
 
 For each question, provide a specific talking point drawn from their actual profile (real companies, projects, tools).
 
 Respond ONLY with valid JSON (no markdown):
-{
+{{
   "questions": [
-    {
-      "type": "behavioral|technical|situational",
+    {{
+      "type": "<one of: {', '.join(types)}>",
       "question": "<the interview question>",
       "why_asked": "<1 sentence: what the interviewer is probing for>",
       "talking_point": "<specific answer guidance using their actual profile — mention real projects, companies, tools>"
-    }
+    }}
   ]
-}"""
+}}
+
+IMPORTANT: Use ONLY these type values exactly: {', '.join(types)}"""
 
     user_message = f"""JOB DESCRIPTION:
 {req.job_description}
@@ -1039,7 +1056,7 @@ Respond ONLY with valid JSON (no markdown):
 CANDIDATE PROFILE:
 {profile_context}
 
-Generate 8 interview questions with talking points tailored to this candidate and role."""
+Generate {total_q} interview questions ({distribution_str}) with talking points tailored to this candidate and role."""
 
     raw = call_groq([
         {"role": "system", "content": system},

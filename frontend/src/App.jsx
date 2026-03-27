@@ -160,6 +160,77 @@ const GlobalStyle = () => (
       0%   { background-position: -400px 0; }
       100% { background-position: 400px 0; }
     }
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(129,140,248,0); }
+      50%       { box-shadow: 0 0 0 4px rgba(129,140,248,0.18); }
+    }
+    @keyframes dot-ping {
+      0%   { transform: scale(1); opacity: 1; }
+      70%  { transform: scale(2.2); opacity: 0; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+
+    /* ── hover utilities ── */
+    .c-hover { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+    .c-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(0,0,0,0.28); border-color: var(--accent-b) !important; }
+
+    .b-primary { transition: all 0.15s ease; }
+    .b-primary:hover:not(:disabled) { filter: brightness(1.13); transform: translateY(-1px); box-shadow: 0 4px 18px rgba(129,140,248,0.38); }
+    .b-primary:active:not(:disabled) { transform: translateY(0); filter: brightness(0.95); }
+
+    .b-ghost { transition: all 0.15s ease; }
+    .b-ghost:hover:not(:disabled) { border-color: var(--accent-b) !important; color: var(--text) !important; background: var(--bg3) !important; }
+    .b-ghost:active:not(:disabled) { transform: scale(0.98); }
+
+    .b-tab { transition: all 0.15s ease; }
+    .b-tab:hover:not([data-active="true"]) { background: var(--bg3) !important; color: var(--text) !important; }
+
+    .b-pill { transition: all 0.15s ease; }
+    .b-pill:hover { border-color: var(--accent-b) !important; color: var(--text) !important; background: var(--bg3) !important; }
+
+    .b-src { transition: all 0.18s ease; cursor: pointer; }
+    .b-src:hover { border-color: var(--accent) !important; background: var(--accent-d) !important; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(129,140,248,0.2); }
+
+    .b-danger { transition: all 0.15s ease; }
+    .b-danger:hover:not(:disabled) { background: rgba(248,113,113,0.15) !important; border-color: var(--red) !important; color: var(--red) !important; }
+
+    /* ── live/animated elements ── */
+    .live-dot { animation: dot-ping 1.8s ease-in-out infinite; }
+    .glow-ring { animation: glow-pulse 2.5s ease-in-out infinite; }
+    .float { animation: float 3s ease-in-out infinite; }
+    .tab-content { animation: fadeUp 0.22s ease both; }
+    .slide-down { animation: slideDown 0.2s ease both; }
+    .scale-in { animation: scaleIn 0.18s ease both; }
+
+    /* ── source row ── */
+    .src-row { transition: background 0.15s, border-color 0.15s; border-radius: var(--r-md); padding: 6px 8px; margin: 0 -8px; }
+    .src-row:hover { background: var(--bg2); }
+
+    /* ── card glow on hover ── */
+    .card-glow { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+    .card-glow:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(129,140,248,0.14), 0 2px 8px rgba(0,0,0,0.2); border-color: var(--accent-b) !important; }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.94); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50%      { transform: translateY(-5px); }
+    }
+    @keyframes live-border {
+      0%, 100% { border-color: rgba(45,212,191,0.4); }
+      50%      { border-color: rgba(45,212,191,0.9); }
+    }
+    @keyframes gradient-x {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
   `}</style>
 );
 
@@ -774,7 +845,7 @@ function Overview({ profile, hideSections = [] }) {
                   <div style={{ color: "var(--accent)", fontSize: 13, marginTop: 4, fontWeight: 600 }}>{exp.company}</div>
                   <div style={{ color: "var(--text3)", fontSize: 12, marginTop: 4, fontWeight: 400 }}>{exp.dates}</div>
                   {exp.description && (
-                    <div style={{ color: "var(--text2)", fontSize: 13.5, marginTop: 12, lineHeight: 1.75, padding: "12px 16px", background: "var(--bg2)", borderRadius: "var(--r-md)", borderLeft: "2px solid var(--accent-b)" }}>
+                    <div className="c-hover" style={{ color: "var(--text2)", fontSize: 13.5, marginTop: 12, lineHeight: 1.75, padding: "12px 16px", background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: "var(--r-md)", borderLeft: "2px solid var(--accent-b)" }}>
                       {exp.description}
                     </div>
                   )}
@@ -846,7 +917,7 @@ function Overview({ profile, hideSections = [] }) {
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>{meta.label}</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {grouped[type].map((l, i) => (
-                        <div key={i} style={{ display: "flex", gap: 14, padding: "14px 16px", background: "var(--bg2)", borderRadius: "var(--r-md)", borderLeft: `2px solid ${meta.color}` }}>
+                        <div key={i} className="c-hover" style={{ display: "flex", gap: 14, padding: "14px 16px", background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: "var(--r-md)", borderLeft: `2px solid ${meta.color}` }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text)" }}>{l.title}</div>
                             {l.issuer && <div style={{ fontSize: 12.5, color: meta.color, marginTop: 3 }}>{l.issuer}</div>}
@@ -898,12 +969,12 @@ function Projects({ profile, hideSections = [], featuredRepos = [] }) {
   );
 
   const SubTab = ({ id, label, count }) => (
-    <button onClick={() => setSub(id)} style={{
+    <button onClick={() => setSub(id)} className="b-tab" data-active={sub === id} style={{
       background: sub === id ? "var(--bg3)" : "transparent",
       border: sub === id ? "1px solid var(--line2)" : "1px solid transparent",
       color: sub === id ? "var(--text)" : "var(--text3)",
       padding: "7px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: sub === id ? 600 : 400,
-      transition: "all 0.15s", display: "flex", alignItems: "center", gap: 7
+      display: "flex", alignItems: "center", gap: 7
     }}>
       <Icon name={id === "github" ? "github" : "file"} size={14} color={sub === id ? "var(--text)" : "var(--text3)"} />
       {label}
@@ -926,9 +997,7 @@ function Projects({ profile, hideSections = [], featuredRepos = [] }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "fadeIn 0.2s ease" }}>
           {githubRepos.map((repo, i) => (
             <a key={i} href={repo.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-              <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px", transition: "border-color 0.18s, transform 0.15s, background 0.15s", cursor: "pointer" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-b)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.background = "var(--bg2)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line2)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = "var(--bg1)"; }}>
+              <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px", cursor: "pointer" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: repo.description ? 10 : 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <Icon name="github" size={16} color="var(--text2)" />
@@ -957,7 +1026,7 @@ function Projects({ profile, hideSections = [], featuredRepos = [] }) {
       {sub === "resume" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "fadeIn 0.2s ease" }}>
           {resumeProjects.map((proj, i) => (
-            <div key={i} style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px" }}>
+            <div key={i} className="c-hover" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: proj.description ? 10 : 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Icon name="code" size={16} color="var(--text2)" />
@@ -1109,7 +1178,7 @@ function GapAnalysis({ userId, role, setRole, result, setResult, error, setError
   const FIT_BG    = { "Strong": "rgba(45,212,191,0.08)", "Moderate": "rgba(251,191,36,0.08)", "Weak": "rgba(248,113,113,0.08)" };
 
   const Section = ({ title, color, icon, children }) => (
-    <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px" }}>
+    <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
         {icon && <Icon name={icon} size={14} color={color || "var(--text3)"} />}
         <div style={{ fontWeight: 700, fontSize: 13, color: color || "var(--text)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{title}</div>
@@ -1146,9 +1215,13 @@ function GapAnalysis({ userId, role, setRole, result, setResult, error, setError
           {/* Score + Summary */}
           <div style={{ background: FIT_BG[result.overall_fit] || "var(--bg1)", border: `1px solid ${FIT_COLOR[result.overall_fit] || "var(--line2)"}`, borderRadius: "var(--r-xl)", padding: "22px 24px", display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
             <div style={{ textAlign: "center", flexShrink: 0 }}>
-              <div style={{ fontSize: 52, fontWeight: 800, color: scoreColor, lineHeight: 1, fontFamily: "var(--serif)" }}>{score}</div>
+              <div style={{ fontSize: 58, fontWeight: 800, color: scoreColor, lineHeight: 1, fontFamily: "var(--serif)", animation: "scaleIn 0.4s ease" }}>{score}</div>
               <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>ATS Score</div>
-              <div style={{ marginTop: 10 }}><Pill color={FIT_COLOR[result.overall_fit]}>{result.overall_fit} Match</Pill></div>
+              {/* Score bar */}
+              <div style={{ marginTop: 10, width: 80, height: 4, background: "var(--bg3)", borderRadius: 2, overflow: "hidden", margin: "10px auto 10px" }}>
+                <div style={{ height: "100%", width: `${score}%`, background: scoreColor, borderRadius: 2, transition: "width 1s ease", animation: "none" }} />
+              </div>
+              <Pill color={FIT_COLOR[result.overall_fit]}>{result.overall_fit} Match</Pill>
             </div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Summary</div>
@@ -1185,7 +1258,7 @@ function GapAnalysis({ userId, role, setRole, result, setResult, error, setError
             <Section title="Strengths" color="var(--accent)" icon="star">
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {result.strengths.map((s, i) => (
-                  <div key={i} style={{ display: "flex", gap: 12, padding: "12px 14px", background: "var(--bg2)", borderRadius: "var(--r-md)" }}>
+                  <div key={i} className="c-hover" style={{ display: "flex", gap: 12, padding: "12px 14px", background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: "var(--r-md)" }}>
                     <Icon name="check" size={14} color="var(--teal)" style={{ flexShrink: 0, marginTop: 2 }} />
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)", marginBottom: 3 }}>{s.point}</div>
@@ -1251,7 +1324,7 @@ function GapAnalysis({ userId, role, setRole, result, setResult, error, setError
             <Section title="Quick Wins — Do This Week" color="var(--teal)" icon="zap">
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {result.quick_wins.map((w, i) => (
-                  <div key={i} style={{ display: "flex", gap: 10, padding: "10px 12px", background: "var(--bg2)", borderRadius: "var(--r-md)", fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
+                  <div key={i} className="c-hover" style={{ display: "flex", gap: 10, padding: "10px 12px", background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: "var(--r-md)", fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
                     <span style={{ color: "var(--teal)", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span> {w}
                   </div>
                 ))}
@@ -1305,7 +1378,7 @@ function UploadRow({ label, icon, done, accept, onFile }) {
         <span style={{ fontSize: 13, color: done ? "var(--text2)" : "var(--text3)", fontWeight: 500 }}>{label}</span>
       </div>
       <label htmlFor={inputId} style={{ cursor: "pointer" }}>
-        <div style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: done ? "var(--text3)" : "var(--accent)", padding: "3px 10px", fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}>
+        <div className="b-ghost" style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: done ? "var(--text3)" : "var(--accent)", padding: "3px 10px", fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}>
           {uploading ? <Spinner size={10} color="var(--accent)" /> : done ? "Replace" : "Upload"}
         </div>
         <input id={inputId} type="file" accept={accept} style={{ display: "none" }} onChange={e => e.target.files[0] && handle(e.target.files[0])} />
@@ -1622,7 +1695,7 @@ function PortfolioPage({ userId, onBack }) {
           {/* Tabs */}
           <div style={{ display: "flex", gap: 2, marginBottom: 22, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content" }}>
             {TABS.map(t => (
-              <button key={t.id} onClick={() => switchTab(t.id)} style={{ background: tab === t.id ? "var(--bg3)" : "transparent", color: tab === t.id ? "var(--text)" : "var(--text3)", padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400, transition: "all 0.15s", display: "flex", alignItems: "center", gap: 7, border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent" }}>
+              <button key={t.id} onClick={() => switchTab(t.id)} className="b-tab" data-active={tab === t.id} style={{ background: tab === t.id ? "var(--bg3)" : "transparent", color: tab === t.id ? "var(--text)" : "var(--text3)", padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400, display: "flex", alignItems: "center", gap: 7, border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent" }}>
                 <Icon name={t.icon} size={14} color={tab === t.id ? "var(--accent)" : "var(--text3)"} /> {t.label}
               </button>
             ))}
@@ -1642,7 +1715,7 @@ function PortfolioPage({ userId, onBack }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 14, position: "sticky", top: 73 }}>
 
           {/* Profile */}
-          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "28px 22px 22px", textAlign: "center", animation: "fadeUp 0.4s ease" }}>
+          <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "28px 22px 22px", textAlign: "center", animation: "fadeUp 0.4s ease" }}>
             <ProfileAvatar profile={profile} size={100} />
             <div style={{ fontFamily: "var(--serif)", fontSize: 22, fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1.2 }}>{profile.name}</div>
             <div style={{ color: "var(--accent)", fontSize: 13, marginTop: 6, fontWeight: 600, letterSpacing: "0.01em" }}>{profile.title}</div>
@@ -1664,9 +1737,7 @@ function PortfolioPage({ userId, onBack }) {
                 )}
                 {profile.has_resume && (
                   <a href={`${API}/resume/${profile.user_id}`} download style={{ textDecoration: "none" }}>
-                    <button style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "var(--accent)", border: "none", color: "#fff", borderRadius: "var(--r-md)", padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "opacity 0.15s" }}
-                      onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
-                      onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+                    <button className="b-primary" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "var(--accent)", border: "none", color: "#fff", borderRadius: "var(--r-md)", padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                       <Icon name="file" size={15} color="#fff" /> Download Resume
                     </button>
                   </a>
@@ -1695,7 +1766,7 @@ function PortfolioPage({ userId, onBack }) {
 
           {/* Top skills - clustered */}
           {!hideSections.includes("skills") && profile.skills?.length > 0 && (
-            <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px", animation: "fadeUp 0.46s ease" }}>
+            <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px", animation: "fadeUp 0.46s ease" }}>
               <SecHead style={{ marginBottom: 12 }}>Top Skills</SecHead>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {Object.entries(getSkillClusters(profile)).map(([cat, skills]) => (
@@ -1726,14 +1797,16 @@ function PortfolioPage({ userId, onBack }) {
           {/* Tab bar */}
           <div style={{ display: "flex", gap: 2, marginBottom: 22, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content" }}>
             {TABS.map(t => (
-              <button key={t.id} onClick={() => switchTab(t.id)} style={{
-                background: tab === t.id ? "var(--bg3)" : "transparent",
-                color: tab === t.id ? "var(--text)" : "var(--text3)",
-                padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400,
-                transition: "all 0.15s", display: "flex", alignItems: "center", gap: 7,
-                border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent",
-                boxShadow: tab === t.id ? "0 1px 3px rgba(0,0,0,0.3)" : "none"
-              }}>
+              <button key={t.id} onClick={() => switchTab(t.id)}
+                className="b-tab" data-active={tab === t.id}
+                style={{
+                  background: tab === t.id ? "var(--bg3)" : "transparent",
+                  color: tab === t.id ? "var(--text)" : "var(--text3)",
+                  padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400,
+                  display: "flex", alignItems: "center", gap: 7,
+                  border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent",
+                  boxShadow: tab === t.id ? "0 1px 3px rgba(0,0,0,0.3)" : "none"
+                }}>
                 <Icon name={t.icon} size={14} color={tab === t.id ? "var(--accent)" : "var(--text3)"} />
                 {t.label}
               </button>
@@ -1869,12 +1942,12 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
         {!isLogin && (
           <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
             {[["seeker", "Job Seeker"], ["recruiter", "Recruiter"]].map(([val, label]) => (
-              <button key={val} onClick={() => setUserType(val)} style={{
+              <button key={val} onClick={() => setUserType(val)} className="b-tab" data-active={userType === val} style={{
                 flex: 1, padding: "10px 0", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: 600,
                 background: userType === val ? "var(--accent)" : "var(--bg2)",
                 color: userType === val ? "#fff" : "var(--text3)",
                 border: userType === val ? "1px solid var(--accent)" : "1px solid var(--line2)",
-                cursor: "pointer", transition: "all 0.15s"
+                cursor: "pointer",
               }}>{label}</button>
             ))}
           </div>
@@ -2345,8 +2418,9 @@ function PortfolioAnalytics({ portfolioId, token }) {
           { label: "AI Questions Asked", value: data.recent_questions.length, color: "var(--teal)" },
           { label: "Tab Interactions", value: Object.values(data.tab_clicks).reduce((a, b) => a + b, 0), color: "var(--rose)" },
         ].map(s => (
-          <div key={s.label} style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px" }}>
-            <div style={{ fontSize: 32, fontWeight: 700, color: s.color, marginBottom: 4 }}>{s.value}</div>
+          <div key={s.label} className="card-glow" style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "18px 20px", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: s.color, opacity: 0.5, borderRadius: "var(--r-lg) var(--r-lg) 0 0" }} />
+            <div style={{ fontSize: 34, fontWeight: 800, color: s.color, marginBottom: 4, fontFamily: "var(--serif)", animation: "scaleIn 0.4s ease" }}>{s.value}</div>
             <div style={{ fontSize: 12.5, color: "var(--text3)" }}>{s.label}</div>
           </div>
         ))}
@@ -2362,7 +2436,10 @@ function PortfolioAnalytics({ portfolioId, token }) {
             {data.views_by_day.map((d, i) => (
               <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flex: 1 }}>
                 <div style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>{d.count}</div>
-                <div title={fmtDate(d.date)} style={{ width: "100%", background: "var(--accent)", borderRadius: "4px 4px 0 0", height: `${Math.max(4, (d.count / maxViews) * 52)}px`, transition: "height 0.3s ease", cursor: "default", opacity: 0.85 }} />
+                <div title={`${d.count} views on ${fmtDate(d.date)}`}
+                  style={{ width: "100%", background: "var(--accent)", borderRadius: "4px 4px 0 0", height: `${Math.max(4, (d.count / maxViews) * 52)}px`, transition: "height 0.3s ease, opacity 0.15s, transform 0.15s", cursor: "default", opacity: 0.75 }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scaleX(1.1)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = "0.75"; e.currentTarget.style.transform = "scaleX(1)"; }} />
                 <div style={{ fontSize: 9, color: "var(--text3)", whiteSpace: "nowrap" }}>{fmtDate(d.date).split(" ")[1]}</div>
               </div>
             ))}
@@ -2531,7 +2608,7 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange }) {
 
       {/* Sections */}
       <Row label="Visible Sections">
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px" }}>
           {SECTIONS.map(s => (
             <Toggle key={s.id} on={!(prefs.hide_sections || []).includes(s.id)} onClick={() => toggleSection(s.id)} label={s.label} />
           ))}
@@ -2542,18 +2619,18 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange }) {
       {githubRepos.length > 0 && (
         <Row label="Featured Projects">
           <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 10 }}>Pinned repos appear first in your portfolio.</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             {githubRepos.map(r => {
               const isFeatured = (prefs.featured_repos || []).includes(r.name);
               return (
                 <button key={r.name} onClick={() => toggleFeatured(r.name)}
-                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: isFeatured ? "var(--accent-d)" : "var(--bg2)", border: `1px solid ${isFeatured ? "var(--accent-b)" : "var(--line2)"}`, borderRadius: "var(--r-md)", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
-                  <Icon name={isFeatured ? "star" : "github"} size={14} color={isFeatured ? "var(--accent)" : "var(--text3)"} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: isFeatured ? "var(--accent)" : "var(--text)" }}>{r.name}</div>
-                    {r.language && <div style={{ fontSize: 11.5, color: "var(--text3)", marginTop: 2 }}>{r.language}</div>}
+                  className="b-ghost"
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: isFeatured ? "var(--accent-d)" : "var(--bg2)", border: `1px solid ${isFeatured ? "var(--accent)" : "var(--line2)"}`, borderRadius: "var(--r-md)", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+                  <Icon name={isFeatured ? "star" : "github"} size={13} color={isFeatured ? "var(--accent)" : "var(--text3)"} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: isFeatured ? "var(--accent)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                    {r.language && <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 2 }}>{r.language}</div>}
                   </div>
-                  {isFeatured && <Pill color="var(--accent)">Featured</Pill>}
                 </button>
               );
             })}
@@ -2565,21 +2642,36 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange }) {
 }
 
 // ─── INTERVIEW PREP ───────────────────────────────────────────────────────────
+const INTERVIEW_TYPES = [
+  { id: "behavioral", label: "Behavioral", color: "var(--rose)" },
+  { id: "technical", label: "Technical / Coding", color: "var(--teal)" },
+  { id: "case_study", label: "Case Study", color: "var(--amber)" },
+  { id: "system_design", label: "System Design", color: "var(--accent)" },
+  { id: "hr_culture", label: "HR / Culture", color: "var(--green)" },
+];
+
 function InterviewPrep({ userId, jd: initialJd }) {
   const [jd, setJd] = useState(initialJd || "");
+  const [selectedTypes, setSelectedTypes] = useState(["behavioral", "technical"]);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(null);
 
-  const TYPE_COLOR = { behavioral: "var(--rose)", technical: "var(--teal)", situational: "var(--amber)" };
-  const TYPE_LABEL = { behavioral: "Behavioral", technical: "Technical", situational: "Situational" };
+  const TYPE_COLOR = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.color]));
+  const TYPE_LABEL = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.label]));
+
+  const toggleType = (id) => {
+    setSelectedTypes(prev =>
+      prev.includes(id) ? (prev.length > 1 ? prev.filter(t => t !== id) : prev) : [...prev, id]
+    );
+  };
 
   const generate = async () => {
-    if (!jd.trim()) return;
+    if (!jd.trim() || selectedTypes.length === 0) return;
     setLoading(true); setError(null); setResult(null);
     try {
-      const res = await axios.post(`${API}/interview-prep`, { user_id: userId, job_description: jd });
+      const res = await axios.post(`${API}/interview-prep`, { user_id: userId, job_description: jd, interview_types: selectedTypes });
       setResult(res.data.questions || []);
     } catch { setError("Failed to generate. Please try again."); }
     finally { setLoading(false); }
@@ -2593,14 +2685,43 @@ function InterviewPrep({ userId, jd: initialJd }) {
   return (
     <div>
       <SecHead>Interview Prep</SecHead>
-      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 18, lineHeight: 1.6 }}>
-        Paste a job description and get targeted interview questions with talking points drawn from your actual profile.
+      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
+        Select interview types, paste a job description, and get targeted questions with talking points drawn from your actual profile.
       </div>
+
+      {/* Type selector */}
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Interview Types (select all that apply)</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {INTERVIEW_TYPES.map(t => {
+            const active = selectedTypes.includes(t.id);
+            return (
+              <button key={t.id} onClick={() => toggleType(t.id)}
+                style={{
+                  padding: "8px 16px", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  background: active ? t.color + "18" : "var(--bg2)",
+                  border: `1.5px solid ${active ? t.color : "var(--line2)"}`,
+                  color: active ? t.color : "var(--text3)",
+                  transition: "all 0.15s", display: "flex", alignItems: "center", gap: 6,
+                }}>
+                {active && <Icon name="check" size={12} color={t.color} />}
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+        {selectedTypes.length > 1 && (
+          <div style={{ marginTop: 8, fontSize: 12, color: "var(--text3)" }}>
+            ~{Math.ceil(8 / selectedTypes.length)} questions per type · {selectedTypes.length * Math.ceil(8 / selectedTypes.length)} total
+          </div>
+        )}
+      </div>
+
       <textarea value={jd} onChange={e => setJd(e.target.value)}
         placeholder="Paste the job description here..."
         rows={6} style={{ width: "100%", marginBottom: 12, resize: "vertical" }} />
       <Btn onClick={generate} disabled={loading || !jd.trim()} style={{ marginBottom: 24 }}>
-        {loading ? <><Spinner size={14} color="#fff" /> Generating questions…</> : <><Icon name="zap" size={14} color="#fff" /> Generate Interview Questions</>}
+        {loading ? <><Spinner size={14} color="#fff" /> Generating questions…</> : <><Icon name="zap" size={14} color="#fff" /> Generate Questions</>}
       </Btn>
       {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
       {result && (
@@ -2608,7 +2729,7 @@ function InterviewPrep({ userId, jd: initialJd }) {
           {result.map((q, i) => {
             const color = TYPE_COLOR[q.type] || "var(--accent)";
             return (
-              <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px", borderLeft: `3px solid ${color}` }}>
+              <div key={i} className="c-hover" style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px", borderLeft: `3px solid ${color}` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 10, fontWeight: 700, color, background: color + "18", border: `1px solid ${color}40`, padding: "2px 8px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -2617,6 +2738,7 @@ function InterviewPrep({ userId, jd: initialJd }) {
                     <span style={{ fontSize: 12, color: "var(--text3)" }}>Q{i + 1}</span>
                   </div>
                   <button onClick={() => copyQ(i, `Q: ${q.question}\n\nTalking point: ${q.talking_point}`)}
+                    className="b-ghost"
                     style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-sm)", color: copied === i ? "var(--teal)" : "var(--text3)", padding: "3px 9px", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                     <Icon name={copied === i ? "check" : "copy"} size={11} color={copied === i ? "var(--teal)" : "var(--text3)"} />
                     {copied === i ? "Copied" : "Copy"}
@@ -2665,6 +2787,8 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
   const [creatingPortfolio, setCreatingPortfolio] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [creatingLoading, setCreatingLoading] = useState(false);
+  const [deletingPortfolioId, setDeletingPortfolioId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const loadProfile = async () => {
     try {
@@ -2748,6 +2872,19 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
     } catch {}
   };
 
+  const deletePortfolio = async (pid) => {
+    setDeleteLoading(true);
+    try {
+      await axios.delete(`${API}/portfolio/${pid}`, { headers: { Authorization: `Bearer ${auth.token}` } });
+      const remaining = portfolios.filter(p => p.id !== pid);
+      if (activePortfolioId === pid && remaining.length > 0) {
+        setActivePortfolioId(remaining[0].id);
+      }
+      setDeletingPortfolioId(null);
+      await loadPortfolios();
+    } catch {} finally { setDeleteLoading(false); }
+  };
+
   if (profileLoading) return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}><Spinner size={32} /></div>;
 
   const hasLinkedin = (profile?.experience?.length > 0) || !!profile?.linkedin_summary;
@@ -2765,18 +2902,27 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
   return (
     <div style={{ minHeight: "100vh" }}>
       {/* Top bar */}
-      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>prolio<span style={{ color: "var(--accent)" }}>.</span></div>
+      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10, backdropFilter: "blur(12px)" }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.01em" }}>prolio<span style={{ color: "var(--accent)" }}>.</span></div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {built && (
             <button onClick={() => { navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-              style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: copied ? "var(--teal)" : "var(--text2)", padding: "6px 14px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+              className="b-ghost"
+              style={{ background: copied ? "rgba(45,212,191,0.1)" : "var(--bg2)", border: `1px solid ${copied ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", color: copied ? "var(--teal)" : "var(--text2)", padding: "6px 14px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
               <Icon name={copied ? "check" : "link"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
               {copied ? "Copied!" : "Share Portfolio"}
             </button>
           )}
+          {built && (
+            <a href={shareUrl} target="_blank" rel="noreferrer"
+              className="b-ghost"
+              style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}>
+              <Icon name="external" size={13} color="var(--text3)" /> View Live
+            </a>
+          )}
           <div style={{ fontSize: 13, color: "var(--text3)" }}>{auth.email}</div>
-          <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+          <button onClick={onLogout} className="b-ghost"
+            style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
             <Icon name="logout" size={13} color="var(--text3)" /> Sign out
           </button>
         </div>
@@ -2785,27 +2931,73 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", display: "flex", gap: 24, alignItems: "flex-start" }}>
         {/* LEFT SIDEBAR */}
         <div style={{ width: 300, flexShrink: 0 }}>
+          {/* Delete portfolio confirmation modal */}
+          {deletingPortfolioId && (
+            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, animation: "fadeIn 0.15s ease" }}>
+              <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "28px 32px", maxWidth: 380, width: "90%", boxShadow: "0 24px 60px rgba(0,0,0,0.5)" }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 10 }}>Delete Portfolio?</div>
+                <div style={{ fontSize: 13, color: "var(--text3)", lineHeight: 1.6, marginBottom: 24 }}>
+                  This will permanently delete <strong style={{ color: "var(--text)" }}>{portfolios.find(p => p.id === deletingPortfolioId)?.role_name}</strong> and all its data. This cannot be undone.
+                </div>
+                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                  <button onClick={() => setDeletingPortfolioId(null)}
+                    className="b-ghost"
+                    style={{ padding: "9px 18px", borderRadius: "var(--r-md)", background: "var(--bg3)", border: "1px solid var(--line2)", color: "var(--text2)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    Cancel
+                  </button>
+                  <button onClick={() => deletePortfolio(deletingPortfolioId)} disabled={deleteLoading}
+                    style={{ padding: "9px 18px", borderRadius: "var(--r-md)", background: "var(--red)", border: "none", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: deleteLoading ? 0.6 : 1, transition: "all 0.15s" }}>
+                    {deleteLoading ? "Deleting…" : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Portfolio switcher */}
           {portfolios.length > 0 && (
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>Portfolios</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>Portfolios</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {portfolios.map(p => (
-                  <button key={p.id} onClick={() => { setActivePortfolioId(p.id); setProfile(null); setBuilt(false); }}
-                    style={{
-                      padding: "5px 12px", borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                      background: p.id === activePortfolioId ? "var(--accent-d)" : "var(--bg2)",
-                      border: `1px solid ${p.id === activePortfolioId ? "var(--accent-b)" : "var(--line2)"}`,
-                      color: p.id === activePortfolioId ? "var(--accent)" : "var(--text3)",
-                      display: "flex", alignItems: "center", gap: 5, transition: "all 0.15s"
-                    }}>
-                    {p.role_name}
-                    {p.is_primary && <span style={{ fontSize: 9, color: "var(--accent)", fontWeight: 800 }}>★</span>}
-                    {p.built && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--teal)", display: "inline-block" }} />}
-                  </button>
+                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 0 }}>
+                    <button onClick={() => { setActivePortfolioId(p.id); setProfile(null); setBuilt(false); }}
+                      className="b-pill"
+                      style={{
+                        padding: "8px 14px", borderRadius: portfolios.length > 1 ? "100px 0 0 100px" : 100,
+                        fontSize: 13, fontWeight: 600, cursor: "pointer",
+                        background: p.id === activePortfolioId ? "var(--accent-d)" : "var(--bg2)",
+                        border: `1px solid ${p.id === activePortfolioId ? "var(--accent)" : "var(--line2)"}`,
+                        borderRight: portfolios.length > 1 ? "none" : undefined,
+                        color: p.id === activePortfolioId ? "var(--accent)" : "var(--text2)",
+                        display: "flex", alignItems: "center", gap: 6,
+                      }}>
+                      {p.role_name}
+                      {p.is_primary && <span style={{ fontSize: 10, color: "var(--amber)", fontWeight: 800 }}>★</span>}
+                      {p.built && <span className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--teal)", display: "inline-block" }} />}
+                    </button>
+                    {portfolios.length > 1 && (
+                      <button onClick={() => setDeletingPortfolioId(p.id)}
+                        title="Delete portfolio"
+                        style={{
+                          padding: "8px 9px", borderRadius: "0 100px 100px 0",
+                          fontSize: 13, cursor: "pointer",
+                          background: p.id === activePortfolioId ? "var(--accent-d)" : "var(--bg2)",
+                          border: `1px solid ${p.id === activePortfolioId ? "var(--accent)" : "var(--line2)"}`,
+                          color: "var(--text3)", display: "flex", alignItems: "center",
+                          transition: "all 0.15s",
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.color = "var(--red)"; e.currentTarget.style.borderColor = "var(--red)"; e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = "var(--text3)"; e.currentTarget.style.borderColor = p.id === activePortfolioId ? "var(--accent)" : "var(--line2)"; e.currentTarget.style.background = p.id === activePortfolioId ? "var(--accent-d)" : "var(--bg2)"; }}>
+                        <Icon name="x" size={11} color="currentColor" />
+                      </button>
+                    )}
+                  </div>
                 ))}
                 <button onClick={() => setCreatingPortfolio(v => !v)}
-                  style={{ padding: "5px 10px", borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: "pointer", background: "transparent", border: "1px dashed var(--line2)", color: "var(--text3)" }}>
+                  style={{ padding: "8px 14px", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: "pointer", background: "transparent", border: "1px dashed var(--line2)", color: "var(--text3)", transition: "all 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-b)"; e.currentTarget.style.color = "var(--accent)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line2)"; e.currentTarget.style.color = "var(--text3)"; }}>
                   + New
                 </button>
               </div>
@@ -2816,6 +3008,7 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
                     placeholder="e.g. Data Analyst" autoFocus
                     style={{ flex: 1, fontSize: 12, padding: "6px 10px", background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text)", outline: "none" }} />
                   <button onClick={createPortfolio} disabled={!newRoleName.trim() || creatingLoading}
+                    className="b-primary"
                     style={{ padding: "6px 12px", borderRadius: "var(--r-md)", background: "var(--accent)", border: "none", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: (!newRoleName.trim() || creatingLoading) ? 0.5 : 1 }}>
                     {creatingLoading ? "…" : "Create"}
                   </button>
@@ -2823,24 +3016,32 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
               )}
               {portfolios.length > 1 && portfolios.find(p => p.id === activePortfolioId && !p.is_primary) && (
                 <button onClick={() => setPrimary(activePortfolioId)}
-                  style={{ marginTop: 8, fontSize: 11, color: "var(--text3)", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
-                  Set as primary portfolio
+                  className="b-ghost"
+                  style={{ marginTop: 10, fontSize: 12, fontWeight: 600, color: "var(--text3)", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", cursor: "pointer", padding: "7px 14px", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ color: "var(--amber)" }}>★</span> Set as primary portfolio
                 </button>
               )}
             </div>
           )}
           {/* Profile card */}
-          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px", marginBottom: 14 }}>
+          <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px", marginBottom: 14, position: "relative", overflow: "hidden" }}>
+            {built && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, var(--accent), var(--teal), var(--accent))", backgroundSize: "200% 100%", animation: "gradient-x 3s ease infinite" }} />}
             <div style={{ marginBottom: 14 }}><ProfilePhoto userId={activePortfolioId} name={profile?.name} size={72} /></div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 3 }}>{profile?.name}</div>
               {profile?.title && <div style={{ fontSize: 12.5, color: "var(--text3)" }}>{profile.title}</div>}
               {profile?.tagline && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 5, fontStyle: "italic", lineHeight: 1.5 }}>{profile.tagline}</div>}
+              {built && (
+                <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(45,212,191,0.1)", border: "1px solid rgba(45,212,191,0.35)", borderRadius: 100, padding: "3px 10px", fontSize: 11, color: "var(--teal)", fontWeight: 600 }}>
+                  <span className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--teal)", display: "inline-block", flexShrink: 0 }} />
+                  Portfolio Live
+                </div>
+              )}
             </div>
           </div>
 
           {/* Data sources */}
-          <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "18px 20px" }}>
+          <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "18px 20px" }}>
             <SecHead style={{ marginBottom: 14 }}>Data Sources</SecHead>
             <UploadRow label="LinkedIn PDF" icon="user" done={hasLinkedin} accept=".pdf" onFile={f => uploadFile(f, "linkedin")} />
             <UploadRow label="Resume / CV" icon="file" done={hasResume} accept=".pdf,.docx,.pptx,.txt" onFile={f => uploadFile(f, "resume")} />
@@ -2853,7 +3054,8 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
                   </div>
                   <span style={{ fontSize: 13, color: hasGithub ? "var(--text2)" : "var(--text3)", fontWeight: 500 }}>GitHub Repos</span>
                 </div>
-                <button onClick={() => setAddingGithub(v => !v)} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: "var(--accent)", padding: "3px 8px", fontSize: 11, cursor: "pointer" }}>
+                <button onClick={() => setAddingGithub(v => !v)} className="b-ghost"
+                  style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: "var(--accent)", padding: "3px 8px", fontSize: 11, cursor: "pointer" }}>
                   {addingGithub ? "Cancel" : "+ Add"}
                 </button>
               </div>
@@ -2887,7 +3089,8 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
                       </div>
                       <span style={{ fontSize: 13, color: links.length > 0 ? "var(--text2)" : "var(--text3)", fontWeight: 500 }}>Links & Credentials</span>
                     </div>
-                    <button onClick={() => setAddingLink(v => !v)} style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: "var(--accent)", padding: "3px 8px", fontSize: 11, cursor: "pointer" }}>
+                    <button onClick={() => setAddingLink(v => !v)} className="b-ghost"
+                      style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: "var(--accent)", padding: "3px 8px", fontSize: 11, cursor: "pointer" }}>
                       {addingLink ? "Cancel" : "+ Add"}
                     </button>
                   </div>
@@ -2909,9 +3112,10 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
                       <div style={{ display: "flex", gap: 5, marginBottom: 10, flexWrap: "wrap" }}>
                         {["certificate", "publication", "award", "other"].map(t => (
                           <button key={t} onClick={() => setNewLink(p => ({ ...p, type: t }))}
-                            style={{ padding: "3px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                            className="b-pill"
+                            style={{ padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: "pointer",
                               background: newLink.type === t ? "var(--accent-d)" : "var(--bg3)",
-                              border: `1px solid ${newLink.type === t ? "var(--accent-b)" : "var(--line2)"}`,
+                              border: `1px solid ${newLink.type === t ? "var(--accent)" : "var(--line2)"}`,
                               color: newLink.type === t ? "var(--accent)" : "var(--text3)" }}>
                             {t.charAt(0).toUpperCase() + t.slice(1)}
                           </button>
@@ -2924,6 +3128,7 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
                       <input value={newLink.url} onChange={e => setNewLink(p => ({ ...p, url: e.target.value }))} placeholder="URL (optional)" style={{ ...linkInputSt, marginTop: 6 }} />
                       <input value={newLink.date} onChange={e => setNewLink(p => ({ ...p, date: e.target.value }))} placeholder="e.g. March 2024 (optional)" style={{ ...linkInputSt, marginTop: 6 }} />
                       <button disabled={!newLink.title.trim() || linkSaving}
+                        className="b-primary"
                         onClick={async () => {
                           await saveLinks([...(profile?.links || []), { ...newLink }]);
                           setNewLink({ type: "certificate", title: "", url: "", issuer: "", date: "" });
@@ -2944,13 +3149,16 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", gap: 2, marginBottom: 20, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content" }}>
             {SEEKER_TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{
-                background: tab === t.id ? "var(--bg3)" : "transparent", color: tab === t.id ? "var(--text)" : "var(--text3)",
-                padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400,
-                border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent",
-                boxShadow: tab === t.id ? "0 1px 3px rgba(0,0,0,0.3)" : "none",
-                display: "flex", alignItems: "center", gap: 7, cursor: "pointer", transition: "all 0.15s"
-              }}>
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className="b-tab"
+                data-active={tab === t.id}
+                style={{
+                  background: tab === t.id ? "var(--bg3)" : "transparent", color: tab === t.id ? "var(--text)" : "var(--text3)",
+                  padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400,
+                  border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent",
+                  boxShadow: tab === t.id ? "0 1px 3px rgba(0,0,0,0.3)" : "none",
+                  display: "flex", alignItems: "center", gap: 7, cursor: "pointer",
+                }}>
                 <Icon name={t.icon} size={14} color={tab === t.id ? "var(--accent)" : "var(--text3)"} /> {t.label}
               </button>
             ))}
@@ -2958,7 +3166,7 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
 
           <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "28px 30px", minHeight: 480 }}>
             {/* Build Portfolio */}
-            <div style={{ display: tab === "build" ? "block" : "none" }}>
+            <div key={`build-${tab === "build"}`} className={tab === "build" ? "tab-content" : ""} style={{ display: tab === "build" ? "block" : "none" }}>
               <SecHead>Build Portfolio</SecHead>
               <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
                 Your portfolio is generated from your LinkedIn, resume, and GitHub data. Click each source below to upload, or use the sidebar.
@@ -2969,18 +3177,19 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
                   { label: "Resume", done: hasResume, accept: ".pdf,.docx,.pptx,.txt", type: "resume", inputId: "build-cv" },
                 ].map(s => (
                   <label key={s.label} htmlFor={s.inputId} style={{ cursor: "pointer" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--bg2)", border: `1px solid ${s.done ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 13, transition: "border-color 0.15s" }}
-                      onMouseEnter={e => { if (!s.done) e.currentTarget.style.borderColor = "var(--accent)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = s.done ? "var(--teal)" : "var(--line2)"; }}>
+                    <div className={!s.done ? "b-src" : ""}
+                      style={{ display: "flex", alignItems: "center", gap: 6, background: s.done ? "rgba(45,212,191,0.08)" : "var(--bg2)", border: `1px solid ${s.done ? "rgba(45,212,191,0.45)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 13 }}>
                       <Icon name={s.done ? "check" : "plus"} size={13} color={s.done ? "var(--teal)" : "var(--accent)"} />
-                      <span style={{ color: s.done ? "var(--teal)" : "var(--text2)" }}>{s.label}</span>
+                      <span style={{ color: s.done ? "var(--teal)" : "var(--text2)", fontWeight: 500 }}>{s.label}</span>
+                      {!s.done && <span style={{ fontSize: 11, color: "var(--text3)", marginLeft: 2 }}>Upload</span>}
                     </div>
                     <input id={s.inputId} type="file" accept={s.accept} style={{ display: "none" }} onChange={e => e.target.files[0] && uploadFile(e.target.files[0], s.type)} />
                   </label>
                 ))}
-                <div style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--bg2)", border: `1px solid ${hasGithub ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 13 }}>
-                  <Icon name={hasGithub ? "check" : "plus"} size={13} color={hasGithub ? "var(--teal)" : "var(--text3)"} />
-                  <span style={{ color: hasGithub ? "var(--teal)" : "var(--text3)" }}>GitHub</span>
+                <div className={!hasGithub ? "b-src" : ""} onClick={() => !hasGithub && setAddingGithub(true)} style={{ display: "flex", alignItems: "center", gap: 6, background: hasGithub ? "rgba(45,212,191,0.08)" : "var(--bg2)", border: `1px solid ${hasGithub ? "rgba(45,212,191,0.45)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "7px 14px", fontSize: 13 }}>
+                  <Icon name={hasGithub ? "check" : "github"} size={13} color={hasGithub ? "var(--teal)" : "var(--text3)"} />
+                  <span style={{ color: hasGithub ? "var(--teal)" : "var(--text2)", fontWeight: 500 }}>GitHub</span>
+                  {!hasGithub && <span style={{ fontSize: 11, color: "var(--text3)", marginLeft: 2 }}>Connect</span>}
                 </div>
               </div>
               {!hasLinkedin && !hasResume && !hasGithub ? (
@@ -2992,9 +3201,19 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
               )}
               {buildError && <div style={{ color: "var(--red)", fontSize: 13, marginTop: 12 }}>{buildError}</div>}
               {built && !building && (
-                <div style={{ marginTop: 20, background: "var(--teal-d)", border: "1px solid var(--teal)", borderRadius: "var(--r-lg)", padding: "16px 20px" }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--teal)", marginBottom: 8 }}>Portfolio is live!</div>
-                  <a href={shareUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: "var(--teal)", wordBreak: "break-all" }}>{shareUrl}</a>
+                <div className="slide-down" style={{ marginTop: 20, background: "linear-gradient(135deg, rgba(45,212,191,0.08), rgba(129,140,248,0.06))", border: "1px solid rgba(45,212,191,0.35)", borderRadius: "var(--r-lg)", padding: "18px 22px", animation: "live-border 2.5s ease-in-out infinite" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <span className="live-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--teal)", display: "inline-block", flexShrink: 0 }} />
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--teal)" }}>Portfolio is live!</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <a href={shareUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12.5, color: "var(--teal)", wordBreak: "break-all", flex: 1, opacity: 0.85 }}>{shareUrl}</a>
+                    <a href={shareUrl} target="_blank" rel="noreferrer"
+                      className="b-ghost"
+                      style={{ background: "rgba(45,212,191,0.1)", border: "1px solid rgba(45,212,191,0.35)", borderRadius: "var(--r-md)", color: "var(--teal)", padding: "5px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>
+                      <Icon name="external" size={12} color="var(--teal)" /> Open
+                    </a>
+                  </div>
                 </div>
               )}
 
@@ -3005,12 +3224,12 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
             </div>
 
             {/* Gap Analysis */}
-            <div style={{ display: tab === "gap" ? "block" : "none" }}>
+            <div key={`gap-${tab === "gap"}`} className={tab === "gap" ? "tab-content" : ""} style={{ display: tab === "gap" ? "block" : "none" }}>
               <GapAnalysis userId={activePortfolioId} role={gapRole} setRole={setGapRole} result={gapResult} setResult={setGapResult} error={gapError} setError={setGapError} />
             </div>
 
             {/* Cover Letter */}
-            <div style={{ display: tab === "cover" ? "block" : "none" }}>
+            <div key={`cover-${tab === "cover"}`} className={tab === "cover" ? "tab-content" : ""} style={{ display: tab === "cover" ? "block" : "none" }}>
               <CoverLetter userId={activePortfolioId} profile={profile} jd={clJd} setJd={setClJd} company={clCompany} setCompany={setClCompany} role={clRole} setRole={setClRole} result={clResult} setResult={setClResult} />
             </div>
 
