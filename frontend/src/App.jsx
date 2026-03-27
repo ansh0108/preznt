@@ -1329,12 +1329,14 @@ function CoverLetter({ userId, profile, jd, setJd, company, setCompany, role, se
   // When result arrives from API, push it into the contentEditable editor
   useEffect(() => {
     if (!editorRef.current || !result) return;
-    // Convert plain text to paragraphs so contentEditable works naturally
+    const contactHeader = contactLine
+      ? `<p style="margin:0 0 2px 0;font-size:12px;color:#888">${contactLine}</p><p style="margin:0 0 1.2em 0"> </p>`
+      : "";
     const html = result
       .split(/\n\n+/)
       .map(block => `<p style="margin:0 0 1em 0">${block.replace(/\n/g, "<br>")}</p>`)
       .join("");
-    editorRef.current.innerHTML = html;
+    editorRef.current.innerHTML = contactHeader + html;
   }, [result]);
 
   const getEditorText = () => editorRef.current?.innerText || result || "";
@@ -1370,35 +1372,41 @@ function CoverLetter({ userId, profile, jd, setJd, company, setCompany, role, se
   };
 
   const copy = () => {
-    const text = getEditorText() + (contactLine ? `\n${contactLine}` : "");
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(getEditorText());
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
 
   const download = () => {
-    const filename = `Cover_Letter${company ? `_${company.replace(/\s+/g, "_")}` : ""}.pdf`;
-    const editorHTML = getEditorHTML();
-    const contactHTML = contactLine
-      ? `<p style="margin:0">${contactLine}</p>`
-      : "";
+    const namePart = (profile?.name || "Cover").replace(/\s+/g, "_");
+    const companyPart = company ? `_${company.replace(/\s+/g, "_")}` : "";
+    const filename = `${namePart}${companyPart}_cover_letter.pdf`;
 
-    const el = document.createElement("div");
-    el.style.cssText = "position:fixed;left:-9999px;top:0;width:451pt;font-family:Georgia,serif;font-size:13pt;line-height:1.9;color:#111;background:#fff;";
-    el.innerHTML = editorHTML + contactHTML;
-    document.body.appendChild(el);
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 22;
+    const maxW = pageW - margin * 2;
+    let y = margin;
 
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    doc.html(el, {
-      callback(pdf) {
-        document.body.removeChild(el);
-        pdf.save(filename);
-      },
-      x: 72,
-      y: 72,
-      width: 451,
-      windowWidth: 600,
-      autoPaging: "text",
-    });
+    doc.setFont("times", "normal");
+    doc.setFontSize(11);
+
+    const raw = getEditorText().trim();
+    const paragraphs = raw.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
+
+    for (const para of paragraphs) {
+      const lines = doc.splitTextToSize(para, maxW);
+      const blockH = lines.length * 6.5;
+      if (y + blockH > pageH - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.setTextColor(30);
+      doc.text(lines, margin, y);
+      y += blockH + 5;
+    }
+
+    doc.save(filename);
   };
 
   const FmtBtn = ({ cmd, label }) => (
@@ -1454,10 +1462,6 @@ function CoverLetter({ userId, profile, jd, setJd, company, setCompany, role, se
             suppressContentEditableWarning
             style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "24px 28px", fontSize: 14, lineHeight: 1.85, color: "var(--text2)", marginBottom: 8, outline: "none", minHeight: 260 }}
           />
-          {/* Contact info (read-only, below letter) */}
-          {contactLine && (
-            <div style={{ fontSize: 13, color: "var(--text3)", paddingLeft: 2, marginBottom: 16 }}>{contactLine}</div>
-          )}
           {/* Refinement input */}
           <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "16px 18px" }}>
             <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 10 }}>Want changes? Tell me what to adjust…</div>
