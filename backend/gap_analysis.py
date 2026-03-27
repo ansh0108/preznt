@@ -65,7 +65,7 @@ def build_profile_context(profile: dict) -> str:
         raw = (doc.get("raw_text") or "").strip()
         source = doc.get("source", "")
         if raw and doc.get("type") == "document" and "linkedin" not in source.lower():
-            sections.append(f"--- RESUME RAW TEXT (use exact lines from here for bullet improvements) ---\n{raw[:6000]}")
+            sections.append(f"--- RESUME RAW TEXT (use exact lines from here for bullet improvements) ---\n{raw[:2500]}")
             break  # only need the first resume doc
 
     return "\n\n".join(sections)
@@ -88,7 +88,7 @@ def analyze_gap(job_description: str, user_id: str, user_name: str, profile: dic
 
     structured_context = build_profile_context(profile) if profile else ""
 
-    results = search_index(job_description[:500], user_id, top_k=8, index_dir=INDEXES_DIR)
+    results = search_index(job_description[:500], user_id, top_k=5, index_dir=INDEXES_DIR)
     vector_context = "\n\n".join([r["text"] for r in results])
 
     profile_context = f"{structured_context}\n\n--- Relevant Profile Chunks ---\n{vector_context}".strip()
