@@ -60,6 +60,14 @@ def build_profile_context(profile: dict) -> str:
             parts.append(link["description"])
         sections.append(" ".join(parts))
 
+    # Append raw resume text so bullet improvements use exact resume lines
+    for doc in profile.get("documents", []):
+        raw = (doc.get("raw_text") or "").strip()
+        source = doc.get("source", "")
+        if raw and doc.get("type") == "document" and "linkedin" not in source.lower():
+            sections.append(f"--- RESUME RAW TEXT (use exact lines from here for bullet improvements) ---\n{raw[:6000]}")
+            break  # only need the first resume doc
+
     return "\n\n".join(sections)
 
 
@@ -112,7 +120,8 @@ SCORING GUIDE for ats_score:
 
 IMPORTANT:
 - bullet_improvements: ONLY improve Experience or Project bullets — NEVER touch the Skills section
-- bullet_improvements: "original" must be a real sentence copied verbatim from their profile (not a list of skill names)
+- bullet_improvements: "original" must be copied VERBATIM and CHARACTER-FOR-CHARACTER from the RESUME RAW TEXT section — do NOT use LinkedIn descriptions, do NOT paraphrase or reconstruct the line
+- bullet_improvements: if there is no RESUME RAW TEXT, use exact lines from the experience descriptions
 - bullet_improvements: "improved" must follow STAR format AND be within ±5% of the original's character count — resume line width and spacing must be preserved exactly
 - suggested_skills: ONLY short skill/tool keyword names (e.g. "Tableau", "Power BI", "dbt") from the JD that are absent from the profile — never full sentences
 - Be specific — reference actual companies, projects, tools from their profile
