@@ -71,6 +71,18 @@ def build_profile_context(profile: dict) -> str:
     return "\n\n".join(sections)
 
 
+def _enforce_length(improved: str, original: str, tolerance: float = 0.05) -> str:
+    """Hard-trim improved bullet to within +5% of original character count at a word boundary."""
+    max_len = int(len(original) * (1 + tolerance))
+    if len(improved) <= max_len:
+        return improved
+    trimmed = improved[:max_len]
+    last_space = trimmed.rfind(" ")
+    if last_space > int(max_len * 0.75):
+        trimmed = trimmed[:last_space]
+    return trimmed.rstrip(".,;: ")
+
+
 def analyze_gap(job_description: str, user_id: str, user_name: str, profile: dict | None = None) -> dict:
     """ATS-aware gap analysis between candidate profile and a specific job description."""
 
@@ -146,7 +158,11 @@ Analyze this candidate against the job description above. Be specific, construct
     raw = raw.replace("```json", "").replace("```", "").strip()
 
     try:
-        return json.loads(raw)
+        result = json.loads(raw)
+        for b in result.get("bullet_improvements", []):
+            if b.get("original") and b.get("improved"):
+                b["improved"] = _enforce_length(b["improved"], b["original"])
+        return result
     except Exception as e:
         return {
             "error": f"Could not parse analysis: {str(e)}",
