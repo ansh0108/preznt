@@ -18,7 +18,7 @@ from embeddings import build_index, index_exists
 from chatbot import chat
 from gap_analysis import analyze_gap
 from groq_client import call_groq
-from auth import init_db, create_user, get_user_by_email, get_user_by_id, verify_password, make_token, get_current_user, link_portfolio
+from auth import init_db, create_user, get_user_by_email, get_user_by_id, verify_password, make_token, get_current_user, link_portfolio, add_portfolio_to_user, set_primary_portfolio, remove_portfolio_from_user
 from analytics import init_analytics_db, log_event, get_analytics as get_analytics_data
 
 load_dotenv()
@@ -43,12 +43,13 @@ os.makedirs(PHOTOS_DIR, exist_ok=True)
 
 
 class ProfileSetup(BaseModel):
-    name: str
-    title: str
-    bio: str
+    name: str = ""
+    title: str = ""
+    bio: str = ""
     github_urls: list[str] = []
     github_username: str = ""
     target_roles: list[str] = []
+    role_name: str = ""
 
 
 class ChatRequest(BaseModel):
@@ -116,6 +117,22 @@ class LinksRequest(BaseModel):
     links: list[LinkItem] = []
 
 
+class CreatePortfolioRequest(BaseModel):
+    role_name: str = ""
+
+class InterviewPrepRequest(BaseModel):
+    user_id: str
+    job_description: str
+
+
+def owns_portfolio(user: dict, portfolio_id: str) -> bool:
+    """Check if user owns a given portfolio (handles legacy single portfolio_id)."""
+    ids = json.loads(user.get("portfolio_ids") or "[]")
+    if not ids and user.get("portfolio_id"):
+        ids = [user["portfolio_id"]]
+    return portfolio_id in ids
+
+
 # ─── ANALYTICS ENDPOINTS ──────────────────────────────────────────────────────
 @app.post("/analytics/{user_id}/view")
 async def track_view(user_id: str):
@@ -132,7 +149,7 @@ async def track_tab(user_id: str, req: TabEventRequest):
 @app.get("/analytics/{user_id}")
 async def get_user_analytics(user_id: str, authorization: str = Header(None)):
     user = get_current_user(authorization)
-    if user.get("portfolio_id") != user_id:
+    if not owns_portfolio(user, user_id):
         raise HTTPException(status_code=403, detail="Not authorized")
     return get_analytics_data(user_id)
 
@@ -152,18 +169,37 @@ async def login(req: LoginRequest):
     if not user or not verify_password(req.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     token = make_token(user["id"])
-    return {"token": token, "user_type": user["user_type"], "user_id": user["id"], "portfolio_id": user.get("portfolio_id")}
+    portfolio_ids = json.loads(user.get("portfolio_ids") or "[]")
+    if not portfolio_ids and user.get("portfolio_id"):
+        portfolio_ids = [user["portfolio_id"]]
+    primary_id = user.get("primary_portfolio_id") or (portfolio_ids[0] if portfolio_ids else None)
+    return {
+        "token": token, "user_type": user["user_type"], "user_id": user["id"],
+        "portfolio_id": user.get("portfolio_id"),
+        "portfolio_ids": portfolio_ids,
+        "primary_portfolio_id": primary_id
+    }
 
 
 @app.get("/auth/me")
 async def me(authorization: str = Header(None)):
     user = get_current_user(authorization)
     profile_name = None
-    if user.get("portfolio_id"):
-        p = load_profile(user["portfolio_id"])
+    portfolio_ids = json.loads(user.get("portfolio_ids") or "[]")
+    if not portfolio_ids and user.get("portfolio_id"):
+        portfolio_ids = [user["portfolio_id"]]
+    primary_id = user.get("primary_portfolio_id") or (portfolio_ids[0] if portfolio_ids else None)
+    if primary_id:
+        p = load_profile(primary_id)
         if p:
             profile_name = p.get("name")
-    return {"user_id": user["id"], "email": user["email"], "user_type": user["user_type"], "portfolio_id": user.get("portfolio_id"), "profile_name": profile_name}
+    return {
+        "user_id": user["id"], "email": user["email"], "user_type": user["user_type"],
+        "portfolio_id": user.get("portfolio_id"),
+        "portfolio_ids": portfolio_ids,
+        "primary_portfolio_id": primary_id,
+        "profile_name": profile_name
+    }
 
 
 @app.post("/auth/link-portfolio")
@@ -176,7 +212,7 @@ async def link_portfolio_endpoint(req: LinkPortfolioRequest, authorization: str 
 @app.patch("/profile/{user_id}/links")
 async def update_links(user_id: str, req: LinksRequest, authorization: str = Header(None)):
     user = get_current_user(authorization)
-    if user.get("portfolio_id") != user_id:
+    if not owns_portfolio(user, user_id):
         raise HTTPException(status_code=403, detail="Not authorized")
     profile = load_profile(user_id)
     if not profile:
@@ -189,7 +225,7 @@ async def update_links(user_id: str, req: LinksRequest, authorization: str = Hea
 @app.patch("/profile/{user_id}/preferences")
 async def update_preferences(user_id: str, req: PreferencesRequest, authorization: str = Header(None)):
     user = get_current_user(authorization)
-    if user.get("portfolio_id") != user_id:
+    if not owns_portfolio(user, user_id):
         raise HTTPException(status_code=403, detail="Not authorized")
     profile = load_profile(user_id)
     if not profile:
@@ -197,6 +233,92 @@ async def update_preferences(user_id: str, req: PreferencesRequest, authorizatio
     profile["preferences"] = req.dict()
     save_profile(user_id, profile)
     return {"message": "Preferences saved"}
+
+
+@app.post("/portfolio/create")
+async def create_portfolio(req: CreatePortfolioRequest, authorization: str = Header(None)):
+    """Create an additional portfolio for an existing user."""
+    user = get_current_user(authorization)
+    # Copy basic info from primary portfolio if it exists
+    primary_id = user.get("primary_portfolio_id") or user.get("portfolio_id")
+    base_profile = load_profile(primary_id) if primary_id else {}
+
+    new_id = str(uuid.uuid4())[:8]
+    profile = {
+        "user_id": new_id,
+        "name": base_profile.get("name", ""),
+        "title": base_profile.get("title", ""),
+        "bio": base_profile.get("bio", ""),
+        "role_name": req.role_name,
+        "github_urls": [], "github_username": "",
+        "target_roles": [], "documents": [],
+        "indexed": False, "education": [], "experience": [],
+        "skills": [], "linkedin_summary": "",
+        "github_repos": [], "resume_projects": [], "photo_ext": None,
+        "resume_filename": None,
+    }
+    save_profile(new_id, profile)
+    add_portfolio_to_user(user["id"], new_id)
+    return {"portfolio_id": new_id, "role_name": req.role_name, "message": "Portfolio created"}
+
+
+@app.get("/portfolios/mine")
+async def list_my_portfolios(authorization: str = Header(None)):
+    """Return all portfolios for the current user with summary info."""
+    user = get_current_user(authorization)
+    portfolio_ids = json.loads(user.get("portfolio_ids") or "[]")
+    if not portfolio_ids and user.get("portfolio_id"):
+        portfolio_ids = [user["portfolio_id"]]
+    primary_id = user.get("primary_portfolio_id") or (portfolio_ids[0] if portfolio_ids else "")
+
+    portfolios = []
+    for pid in portfolio_ids:
+        p = load_profile(pid)
+        if not p:
+            continue
+        portfolios.append({
+            "id": pid,
+            "role_name": p.get("role_name", "") or p.get("title", "") or "My Portfolio",
+            "name": p.get("name", ""),
+            "title": p.get("title", ""),
+            "built": bool(p.get("indexed", False)),
+            "is_primary": pid == primary_id,
+            "has_linkedin": bool(p.get("linkedin_summary") or p.get("experience")),
+            "has_resume": bool(p.get("resume_projects")),
+            "has_github": bool(p.get("github_urls")),
+        })
+    return {"portfolios": portfolios, "primary_portfolio_id": primary_id}
+
+
+@app.patch("/portfolio/{portfolio_id}/set-primary")
+async def set_primary(portfolio_id: str, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    if not owns_portfolio(user, portfolio_id):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    set_primary_portfolio(user["id"], portfolio_id)
+    return {"message": "Primary portfolio updated"}
+
+
+@app.delete("/portfolio/{portfolio_id}")
+async def delete_portfolio(portfolio_id: str, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    if not owns_portfolio(user, portfolio_id):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    portfolio_ids = json.loads(user.get("portfolio_ids") or "[]")
+    if len(portfolio_ids) <= 1:
+        raise HTTPException(status_code=400, detail="Cannot delete your only portfolio")
+    remove_portfolio_from_user(user["id"], portfolio_id)
+    # Clean up files (best effort)
+    try:
+        profile_path = os.path.join(PROFILES_DIR, f"{portfolio_id}.json")
+        if os.path.exists(profile_path):
+            os.remove(profile_path)
+        index_path = os.path.join(INDEXES_DIR, portfolio_id)
+        if os.path.exists(index_path):
+            shutil.rmtree(index_path)
+    except Exception:
+        pass
+    return {"message": "Portfolio deleted"}
 
 
 @app.post("/profile/{user_id}/github")
@@ -725,7 +847,7 @@ async def setup_profile(data: ProfileSetup):
         "indexed": False, "education": [], "experience": [],
         "skills": [], "linkedin_summary": "",
         "github_repos": [], "resume_projects": [], "photo_ext": None,
-        "resume_filename": None
+        "resume_filename": None, "role_name": data.role_name
     }
     save_profile(user_id, profile)
     return {"user_id": user_id, "message": "Profile created"}
@@ -880,6 +1002,55 @@ async def gap_analysis_endpoint(req: GapRequest):
     jd = req.job_description.strip() or req.target_role.strip()
     result = analyze_gap(jd, req.user_id, profile["name"], profile)
     return result
+
+
+@app.post("/interview-prep")
+async def interview_prep(req: InterviewPrepRequest):
+    profile = load_profile(req.user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    from gap_analysis import build_profile_context
+    profile_context = build_profile_context(profile)
+
+    system = """You are an expert interview coach preparing a candidate for a specific role.
+
+Given the job description and candidate profile, generate 8 targeted interview questions they are likely to face — a mix of behavioral, technical, and situational. Focus especially on areas where their profile has gaps vs the JD.
+
+For each question, provide a specific talking point drawn from their actual profile (real companies, projects, tools).
+
+Respond ONLY with valid JSON (no markdown):
+{
+  "questions": [
+    {
+      "type": "behavioral|technical|situational",
+      "question": "<the interview question>",
+      "why_asked": "<1 sentence: what the interviewer is probing for>",
+      "talking_point": "<specific answer guidance using their actual profile — mention real projects, companies, tools>"
+    }
+  ]
+}"""
+
+    user_message = f"""JOB DESCRIPTION:
+{req.job_description}
+
+---
+
+CANDIDATE PROFILE:
+{profile_context}
+
+Generate 8 interview questions with talking points tailored to this candidate and role."""
+
+    raw = call_groq([
+        {"role": "system", "content": system},
+        {"role": "user", "content": user_message}
+    ], max_tokens=2500, temperature=0.3)
+    raw = raw.replace("```json", "").replace("```", "").strip()
+
+    try:
+        return json.loads(raw)
+    except Exception as e:
+        return {"error": f"Could not parse response: {str(e)}", "raw": raw[:500]}
 
 
 @app.post("/cover-letter")

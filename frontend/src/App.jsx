@@ -2564,8 +2564,85 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange }) {
   );
 }
 
+// ─── INTERVIEW PREP ───────────────────────────────────────────────────────────
+function InterviewPrep({ userId, jd: initialJd }) {
+  const [jd, setJd] = useState(initialJd || "");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(null);
+
+  const TYPE_COLOR = { behavioral: "var(--rose)", technical: "var(--teal)", situational: "var(--amber)" };
+  const TYPE_LABEL = { behavioral: "Behavioral", technical: "Technical", situational: "Situational" };
+
+  const generate = async () => {
+    if (!jd.trim()) return;
+    setLoading(true); setError(null); setResult(null);
+    try {
+      const res = await axios.post(`${API}/interview-prep`, { user_id: userId, job_description: jd });
+      setResult(res.data.questions || []);
+    } catch { setError("Failed to generate. Please try again."); }
+    finally { setLoading(false); }
+  };
+
+  const copyQ = (i, text) => {
+    navigator.clipboard.writeText(text);
+    setCopied(i); setTimeout(() => setCopied(null), 2000);
+  };
+
+  return (
+    <div>
+      <SecHead>Interview Prep</SecHead>
+      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 18, lineHeight: 1.6 }}>
+        Paste a job description and get targeted interview questions with talking points drawn from your actual profile.
+      </div>
+      <textarea value={jd} onChange={e => setJd(e.target.value)}
+        placeholder="Paste the job description here..."
+        rows={6} style={{ width: "100%", marginBottom: 12, resize: "vertical" }} />
+      <Btn onClick={generate} disabled={loading || !jd.trim()} style={{ marginBottom: 24 }}>
+        {loading ? <><Spinner size={14} color="#fff" /> Generating questions…</> : <><Icon name="zap" size={14} color="#fff" /> Generate Interview Questions</>}
+      </Btn>
+      {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+      {result && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "fadeUp 0.3s ease" }}>
+          {result.map((q, i) => {
+            const color = TYPE_COLOR[q.type] || "var(--accent)";
+            return (
+              <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px", borderLeft: `3px solid ${color}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color, background: color + "18", border: `1px solid ${color}40`, padding: "2px 8px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      {TYPE_LABEL[q.type] || q.type}
+                    </span>
+                    <span style={{ fontSize: 12, color: "var(--text3)" }}>Q{i + 1}</span>
+                  </div>
+                  <button onClick={() => copyQ(i, `Q: ${q.question}\n\nTalking point: ${q.talking_point}`)}
+                    style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-sm)", color: copied === i ? "var(--teal)" : "var(--text3)", padding: "3px 9px", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                    <Icon name={copied === i ? "check" : "copy"} size={11} color={copied === i ? "var(--teal)" : "var(--text3)"} />
+                    {copied === i ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--text)", marginBottom: 8, lineHeight: 1.5 }}>"{q.question}"</div>
+                {q.why_asked && (
+                  <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 10, fontStyle: "italic" }}>
+                    Why asked: {q.why_asked}
+                  </div>
+                )}
+                <div style={{ background: "var(--bg1)", borderRadius: "var(--r-md)", padding: "12px 14px", borderLeft: `2px solid ${color}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Your talking point</div>
+                  <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.75 }}>{q.talking_point}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── SEEKER PROFILE DASHBOARD ────────────────────────────────────────────────
-function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
+function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId }) {
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [tab, setTab] = useState("build");
@@ -2582,18 +2659,33 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
   // Lifted AI tab state
   const [gapRole, setGapRole] = useState(""); const [gapResult, setGapResult] = useState(null); const [gapError, setGapError] = useState(null);
   const [clJd, setClJd] = useState(""); const [clCompany, setClCompany] = useState(""); const [clRole, setClRole] = useState(""); const [clResult, setClResult] = useState(null);
+  // Multi-portfolio state
+  const [portfolios, setPortfolios] = useState([]);
+  const [activePortfolioId, setActivePortfolioId] = useState(initialPortfolioId);
+  const [creatingPortfolio, setCreatingPortfolio] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [creatingLoading, setCreatingLoading] = useState(false);
 
   const loadProfile = async () => {
     try {
-      const r = await axios.get(`${API}/profile/${portfolioId}`);
+      const r = await axios.get(`${API}/profile/${activePortfolioId}`);
       setProfile(r.data);
       setBuilt(r.data.indexed);
     } catch {} finally { setProfileLoading(false); }
   };
 
-  useEffect(() => { loadProfile(); }, [portfolioId]);
+  const loadPortfolios = async () => {
+    try {
+      const r = await axios.get(`${API}/portfolios/mine`, { headers: { Authorization: `Bearer ${auth.token}` } });
+      setPortfolios(r.data.portfolios || []);
+    } catch {}
+  };
 
-  const shareSlug = auth.profile_name ? `${nameToSlug(auth.profile_name)}-${portfolioId}` : portfolioId;
+  useEffect(() => { loadProfile(); loadPortfolios(); }, [activePortfolioId]);
+
+  const activePortfolio = portfolios.find(p => p.id === activePortfolioId);
+  const roleSlug = activePortfolio?.role_name ? `-${nameToSlug(activePortfolio.role_name)}` : "";
+  const shareSlug = auth.profile_name ? `${nameToSlug(auth.profile_name)}${roleSlug}-${activePortfolioId}` : activePortfolioId;
   const shareUrl = `${window.location.origin}${window.location.pathname}#/portfolio/${shareSlug}`;
 
   const addAllGithubRepos = async () => {
@@ -2605,7 +2697,7 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
       const res = await axios.get(`${API}/github/repos?username=${username}`);
       const repos = res.data.repos || [];
       for (const repo of repos) {
-        await axios.post(`${API}/profile/${portfolioId}/github`, { github_url: repo.url });
+        await axios.post(`${API}/profile/${activePortfolioId}/github`, { github_url: repo.url });
       }
       setGithubUrl(""); setAddingGithub(false);
       await loadProfile();
@@ -2614,7 +2706,7 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
 
   const uploadFile = async (file, type) => {
     const f = new FormData(); f.append("file", file);
-    const ep = type === "linkedin" ? `/upload/linkedin/${portfolioId}` : `/upload/document/${portfolioId}`;
+    const ep = type === "linkedin" ? `/upload/linkedin/${activePortfolioId}` : `/upload/document/${activePortfolioId}`;
     await axios.post(`${API}${ep}`, f);
     await loadProfile();
   };
@@ -2622,7 +2714,7 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
   const saveLinks = async (updatedLinks) => {
     setLinkSaving(true);
     try {
-      await axios.patch(`${API}/profile/${portfolioId}/links`, { links: updatedLinks }, { headers: { Authorization: `Bearer ${auth.token}` } });
+      await axios.patch(`${API}/profile/${activePortfolioId}/links`, { links: updatedLinks }, { headers: { Authorization: `Bearer ${auth.token}` } });
       await loadProfile();
     } catch {} finally { setLinkSaving(false); }
   };
@@ -2630,10 +2722,30 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
   const buildPortfolio = async () => {
     setBuilding(true); setBuildError(null);
     try {
-      await axios.post(`${API}/index/${portfolioId}`);
+      await axios.post(`${API}/index/${activePortfolioId}`);
       setBuilt(true); await loadProfile();
     } catch { setBuildError("Build failed. Please try again."); }
     finally { setBuilding(false); }
+  };
+
+  const createPortfolio = async () => {
+    if (!newRoleName.trim()) return;
+    setCreatingLoading(true);
+    try {
+      const r = await axios.post(`${API}/portfolio/create`, { role_name: newRoleName.trim() }, { headers: { Authorization: `Bearer ${auth.token}` } });
+      const newId = r.data.portfolio_id;
+      setActivePortfolioId(newId);
+      setNewRoleName("");
+      setCreatingPortfolio(false);
+      await loadPortfolios();
+    } catch {} finally { setCreatingLoading(false); }
+  };
+
+  const setPrimary = async (pid) => {
+    try {
+      await axios.patch(`${API}/portfolio/${pid}/set-primary`, {}, { headers: { Authorization: `Bearer ${auth.token}` } });
+      await loadPortfolios();
+    } catch {}
   };
 
   if (profileLoading) return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}><Spinner size={32} /></div>;
@@ -2647,6 +2759,7 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
     { id: "gap", label: "Gap Analysis", icon: "target" },
     { id: "cover", label: "Cover Letter", icon: "file" },
     { id: "analytics", label: "Analytics", icon: "chart" },
+    { id: "interview", label: "Interview Prep", icon: "zap" },
   ];
 
   return (
@@ -2672,9 +2785,53 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", display: "flex", gap: 24, alignItems: "flex-start" }}>
         {/* LEFT SIDEBAR */}
         <div style={{ width: 300, flexShrink: 0 }}>
+          {/* Portfolio switcher */}
+          {portfolios.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>Portfolios</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {portfolios.map(p => (
+                  <button key={p.id} onClick={() => { setActivePortfolioId(p.id); setProfile(null); setBuilt(false); }}
+                    style={{
+                      padding: "5px 12px", borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                      background: p.id === activePortfolioId ? "var(--accent-d)" : "var(--bg2)",
+                      border: `1px solid ${p.id === activePortfolioId ? "var(--accent-b)" : "var(--line2)"}`,
+                      color: p.id === activePortfolioId ? "var(--accent)" : "var(--text3)",
+                      display: "flex", alignItems: "center", gap: 5, transition: "all 0.15s"
+                    }}>
+                    {p.role_name}
+                    {p.is_primary && <span style={{ fontSize: 9, color: "var(--accent)", fontWeight: 800 }}>★</span>}
+                    {p.built && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--teal)", display: "inline-block" }} />}
+                  </button>
+                ))}
+                <button onClick={() => setCreatingPortfolio(v => !v)}
+                  style={{ padding: "5px 10px", borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: "pointer", background: "transparent", border: "1px dashed var(--line2)", color: "var(--text3)" }}>
+                  + New
+                </button>
+              </div>
+              {creatingPortfolio && (
+                <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+                  <input value={newRoleName} onChange={e => setNewRoleName(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && createPortfolio()}
+                    placeholder="e.g. Data Analyst" autoFocus
+                    style={{ flex: 1, fontSize: 12, padding: "6px 10px", background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text)", outline: "none" }} />
+                  <button onClick={createPortfolio} disabled={!newRoleName.trim() || creatingLoading}
+                    style={{ padding: "6px 12px", borderRadius: "var(--r-md)", background: "var(--accent)", border: "none", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: (!newRoleName.trim() || creatingLoading) ? 0.5 : 1 }}>
+                    {creatingLoading ? "…" : "Create"}
+                  </button>
+                </div>
+              )}
+              {portfolios.length > 1 && portfolios.find(p => p.id === activePortfolioId && !p.is_primary) && (
+                <button onClick={() => setPrimary(activePortfolioId)}
+                  style={{ marginTop: 8, fontSize: 11, color: "var(--text3)", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
+                  Set as primary portfolio
+                </button>
+              )}
+            </div>
+          )}
           {/* Profile card */}
           <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px", marginBottom: 14 }}>
-            <div style={{ marginBottom: 14 }}><ProfilePhoto userId={portfolioId} name={profile?.name} size={72} /></div>
+            <div style={{ marginBottom: 14 }}><ProfilePhoto userId={activePortfolioId} name={profile?.name} size={72} /></div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 3 }}>{profile?.name}</div>
               {profile?.title && <div style={{ fontSize: 12.5, color: "var(--text3)" }}>{profile.title}</div>}
@@ -2707,7 +2864,7 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
                     setGithubLoading(true);
                     try {
                       for (const url of urls) {
-                        await axios.post(`${API}/profile/${portfolioId}/github`, { github_url: url });
+                        await axios.post(`${API}/profile/${activePortfolioId}/github`, { github_url: url });
                       }
                       setAddingGithub(false);
                       await loadProfile();
@@ -2843,23 +3000,28 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
 
               {/* Customize section inline */}
               <div style={{ marginTop: 36, borderTop: "1px solid var(--line)", paddingTop: 28 }}>
-                <CustomizeTab portfolioId={portfolioId} auth={auth} profile={profile} onPrefsChange={(p) => setProfile(prev => ({ ...prev, preferences: p }))} />
+                <CustomizeTab portfolioId={activePortfolioId} auth={auth} profile={profile} onPrefsChange={(p) => setProfile(prev => ({ ...prev, preferences: p }))} />
               </div>
             </div>
 
             {/* Gap Analysis */}
             <div style={{ display: tab === "gap" ? "block" : "none" }}>
-              <GapAnalysis userId={portfolioId} role={gapRole} setRole={setGapRole} result={gapResult} setResult={setGapResult} error={gapError} setError={setGapError} />
+              <GapAnalysis userId={activePortfolioId} role={gapRole} setRole={setGapRole} result={gapResult} setResult={setGapResult} error={gapError} setError={setGapError} />
             </div>
 
             {/* Cover Letter */}
             <div style={{ display: tab === "cover" ? "block" : "none" }}>
-              <CoverLetter userId={portfolioId} profile={profile} jd={clJd} setJd={setClJd} company={clCompany} setCompany={setClCompany} role={clRole} setRole={setClRole} result={clResult} setResult={setClResult} />
+              <CoverLetter userId={activePortfolioId} profile={profile} jd={clJd} setJd={setClJd} company={clCompany} setCompany={setClCompany} role={clRole} setRole={setClRole} result={clResult} setResult={setClResult} />
             </div>
 
             {/* Analytics */}
             {tab === "analytics" && (
-              <PortfolioAnalytics portfolioId={portfolioId} token={auth.token} />
+              <PortfolioAnalytics portfolioId={activePortfolioId} token={auth.token} />
+            )}
+
+            {/* Interview Prep */}
+            {tab === "interview" && (
+              <InterviewPrep userId={activePortfolioId} jd={gapRole} />
             )}
 
           </div>
@@ -2873,7 +3035,7 @@ function SeekerProfileDashboard({ auth, onLogout, portfolioId }) {
 function SeekerDashboard({ auth, setAuth, onLogout }) {
   const portfolioId = auth.portfolio_id || null;
   if (!portfolioId) return <MinimalProfileSetup auth={auth} setAuth={setAuth} onLogout={onLogout} />;
-  return <SeekerProfileDashboard auth={auth} setAuth={setAuth} onLogout={onLogout} portfolioId={portfolioId} />;
+  return <SeekerProfileDashboard auth={auth} setAuth={setAuth} onLogout={onLogout} initialPortfolioId={portfolioId} />;
 }
 
 // ─── APP ─────────────────────────────────────────────────────────────────────
