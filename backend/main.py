@@ -236,6 +236,22 @@ async def update_preferences(user_id: str, req: PreferencesRequest, authorizatio
     return {"message": "Preferences saved"}
 
 
+@app.patch("/profile/{user_id}/headline")
+async def update_headline(user_id: str, req: dict, authorization: str = Header(None)):
+    user = get_current_user(authorization)
+    if not owns_portfolio(user, user_id):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    profile = load_profile(user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    if "title" in req:
+        profile["title"] = req["title"]
+    if "tagline" in req:
+        profile["tagline"] = req["tagline"]
+    save_profile(user_id, profile)
+    return {"message": "Headline saved"}
+
+
 @app.post("/portfolio/create")
 async def create_portfolio(req: CreatePortfolioRequest, authorization: str = Header(None)):
     """Create an additional portfolio for an existing user."""
@@ -891,11 +907,8 @@ async def upload_document(user_id: str, file: UploadFile = File(...)):
 
     print(f"[Resume] Extracting from {file.filename}...")
     extracted = extract_resume_data(parsed.get("raw_text", ""), file.filename)
-    existing_names = {p.get("name", "").lower()
-                      for p in profile.get("resume_projects", [])}
-    new_projects = [p for p in extracted["projects"]
-                    if p.get("name", "").lower() not in existing_names]
-    profile.setdefault("resume_projects", []).extend(new_projects)
+    # Replace resume_projects entirely — uploading a new resume replaces the old one
+    profile["resume_projects"] = extracted.get("projects", [])
     existing_skills = {s.lower() for s in profile.get("skills", [])}
     new_skills = [s for s in extracted["skills"]
                   if s.lower() not in existing_skills]
@@ -912,7 +925,7 @@ async def upload_document(user_id: str, file: UploadFile = File(...)):
             profile["phone"] = contact["phone"]
     profile["indexed"] = False
     save_profile(user_id, profile)
-    return {"message": f"{file.filename} uploaded", "extracted": {"projects": len(new_projects), "skills": len(new_skills)}}
+    return {"message": f"{file.filename} uploaded", "extracted": {"projects": len(extracted.get("projects", [])), "skills": len(new_skills)}}
 
 
 @app.post("/index/{user_id}")

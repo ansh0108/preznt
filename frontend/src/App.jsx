@@ -2531,11 +2531,15 @@ function PortfolioAnalytics({ portfolioId, token }) {
 }
 
 // ─── CUSTOMIZE TAB ────────────────────────────────────────────────────────────
-function CustomizeTab({ portfolioId, auth, profile, onPrefsChange }) {
+function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChange }) {
   const DEFAULT_PREFS = { accent: "#818cf8", dark_mode: true, template: "sidebar", hide_sections: [], featured_repos: [] };
   const [prefs, setPrefs] = useState(profile?.preferences || DEFAULT_PREFS);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [title, setTitle] = useState(profile?.title || "");
+  const [tagline, setTagline] = useState(profile?.tagline || "");
+  const [headlineSaving, setHeadlineSaving] = useState(false);
+  const [headlineSaved, setHeadlineSaved] = useState(false);
 
   useEffect(() => {
     if (profile?.preferences) setPrefs({ ...DEFAULT_PREFS, ...profile.preferences });
@@ -2553,6 +2557,15 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange }) {
   const update = (key, val) => {
     const next = { ...prefs, [key]: val };
     setPrefs(next); save(next);
+  };
+
+  const saveHeadline = async () => {
+    setHeadlineSaving(true);
+    try {
+      await axios.patch(`${API}/profile/${portfolioId}/headline`, { title, tagline }, { headers: { Authorization: `Bearer ${auth.token}` } });
+      setHeadlineSaved(true); onProfileChange?.();
+      setTimeout(() => setHeadlineSaved(false), 2000);
+    } catch {} finally { setHeadlineSaving(false); }
   };
 
   const toggleSection = (sec) => {
@@ -2609,6 +2622,23 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange }) {
         {saved && <span style={{ marginLeft: 12, color: "var(--teal)", fontWeight: 600 }}>Saved!</span>}
         {saving && <span style={{ marginLeft: 12, color: "var(--text3)" }}>Saving…</span>}
       </div>
+
+      {/* Headline */}
+      <Row label="Headline">
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. AI Engineer · ML & LLM Systems"
+            style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", padding: "9px 12px", fontSize: 13, color: "var(--text)", outline: "none" }} />
+          <input value={tagline} onChange={e => setTagline(e.target.value)} placeholder="Short tagline (optional) — shown below your name"
+            style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", padding: "9px 12px", fontSize: 13, color: "var(--text)", outline: "none" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button className="b-primary" onClick={saveHeadline} disabled={headlineSaving}
+              style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: "var(--r-md)", padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              {headlineSaving ? "Saving…" : "Save"}
+            </button>
+            {headlineSaved && <span style={{ fontSize: 12, color: "var(--teal)", fontWeight: 600 }}>Saved!</span>}
+          </div>
+        </div>
+      </Row>
 
       {/* Accent color */}
       <Row label="Accent Color">
@@ -3275,7 +3305,7 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
 
               {/* Customize section inline */}
               <div style={{ marginTop: 36, borderTop: "1px solid var(--line)", paddingTop: 28 }}>
-                <CustomizeTab portfolioId={activePortfolioId} auth={auth} profile={profile} onPrefsChange={(p) => setProfile(prev => ({ ...prev, preferences: p }))} />
+                <CustomizeTab portfolioId={activePortfolioId} auth={auth} profile={profile} onPrefsChange={(p) => setProfile(prev => ({ ...prev, preferences: p }))} onProfileChange={loadProfile} />
               </div>
             </div>
 
