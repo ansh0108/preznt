@@ -1772,8 +1772,18 @@ function PortfolioPage({ userId, onBack }) {
                 {profile.tagline}
               </div>
             )}
-            {(profile.github_username || profile.has_resume) && (
+            {(profile.github_username || profile.has_resume || profile.linkedin_url) && (
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
+                {profile.linkedin_url && (
+                  <a href={profile.linkedin_url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                    <button style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "var(--bg3)", border: "1px solid var(--line2)", color: "var(--text2)", borderRadius: "var(--r-md)", padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "#0a66c2"; e.currentTarget.style.color = "#0a66c2"; e.currentTarget.style.background = "rgba(10,102,194,0.1)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line2)"; e.currentTarget.style.color = "var(--text2)"; e.currentTarget.style.background = "var(--bg3)"; }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                      LinkedIn Profile
+                    </button>
+                  </a>
+                )}
                 {profile.github_username && (
                   <a href={`https://github.com/${profile.github_username}`} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
                     <button style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "var(--bg3)", border: "1px solid var(--line2)", color: "var(--text2)", borderRadius: "var(--r-md)", padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}
@@ -2538,6 +2548,7 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
   const [saved, setSaved] = useState(false);
   const [title, setTitle] = useState(profile?.title || "");
   const [tagline, setTagline] = useState(profile?.tagline || "");
+  const [linkedinUrl, setLinkedinUrl] = useState(profile?.linkedin_url || "");
   const [headlineSaving, setHeadlineSaving] = useState(false);
   const [headlineSaved, setHeadlineSaved] = useState(false);
 
@@ -2562,7 +2573,7 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
   const saveHeadline = async () => {
     setHeadlineSaving(true);
     try {
-      await axios.patch(`${API}/profile/${portfolioId}/headline`, { title, tagline }, { headers: { Authorization: `Bearer ${auth.token}` } });
+      await axios.patch(`${API}/profile/${portfolioId}/headline`, { title, tagline, linkedin_url: linkedinUrl }, { headers: { Authorization: `Bearer ${auth.token}` } });
       setHeadlineSaved(true); onProfileChange?.();
       setTimeout(() => setHeadlineSaved(false), 2000);
     } catch {} finally { setHeadlineSaving(false); }
@@ -2626,10 +2637,12 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
       {/* Headline */}
       <Row label="Headline">
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. AI Engineer · ML & LLM Systems"
-            style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", padding: "9px 12px", fontSize: 13, color: "var(--text)", outline: "none" }} />
-          <input value={tagline} onChange={e => setTagline(e.target.value)} placeholder="Short tagline (optional) — shown below your name"
-            style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", padding: "9px 12px", fontSize: 13, color: "var(--text)", outline: "none" }} />
+          <input type="text" value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.stopPropagation()} placeholder="e.g. AI Engineer · ML & LLM Systems"
+            style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", padding: "9px 12px", fontSize: 13, color: "var(--text)", outline: "none", boxSizing: "border-box" }} />
+          <input type="text" value={tagline} onChange={e => setTagline(e.target.value)} onKeyDown={e => e.stopPropagation()} placeholder="Short tagline (optional) — e.g. Building AI-powered products"
+            style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", padding: "9px 12px", fontSize: 13, color: "var(--text)", outline: "none", boxSizing: "border-box" }} />
+          <input type="text" value={linkedinUrl} onChange={e => setLinkedinUrl(e.target.value)} onKeyDown={e => e.stopPropagation()} placeholder="LinkedIn URL — https://linkedin.com/in/yourprofile"
+            style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", padding: "9px 12px", fontSize: 13, color: "var(--text)", outline: "none", boxSizing: "border-box" }} />
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <button className="b-primary" onClick={saveHeadline} disabled={headlineSaving}
               style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: "var(--r-md)", padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
@@ -3105,7 +3118,7 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
           <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px", marginBottom: 14, position: "relative", overflow: "hidden" }}>
             {built && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, var(--accent), var(--teal), var(--accent))", backgroundSize: "200% 100%", animation: "gradient-x 3s ease infinite" }} />}
             <div style={{ marginBottom: 14 }}>
-              <ProfilePhoto userId={activePortfolioId} name={profile?.name} size={72} onUpload={() => document.getElementById("dash-photo-upload").click()} />
+              <ProfilePhoto key={`photo-${activePortfolioId}-${profile?.photo_ext || "none"}`} userId={profile?.has_photo ? activePortfolioId : null} name={profile?.name} size={72} onUpload={() => document.getElementById("dash-photo-upload").click()} />
               <input id="dash-photo-upload" type="file" accept="image/*" style={{ display: "none" }} onChange={async e => {
                 const file = e.target.files[0]; if (!file) return;
                 const fd = new FormData(); fd.append("file", file);

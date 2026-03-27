@@ -248,6 +248,8 @@ async def update_headline(user_id: str, req: dict, authorization: str = Header(N
         profile["title"] = req["title"]
     if "tagline" in req:
         profile["tagline"] = req["tagline"]
+    if "linkedin_url" in req:
+        profile["linkedin_url"] = req["linkedin_url"]
     save_profile(user_id, profile)
     return {"message": "Headline saved"}
 
@@ -1200,6 +1202,7 @@ async def get_profile(user_id: str):
         "skill_clusters": profile.get("skill_clusters", {}),
         "target_roles": profile.get("target_roles", []),
         "tagline": profile.get("tagline", ""),
+        "linkedin_url": profile.get("linkedin_url", ""),
         "email": profile.get("email", ""),
         "phone": profile.get("phone", ""),
         "indexed": profile.get("indexed", False),
