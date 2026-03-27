@@ -1270,16 +1270,43 @@ function GapAnalysis({ userId, role, setRole, result, setResult, error, setError
             </Section>
           )}
 
-          {/* Bullet improvements */}
-          {result.bullet_improvements?.length > 0 && (
-            <Section title="Resume Bullet Rewrites (XYZ Format)" color="var(--rose)" icon="wrench">
-              <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 14 }}>Click the improved version to copy it.</div>
+          {/* Suggested skills to add */}
+          {result.suggested_skills?.length > 0 && (
+            <Section title="Skills to Add to Your Resume" color="var(--teal)" icon="plus">
+              <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 12 }}>
+                These tools and skills appear in the JD but are missing from your profile. Add them to your skills section if you have experience with them.
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {result.suggested_skills.map((skill, i) => (
+                  <button key={i} onClick={() => copyText(skill, `skill-${i}`)}
+                    className="b-pill"
+                    style={{
+                      padding: "6px 14px", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      background: copied === `skill-${i}` ? "rgba(45,212,191,0.12)" : "var(--bg2)",
+                      border: `1px solid ${copied === `skill-${i}` ? "var(--teal)" : "var(--line2)"}`,
+                      color: copied === `skill-${i}` ? "var(--teal)" : "var(--text2)",
+                      display: "flex", alignItems: "center", gap: 5,
+                    }}>
+                    {copied === `skill-${i}` ? <Icon name="check" size={11} color="var(--teal)" /> : <Icon name="plus" size={11} color="var(--text3)" />}
+                    {skill}
+                  </button>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {/* Bullet improvements — Experience & Projects only */}
+          {result.bullet_improvements?.filter(b => b.section?.toLowerCase() !== "skills").length > 0 && (
+            <Section title="Resume Bullet Rewrites (STAR Format)" color="var(--rose)" icon="wrench">
+              <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 14 }}>
+                Rewrites match the original length so they slot into your resume without breaking formatting. Click the improved version to copy.
+              </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {result.bullet_improvements.map((b, i) => (
+                {result.bullet_improvements.filter(b => b.section?.toLowerCase() !== "skills").map((b, i) => (
                   <div key={i} style={{ borderRadius: "var(--r-md)", overflow: "hidden", border: "1px solid var(--line2)" }}>
                     <div style={{ padding: "10px 14px", background: "var(--bg2)", borderBottom: "1px solid var(--line)" }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5 }}>Section: {b.section}</div>
-                      <div style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic", lineHeight: 1.5 }}>Before: {b.original}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5 }}>{b.section}</div>
+                      <div style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic", lineHeight: 1.6 }}>{b.original}</div>
                     </div>
                     <div
                       onClick={() => copyText(b.improved, i)}
@@ -1291,7 +1318,7 @@ function GapAnalysis({ userId, role, setRole, result, setResult, error, setError
                           <Icon name={copied === i ? "check" : "copy"} size={13} color={copied === i ? "var(--teal)" : "var(--text3)"} />
                         </div>
                       </div>
-                      {b.why && <div style={{ fontSize: 11.5, color: "var(--accent)", marginTop: 6 }}>{b.why}</div>}
+                      {b.why && <div style={{ fontSize: 11.5, color: "var(--accent)", marginTop: 6, lineHeight: 1.5 }}>{b.why}</div>}
                     </div>
                   </div>
                 ))}

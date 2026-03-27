@@ -95,8 +95,9 @@ Respond ONLY with valid JSON in this EXACT format (no extra keys, no markdown):
   "missing_keywords": [
     {{"keyword": "<missing JD keyword>", "importance": "<Must Have|Nice to Have>", "context": "<why it matters for this role, 1 sentence>"}}
   ],
+  "suggested_skills": ["<skill or tool name only — short keyword, e.g. 'Tableau', 'dbt', 'Spark' — mentioned in JD but absent from profile>"],
   "bullet_improvements": [
-    {{"section": "<Experience/Project/Skills>", "original": "<existing bullet or description>", "improved": "<rewritten in Google XYZ format: Accomplished X by doing Y, resulting in Z>", "why": "<what makes this version better for ATS and human readers>"}}
+    {{"section": "<Experience|Project>", "original": "<the EXACT existing sentence or bullet from their Experience or Project sections>", "improved": "<rewritten using STAR format: Situation/Task + Action + Result — must be approximately the same character length as the original (±20%), so it fits the same space on a resume>", "why": "<what makes this version better for ATS and human readers>"}}
   ],
   "tone_feedback": "<1-2 paragraphs on tone, framing, and positioning — how to present their background as impactful and relevant, not academic or generic>",
   "differentiation_tips": ["<specific tip for standing out — each should be actionable and role-specific>"],
@@ -110,11 +111,14 @@ SCORING GUIDE for ats_score:
 - 0-39: Weak match, major skill or domain mismatch
 
 IMPORTANT:
-- bullet_improvements: use REAL content from their profile as "original", rewrite it in XYZ format
+- bullet_improvements: ONLY improve Experience or Project bullets — NEVER touch the Skills section
+- bullet_improvements: "original" must be a real sentence copied verbatim from their profile (not a list of skill names)
+- bullet_improvements: "improved" must follow STAR format AND be approximately the same length as "original" (±20% characters) — resume spacing matters
+- suggested_skills: ONLY short skill/tool keyword names (e.g. "Tableau", "Power BI", "dbt") from the JD that are absent from the profile — never full sentences
 - Be specific — reference actual companies, projects, tools from their profile
 - Do NOT give generic advice. Every item must be tied to their actual profile and this specific JD
 - missing_keywords: only include things actually mentioned in the JD that are absent from the profile
-- Provide at least 2 bullet_improvements, 3 strengths, 3 missing keywords (if any), and 3 quick wins"""
+- Provide at least 2 bullet_improvements (Experience/Project only), 3 strengths, 3 missing keywords (if any), and 3 quick wins"""
 
     user_message = f"""JOB DESCRIPTION:
 {job_description}
