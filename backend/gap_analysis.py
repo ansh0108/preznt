@@ -97,7 +97,7 @@ Respond ONLY with valid JSON in this EXACT format (no extra keys, no markdown):
   ],
   "suggested_skills": ["<skill or tool name only — short keyword, e.g. 'Tableau', 'dbt', 'Spark' — mentioned in JD but absent from profile>"],
   "bullet_improvements": [
-    {{"section": "<Experience|Project>", "original": "<the EXACT existing sentence or bullet from their Experience or Project sections>", "improved": "<rewritten using STAR format: Situation/Task + Action + Result — must be approximately the same character length as the original (±20%), so it fits the same space on a resume>", "why": "<what makes this version better for ATS and human readers>"}}
+    {{"section": "<Experience|Project>", "original": "<the EXACT existing sentence or bullet from their Experience or Project sections>", "improved": "<rewritten using STAR format: Situation/Task + Action + Result — must be within ±5% of the original's character count, so it fits the exact same space on a resume without any reformatting>", "why": "<what makes this version better for ATS and human readers>"}}
   ],
   "tone_feedback": "<1-2 paragraphs on tone, framing, and positioning — how to present their background as impactful and relevant, not academic or generic>",
   "differentiation_tips": ["<specific tip for standing out — each should be actionable and role-specific>"],
@@ -113,7 +113,7 @@ SCORING GUIDE for ats_score:
 IMPORTANT:
 - bullet_improvements: ONLY improve Experience or Project bullets — NEVER touch the Skills section
 - bullet_improvements: "original" must be a real sentence copied verbatim from their profile (not a list of skill names)
-- bullet_improvements: "improved" must follow STAR format AND be approximately the same length as "original" (±20% characters) — resume spacing matters
+- bullet_improvements: "improved" must follow STAR format AND be within ±5% of the original's character count — resume line width and spacing must be preserved exactly
 - suggested_skills: ONLY short skill/tool keyword names (e.g. "Tableau", "Power BI", "dbt") from the JD that are absent from the profile — never full sentences
 - Be specific — reference actual companies, projects, tools from their profile
 - Do NOT give generic advice. Every item must be tied to their actual profile and this specific JD
