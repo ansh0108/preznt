@@ -1315,6 +1315,28 @@ function UploadRow({ label, icon, done, accept, onFile }) {
 }
 
 // ─── COVER LETTER ────────────────────────────────────────────────────────────
+function extractCompanyFromJD(jd) {
+  if (!jd?.trim()) return "";
+  const text = jd.trim();
+  // "About [Company]" section header
+  const aboutM = text.match(/\bAbout\s+([A-Z][A-Za-z0-9\s&,.'"-]{2,40}?)(?:\n|:|\.)/m);
+  if (aboutM) return aboutM[1].trim();
+  // "[Company] is hiring / looking / seeking"
+  const hiringM = text.match(/^([A-Z][A-Za-z0-9\s&.'-]{2,35}?)\s+is\s+(?:hiring|looking|seeking)/m);
+  if (hiringM) return hiringM[1].trim();
+  // "join / at [Company]"
+  const joinM = text.match(/\b(?:join|at)\s+([A-Z][A-Za-z0-9\s&]{2,30}?)(?:\s+(?:and|as|to|team)|[,.\n])/);
+  if (joinM) return joinM[1].trim();
+  // "Company: [Name]" explicit label
+  const labelM = text.match(/\bCompany[:\s]+([A-Z][A-Za-z0-9\s&,.'"-]{2,40}?)(?:\n|$)/m);
+  if (labelM) return labelM[1].trim();
+  // First line if short and starts with a capital
+  const firstLine = text.split("\n")[0].trim();
+  if (firstLine.length < 60 && /^[A-Z]/.test(firstLine))
+    return firstLine.replace(/[^A-Za-z0-9\s&]/g, "").trim();
+  return "";
+}
+
 function CoverLetter({ userId, profile, jd, setJd, company, setCompany, role, setRole, result, setResult }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -1378,7 +1400,8 @@ function CoverLetter({ userId, profile, jd, setJd, company, setCompany, role, se
 
   const download = () => {
     const namePart = (profile?.name || "Cover").replace(/\s+/g, "_");
-    const companyPart = company ? `_${company.replace(/\s+/g, "_")}` : "";
+    const resolvedCompany = company.trim() || extractCompanyFromJD(jd);
+    const companyPart = resolvedCompany ? `_${resolvedCompany.replace(/\s+/g, "_")}` : "";
     const filename = `${namePart}${companyPart}_cover_letter.pdf`;
 
     const doc = new jsPDF({ unit: "mm", format: "a4" });
