@@ -140,47 +140,103 @@ def parse_linkedin_structured(text: str) -> dict:
             if is_valid_skill(line):
                 skills.append(line.strip())
 
-    # ── EXPERIENCE (date-anchor approach) ────────────────────────────────────
+    # ── EXPERIENCE (date-anchor approach with multi-role company support) ──────
     exp_lines = get_section("experience")
     experience = []
-    date_indices = [i for i, l in enumerate(
-        exp_lines) if date_line_re.search(l)]
+    date_indices = [i for i, l in enumerate(exp_lines) if date_line_re.search(l)]
+
+    EMPLOYMENT_TYPES = {
+        "full-time", "part-time", "contract", "internship", "freelance",
+        "self-employed", "seasonal", "temporary", "apprenticeship", "volunteer"
+    }
+
+    # Pre-pass: detect company header lines — a line followed immediately by a
+    # pure-duration line (e.g. "Quantiphi" → "2 yrs 7 months").
+    # These mark the top of a multi-role company block.
+    company_header_map = {}  # line_idx -> company_name
+    for idx in range(len(exp_lines) - 1):
+        nxt = exp_lines[idx + 1]
+        cur = exp_lines[idx]
+        if (duration_re.search(nxt) and len(nxt) < 30
+                and not date_line_re.search(cur)
+                and 2 < len(cur) < 80
+                and cur.lower().strip() not in EMPLOYMENT_TYPES):
+            company_header_map[idx] = cur
+
+    last_company_header = ""
 
     for di, date_idx in enumerate(date_indices):
         raw_date = exp_lines[date_idx]
-        dates = re.sub(r'\s*\([\d\s\w]+\)\s*$', '', raw_date).strip()
+        # Remove trailing "· 2 yrs 1 mo" or "(6 months)" suffixes
+        dates = re.sub(r'\s*·.*$', '', raw_date).strip()
+        dates = re.sub(r'\s*\([\d\s\w]+\)\s*$', '', dates).strip()
+
+        # Update last_company_header to closest header before this date
+        for pos in sorted(company_header_map.keys()):
+            if pos < date_idx:
+                last_company_header = company_header_map[pos]
 
         back = []
         j = date_idx - 1
-        while j >= 0 and len(back) < 3:
+        while j >= 0 and len(back) < 4:
             candidate = exp_lines[j]
+            # Skip pure duration lines
             if duration_re.search(candidate) and len(candidate) < 30:
                 j -= 1
                 continue
+            # Stop at previous date line
             if date_line_re.search(candidate):
                 break
-            if len(candidate) > 2 and len(candidate) < 120:
+            # Skip employment-type labels
+            if candidate.lower().strip() in EMPLOYMENT_TYPES:
+                j -= 1
+                continue
+            if 2 < len(candidate) < 120:
                 back.insert(0, candidate)
             j -= 1
 
         title = back[-1] if back else ""
+        # Strip LinkedIn bullet prefix (• or ·) used in multi-role blocks
+        title = re.sub(r'^[•·]\s*', '', title).strip()
+
         company = back[-2] if len(back) >= 2 else ""
+
+        # If company looks like a description fragment or location, fall back to
+        # the last detected company header (handles multi-role companies)
+        if (not company
+                or company.startswith('-')
+                or len(company) > 70
+                or (len(company) > 20 and company[0].islower())
+                or re.search(r',\s*(United States|USA|Remote|India|Boston|Chicago|New York)',
+                             company, re.IGNORECASE)):
+            company = last_company_header
 
         if not title or len(title) > 80 or (title[0].islower() and len(title) > 30):
             continue
 
-        next_date_idx = date_indices[di + 1] if di + \
-            1 < len(date_indices) else len(exp_lines)
+        next_date_idx = date_indices[di + 1] if di + 1 < len(date_indices) else len(exp_lines)
         forward_lines = exp_lines[date_idx + 1: next_date_idx]
 
         location = ""
         description_parts = []
         for fl in forward_lines:
+            # Skip duration lines
             if duration_re.search(fl) and len(fl) < 30:
                 continue
-            if not location and len(fl) < 60 and re.search(r',|area|india|il\b|ny\b|ca\b|remote', fl.lower()):
+            # Skip employment-type labels
+            if fl.lower().strip() in EMPLOYMENT_TYPES:
+                continue
+            # Skip department/group names: short lines with parenthetical acronyms
+            # e.g. "Business Intelligence Group (UIUC)"
+            if re.search(r'\([A-Z]{2,6}\)', fl) and len(fl) < 80:
+                continue
+            if not location and len(fl) < 60 and re.search(
+                    r',|area|india|il\b|ny\b|ca\b|remote|united states|boston|chicago|new york',
+                    fl.lower()):
                 location = fl
-            elif len(fl) > 25 and not date_line_re.search(fl):
+            elif not date_line_re.search(fl) and (
+                    len(fl) > 40 or fl.startswith('-') or fl.startswith('•')):
+                # Require ≥40 chars for unformatted lines (filters stray short labels)
                 description_parts.append(fl)
 
         experience.append({
@@ -188,7 +244,6 @@ def parse_linkedin_structured(text: str) -> dict:
             "company": company,
             "dates": dates,
             "location": location,
-            # raw text, LLM will summarize
             "description": " ".join(description_parts[:6])
         })
 
