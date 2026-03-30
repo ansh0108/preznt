@@ -239,6 +239,24 @@ const Spinner = ({ size = 16, color = "var(--accent)" }) => (
   <div style={{ width: size, height: size, border: `1.5px solid ${color}30`, borderTop: `1.5px solid ${color}`, borderRadius: "50%", animation: "spin 0.75s linear infinite", display: "inline-block", flexShrink: 0 }} />
 );
 
+// Renders bullet text (lines starting with •) as a proper vertical list, otherwise plain text
+const BulletText = ({ text, style: s = {} }) => {
+  if (!text) return null;
+  const hasBullets = text.includes("•");
+  if (!hasBullets) return <div style={{ whiteSpace: "pre-line", ...s }}>{text}</div>;
+  const bullets = text.split("•").map(b => b.trim()).filter(Boolean);
+  return (
+    <div style={s}>
+      {bullets.map((b, i) => (
+        <div key={i} style={{ display: "flex", gap: 8, marginBottom: i < bullets.length - 1 ? 8 : 0 }}>
+          <span style={{ color: "var(--accent)", flexShrink: 0, marginTop: 2 }}>•</span>
+          <span>{b}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const Pill = ({ children, color = "var(--accent)", size = "sm" }) => {
   const pad = size === "sm" ? "3px 10px" : "5px 14px";
   const fs = size === "sm" ? 11.5 : 13;
@@ -846,7 +864,7 @@ function Overview({ profile, hideSections = [] }) {
                   <div style={{ color: "var(--text3)", fontSize: 12, marginTop: 4, fontWeight: 400 }}>{exp.dates}</div>
                   {exp.description && (
                     <div className="c-hover" style={{ color: "var(--text2)", fontSize: 13.5, marginTop: 12, lineHeight: 1.75, padding: "12px 16px", background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: "var(--r-md)", borderLeft: "2px solid var(--accent-b)" }}>
-                      {exp.description}
+                      <BulletText text={exp.description} />
                     </div>
                   )}
                 </div>
@@ -1010,7 +1028,7 @@ function Projects({ profile, hideSections = [], featuredRepos = [] }) {
                     <span style={{ fontSize: 12, color: "var(--accent)", background: "var(--accent-d)", border: "1px solid var(--accent-b)", padding: "3px 10px", borderRadius: 100, fontWeight: 600 }}>↗ View</span>
                   </div>
                 </div>
-                {repo.description && <div style={{ color: "var(--text2)", fontSize: 13.5, lineHeight: 1.7, marginBottom: 14 }}>{repo.description}</div>}
+                {repo.description && <BulletText text={repo.description} style={{ color: "var(--text2)", fontSize: 13.5, lineHeight: 1.75, marginBottom: 14 }} />}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   {extractTechTags(repo.description, repo.topics, repo.language).map((tag, j) => (
                     <Pill key={j} color="var(--teal)" size="sm">{tag}</Pill>
@@ -1034,7 +1052,7 @@ function Projects({ profile, hideSections = [], featuredRepos = [] }) {
                 </div>
                 {proj.type && <Pill color="var(--rose)" size="sm">{proj.type}</Pill>}
               </div>
-              {proj.description && <div style={{ color: "var(--text2)", fontSize: 13.5, lineHeight: 1.7, marginBottom: proj.tech_stack?.length ? 14 : 0 }}>{proj.description}</div>}
+              {proj.description && <BulletText text={proj.description} style={{ color: "var(--text2)", fontSize: 13.5, lineHeight: 1.75, marginBottom: proj.tech_stack?.length ? 14 : 0 }} />}
               {proj.tech_stack?.length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {proj.tech_stack.map((t, j) => <Pill key={j} size="sm">{t}</Pill>)}

@@ -102,6 +102,7 @@ class PreferencesRequest(BaseModel):
     template: str = "sidebar"
     hide_sections: list[str] = []
     featured_repos: list[str] = []
+    tab_order: list[str] = ["overview", "projects", "chat"]
 
 
 class LinkItem(BaseModel):
