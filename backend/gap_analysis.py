@@ -104,7 +104,11 @@ def analyze_gap(job_description: str, user_id: str, user_name: str, profile: dic
 
 Your task: conduct a thorough, ATS-optimised analysis of the candidate's profile against the provided job description.
 
-IMPORTANT: Write ALL narrative text in second person, directly addressing the candidate as "You" — e.g. "You have strong experience in..." NOT "Ansh has..." or "The candidate has...". This applies to every field: summary, strengths details, tone_feedback, differentiation_tips, quick_wins.
+⚠️ LANGUAGE RULE — NEVER BREAK THIS:
+Every piece of narrative text MUST use second person ("You" / "Your"), directly addressing the reader.
+CORRECT: "You have strong experience in..." / "Your background in X..."
+WRONG: "{user_name} has..." / "The candidate has..." / "He/She has..."
+This applies to EVERY field: summary, strengths details, tone_feedback, differentiation_tips, quick_wins.
 
 {'This appears to be a technical role. Pay close attention to tool/framework/language matches and project relevance.' if is_technical else 'This appears to be a non-technical or business role. Focus on transferable skills, domain knowledge, communication, and leadership signals.'}
 

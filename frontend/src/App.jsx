@@ -137,7 +137,7 @@ const GlobalStyle = () => (
       border-radius: var(--r-md);
       color: var(--text);
       padding: 11px 14px;
-      font-size: 13.5px;
+      font-size: 14.5px;
       width: 100%;
       outline: none;
       transition: border-color 0.18s, background 0.18s;
@@ -1638,7 +1638,13 @@ function PortfolioPage({ userId, onBack }) {
 
   useEffect(() => {
     axios.get(`${API}/profile/${userId}`)
-      .then(res => { setProfile(res.data); axios.post(`${API}/analytics/${userId}/view`).catch(() => {}); })
+      .then(res => {
+        const p = res.data;
+        setProfile(p);
+        const order = p?.preferences?.tab_order;
+        if (order?.[0]) setTab(order[0]);
+        axios.post(`${API}/analytics/${userId}/view`).catch(() => {});
+      })
       .catch(() => setProfile(null)).finally(() => setLoading(false));
   }, [userId]);
 
@@ -1682,15 +1688,18 @@ function PortfolioPage({ userId, onBack }) {
     </div>
   );
 
-  const TABS = [
+  const prefs = profile.preferences || {};
+
+  const ALL_PORTFOLIO_TABS = [
     { id: "overview", label: "Overview", icon: "user" },
     { id: "projects", label: "Projects", icon: "code" },
     { id: "chat", label: "Ask AI", icon: "chat" },
   ];
+  const tabOrder = prefs.tab_order || ["overview", "projects", "chat"];
+  const TABS = tabOrder.map(id => ALL_PORTFOLIO_TABS.find(t => t.id === id)).filter(Boolean);
 
   const portfolioUrl = `${window.location.origin}${window.location.pathname}#/portfolio/${nameToSlug(profile.name)}-${userId}`;
   const totalProjects = (profile.github_repos?.length || 0) + (profile.resume_projects?.length || 0);
-  const prefs = profile.preferences || {};
   const accent = prefs.accent || "#818cf8";
   const darkMode = prefs.dark_mode !== false;
   const template = prefs.template || "sidebar";
@@ -2119,34 +2128,109 @@ function CandidateEvaluator({ candidate: c, onRemove }) {
           <Btn onClick={runFit} disabled={fitLoading || !jd.trim()} style={{ marginBottom: 16 }}>
             {fitLoading ? <><Spinner size={14} color="#fff" /> Analyzing…</> : <><Icon name="target" size={14} color="#fff" /> Analyze Fit</>}
           </Btn>
-          {fitError && <div style={{ color: "var(--red)", fontSize: 13 }}>{fitError}</div>}
-          {fitResult && !fitResult.error && (
-            <div style={{ animation: "fadeUp 0.3s ease" }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: fitResult.overall_fit === "Strong" ? "var(--teal)" : fitResult.overall_fit === "Moderate" ? "var(--amber)" : "var(--red)", marginBottom: 10 }}>
-                {fitResult.overall_fit} Fit
-              </div>
-              <div style={{ fontSize: 13.5, color: "var(--text2)", lineHeight: 1.7, marginBottom: 16 }}>{fitResult.summary}</div>
-              {fitResult.matching_skills?.length > 0 && (
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Matching Skills</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{fitResult.matching_skills.map((s, i) => <Pill key={i} color="var(--teal)">{s}</Pill>)}</div>
-                </div>
-              )}
-              {fitResult.missing_skills?.length > 0 && (
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Gaps</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                    {fitResult.missing_skills.slice(0, 6).map((s, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <Pill color={s.importance === "Must Have" ? "var(--red)" : "var(--amber)"}>{s.importance}</Pill>
-                        <span style={{ fontSize: 13, color: "var(--text2)" }}>{s.skill}</span>
-                      </div>
-                    ))}
+          {fitError && <div style={{ color: "var(--red)", fontSize: 14 }}>{fitError}</div>}
+          {fitResult && !fitResult.error && (() => {
+            const score = fitResult.ats_score;
+            const scoreColor = score >= 70 ? "var(--teal)" : score >= 45 ? "var(--amber)" : "var(--red)";
+            const fitColor = fitResult.overall_fit === "Strong" ? "var(--teal)" : fitResult.overall_fit === "Moderate" ? "var(--amber)" : "var(--red)";
+            const SLabel = ({ children }) => <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{children}</div>;
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeUp 0.3s ease" }}>
+                {/* Score + Summary */}
+                <div style={{ background: "var(--bg2)", border: `1px solid ${fitColor}33`, borderRadius: "var(--r-xl)", padding: "18px 20px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
+                  <div style={{ textAlign: "center", flexShrink: 0 }}>
+                    <div style={{ fontSize: 48, fontWeight: 800, color: scoreColor, lineHeight: 1, fontFamily: "var(--serif)" }}>{score}</div>
+                    <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>ATS Score</div>
+                    <div style={{ marginTop: 8, width: 64, height: 4, background: "var(--bg3)", borderRadius: 2, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${score}%`, background: scoreColor, borderRadius: 2 }} />
+                    </div>
+                    <div style={{ marginTop: 8 }}><Pill color={fitColor}>{fitResult.overall_fit} Fit</Pill></div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 180 }}>
+                    <SLabel>Summary</SLabel>
+                    <div style={{ color: "var(--text2)", fontSize: 14, lineHeight: 1.7 }}>{fitResult.summary}</div>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
+
+                {/* Keywords */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+                    <SLabel>Matching Keywords</SLabel>
+                    {fitResult.matching_keywords?.length > 0
+                      ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{fitResult.matching_keywords.map((k, i) => <Pill key={i} color="var(--teal)">{k}</Pill>)}</div>
+                      : <div style={{ fontSize: 13, color: "var(--text3)" }}>No matches found.</div>}
+                  </div>
+                  <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+                    <SLabel>Missing Keywords</SLabel>
+                    {fitResult.missing_keywords?.length > 0
+                      ? <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                          {fitResult.missing_keywords.map((k, i) => (
+                            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 10px", background: "var(--bg3)", borderRadius: "var(--r-md)" }}>
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)" }}>{k.keyword}</div>
+                                <div style={{ color: "var(--text3)", fontSize: 12, marginTop: 2 }}>{k.context}</div>
+                              </div>
+                              <Pill color={k.importance === "Must Have" ? "var(--red)" : "var(--amber)"}>{k.importance}</Pill>
+                            </div>
+                          ))}
+                        </div>
+                      : <div style={{ fontSize: 13, color: "var(--text3)" }}>No critical gaps!</div>}
+                  </div>
+                </div>
+
+                {/* Strengths */}
+                {fitResult.strengths?.length > 0 && (
+                  <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+                    <SLabel>Strengths</SLabel>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {fitResult.strengths.map((s, i) => (
+                        <div key={i} style={{ display: "flex", gap: 10, padding: "10px 12px", background: "var(--bg3)", borderRadius: "var(--r-md)" }}>
+                          <Icon name="check" size={14} color="var(--teal)" style={{ flexShrink: 0, marginTop: 2 }} />
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)", marginBottom: 2 }}>{s.point}</div>
+                            <div style={{ fontSize: 13, color: "var(--text3)", lineHeight: 1.6 }}>{s.detail}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Suggested skills + Quick wins */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  {fitResult.suggested_skills?.length > 0 && (
+                    <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+                      <SLabel>Skills Gaps</SLabel>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {fitResult.suggested_skills.map((s, i) => <Pill key={i} color="var(--amber)">{s}</Pill>)}
+                      </div>
+                    </div>
+                  )}
+                  {fitResult.quick_wins?.length > 0 && (
+                    <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+                      <SLabel>Quick Wins</SLabel>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                        {fitResult.quick_wins.map((w, i) => (
+                          <div key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: "var(--text2)", lineHeight: 1.5 }}>
+                            <span style={{ color: "var(--accent)", flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
+                            {w}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tone feedback */}
+                {fitResult.tone_feedback && (
+                  <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+                    <SLabel>Positioning Feedback</SLabel>
+                    <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.7 }}>{fitResult.tone_feedback}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
@@ -2732,6 +2816,37 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
           </div>
         </CustomizeRow>
       )}
+
+      {/* Tab Order */}
+      <CustomizeRow label="Tab Order">
+        <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 10 }}>Drag or use arrows to reorder tabs on your public portfolio.</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(() => {
+            const ALL_TABS = [
+              { id: "overview", label: "Overview" },
+              { id: "projects", label: "Projects" },
+              { id: "chat", label: "Ask AI" },
+            ];
+            const order = prefs.tab_order || ["overview", "projects", "chat"];
+            const ordered = order.map(id => ALL_TABS.find(t => t.id === id)).filter(Boolean);
+            const moveTab = (idx, dir) => {
+              const newOrder = [...order];
+              const swap = idx + dir;
+              if (swap < 0 || swap >= newOrder.length) return;
+              [newOrder[idx], newOrder[swap]] = [newOrder[swap], newOrder[idx]];
+              update("tab_order", newOrder);
+            };
+            return ordered.map((t, idx) => (
+              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)" }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--accent)", minWidth: 20 }}>{idx + 1}</span>
+                <span style={{ fontSize: 13, color: "var(--text)", flex: 1 }}>{t.label}</span>
+                <button onClick={() => moveTab(idx, -1)} disabled={idx === 0} style={{ background: "transparent", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? "var(--text3)" : "var(--text2)", padding: "2px 6px", fontSize: 14 }}>↑</button>
+                <button onClick={() => moveTab(idx, 1)} disabled={idx === ordered.length - 1} style={{ background: "transparent", border: "none", cursor: idx === ordered.length - 1 ? "default" : "pointer", color: idx === ordered.length - 1 ? "var(--text3)" : "var(--text2)", padding: "2px 6px", fontSize: 14 }}>↓</button>
+              </div>
+            ));
+          })()}
+        </div>
+      </CustomizeRow>
     </div>
   );
 }

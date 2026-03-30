@@ -450,18 +450,22 @@ def load_profile(user_id: str) -> dict:
 def summarize_experience(title: str, company: str, raw_description: str) -> str:
     if not raw_description or len(raw_description) < 40:
         return raw_description
-    prompt = f"""Rewrite this work experience in exactly 3 sentences from first-person perspective.
-- Start sentences with "I"
-- Be specific: mention exact tools, technologies, measurable outcomes
-- Professional and natural tone
-- Do NOT refer to yourself in third person ever
+    prompt = f"""Convert this work experience description into 2-4 concise bullet points.
+
+STRICT RULES — follow exactly:
+- Use ONLY information that is explicitly stated in the original text below
+- Do NOT add tools, technologies, frameworks, metrics, or outcomes that are not present in the original
+- Start each bullet with a strong action verb
+- One concise sentence per bullet
+- Return ONLY the bullet points, one per line, each starting with "•"
 
 Role: {title} at {company}
-Original: {raw_description}
+Original:
+{raw_description}
 
-3-sentence first-person rewrite:"""
+Bullet points:"""
     try:
-        return call_groq([{"role": "user", "content": prompt}], max_tokens=180, temperature=0.2)
+        return call_groq([{"role": "user", "content": prompt}], max_tokens=220, temperature=0.1)
     except Exception as e:
         print(f"[LLM] Summarize failed for {title}: {e}")
         return raw_description[:300]
@@ -500,18 +504,22 @@ def extract_skills_from_all_sources(profile: dict, github_repos: list) -> list:
 
     combined_text = "\n\n".join(sources)[:5000]
 
-    prompt = f"""Extract a comprehensive list of skills from this professional profile. This person may be in any field — tech, marketing, sales, finance, research, design, etc.
+    prompt = f"""Extract skills from this professional profile text.
 
-Include ALL relevant skills: tools, software, platforms, methodologies, frameworks, domain-specific techniques, analytical methods, research methods, certifications. Include both technical and domain-specific professional skills.
-Exclude: soft skills (communication, teamwork), company names, university names, locations, person names, vague adjectives.
+CRITICAL RULES:
+- Extract ONLY skills that are explicitly written in the text below — tools, software, languages, frameworks, platforms, methodologies named directly
+- Do NOT infer or add skills based on the person's job title, field, or domain knowledge
+- Do NOT add any skill that is not literally present somewhere in the text
+- Exclude: soft skills (communication, teamwork), company names, university names, locations, person names, vague adjectives
+- Include the seed skills below if they appear in the text
 
 Seed skills already known: {', '.join(existing)}
 
 Profile text:
 {combined_text}
 
-Return ONLY a JSON array of skill strings, nothing else. Example: ["Python", "Tableau", "Van Westendorp", "SAP Analytics Cloud", "Journey Mapping"]
-Aim for 15-25 specific, accurate skills. No duplicates. Capitalize properly."""
+Return ONLY a JSON array of skill strings, nothing else. Example: ["Python", "Tableau", "dbt", "Power BI"]
+Aim for 10-20 verified skills. No duplicates. Capitalize properly."""
 
     try:
         raw = call_groq([{"role": "user", "content": prompt}], max_tokens=500, temperature=0.1)
@@ -655,7 +663,7 @@ Return ONLY valid JSON, nothing else:
   "projects": [
     {{
       "name": "Project Name",
-      "description": "2-3 sentence narrative: what the person set out to do, how they approached it, and what was achieved. Write in a natural storytelling style — not bullet points or resume fragments.",
+      "description": "3-5 bullet points (each starting with '•') covering what was built/done, how it was done, and key outcomes — use ONLY information explicitly stated in the resume, do NOT invent tools, metrics, or outcomes not mentioned, expand each point into a complete sentence",
       "tech_stack": ["Tool or method used", "Another tool"],
       "type": "personal"
     }}
@@ -719,16 +727,22 @@ def generate_repo_description(repo: dict) -> str:
     readme = repo.get("readme", "")
     if not readme and not name:
         return ""
-    prompt = f"""Write exactly 2 sentences describing what this GitHub project does and its tech stack. Specific and technical. No fluff.
+    prompt = f"""Write 2-3 bullet points describing what this GitHub project does and its tech stack.
+
+STRICT RULES:
+- Use ONLY information from the project name, language, topics, and README provided below
+- Do NOT add technologies, frameworks, or features not explicitly mentioned
+- Start each bullet with "•" followed by an action verb
+- Return ONLY the bullet points, one per line
 
 Project: {name}
 Language: {language}
 Topics: {topics}
 README: {readme[:1500]}
 
-2-sentence description:"""
+Bullet points:"""
     try:
-        return call_groq([{"role": "user", "content": prompt}], max_tokens=120, temperature=0.3)
+        return call_groq([{"role": "user", "content": prompt}], max_tokens=160, temperature=0.1)
     except Exception as e:
         print(f"[LLM] Repo desc failed for {name}: {e}")
         return ""
