@@ -673,7 +673,9 @@ Return ONLY valid JSON, nothing else:
 }}
 
 Rules:
-- Only clearly defined projects (not job responsibilities)
+- PROJECTS ONLY: Extract items explicitly listed under a "Projects", "Academic Projects", "Personal Projects", "Portfolio", or "Side Projects" section
+- Do NOT include work experience, internships, or job responsibilities even if they describe project-like work
+- If no dedicated projects section exists in the resume, return an empty projects array
 - skills = tools, software, platforms, methodologies, domain-specific techniques — include both technical AND domain/professional skills relevant to this person's field
 - Exclude vague soft skills (communication, teamwork) but include domain-specific methods
 - Max 10 projects, 20 skills

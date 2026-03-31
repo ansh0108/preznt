@@ -621,10 +621,20 @@ function SetupPage({ onComplete }) {
 
   const uploadLinkedin = async () => {
     if (!linkedinFile) return setStep(3);
-    setLoading(true);
-    try { const f = new FormData(); f.append("file", linkedinFile); await axios.post(`${API}/upload/linkedin/${userId}`, f); setStep(3); }
-    catch { setError("LinkedIn upload failed"); }
-    finally { setLoading(false); }
+    setLoading(true); setError("");
+    let lastErr;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const f = new FormData(); f.append("file", linkedinFile);
+        await axios.post(`${API}/upload/linkedin/${userId}`, f, { timeout: 60000 });
+        setLoading(false); setStep(3); return;
+      } catch (e) {
+        lastErr = e;
+        if (attempt < 3) await new Promise(r => setTimeout(r, 1500 * attempt));
+      }
+    }
+    setError("LinkedIn upload failed after 3 attempts. Please try again.");
+    setLoading(false);
   };
 
   const uploadExtras = async () => {
@@ -1071,7 +1081,7 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
   const defaultMsg = [{ role: "assistant", content: `Hi — I'm ${userName}'s portfolio assistant. Ask me anything about their background, projects, or skills.` }];
   const [localMessages, setLocalMessages] = useState(defaultMsg);
   const messages = messagesProp ?? localMessages;
-  const setMessages = setMessagesProp ? (v) => { setMessagesProp(typeof v === "function" ? v(messages) : v); } : setLocalMessages;
+  const setMessages = setMessagesProp ? (v) => { setMessagesProp(typeof v === "function" ? prev => v(prev) : v); } : setLocalMessages;
 
   // Initialise lifted state on first render
   useEffect(() => { if (setMessagesProp && messagesProp === null) setMessagesProp(defaultMsg); }, []);
@@ -3084,8 +3094,12 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
   const uploadFile = async (file, type) => {
     const f = new FormData(); f.append("file", file);
     const ep = type === "linkedin" ? `/upload/linkedin/${activePortfolioId}` : `/upload/document/${activePortfolioId}`;
-    await axios.post(`${API}${ep}`, f);
-    await loadProfile();
+    let lastErr;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try { await axios.post(`${API}${ep}`, f, { timeout: 60000 }); await loadProfile(); return; }
+      catch (e) { lastErr = e; if (attempt < 3) await new Promise(r => setTimeout(r, 1500 * attempt)); }
+    }
+    throw lastErr;
   };
 
   const saveLinks = async (updatedLinks) => {
