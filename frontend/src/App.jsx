@@ -1428,27 +1428,52 @@ function ProfilePhoto({ userId, name, size = 60, onUpload }) {
 }
 
 // ─── UPLOAD ROW ───────────────────────────────────────────────────────────────
-function UploadRow({ label, icon, done, accept, onFile }) {
+function UploadRow({ label, icon, done, accept, onFile, hint }) {
   const inputId = `upload-${label.replace(/\s/g, "-")}`;
   const [uploading, setUploading] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const handle = async (file) => {
     setUploading(true);
     try { await onFile(file); } catch {} finally { setUploading(false); }
   };
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 28, height: 28, borderRadius: 8, background: done ? "rgba(45,212,191,0.1)" : "var(--bg3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name={done ? "check" : icon} size={14} color={done ? "var(--teal)" : "var(--text3)"} />
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: done ? "rgba(45,212,191,0.1)" : "var(--bg3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name={done ? "check" : icon} size={14} color={done ? "var(--teal)" : "var(--text3)"} />
+          </div>
+          <span style={{ fontSize: 13, color: done ? "var(--text2)" : "var(--text3)", fontWeight: 500 }}>{label}</span>
+          {hint && (
+            <button onClick={() => setShowHint(v => !v)}
+              style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text3)", fontSize: 11, padding: "0 4px", display: "flex", alignItems: "center", gap: 3, opacity: 0.7 }}>
+              <span style={{ fontSize: 13 }}>ⓘ</span>
+              <span style={{ fontSize: 11 }}>How?</span>
+            </button>
+          )}
         </div>
-        <span style={{ fontSize: 13, color: done ? "var(--text2)" : "var(--text3)", fontWeight: 500 }}>{label}</span>
+        <label htmlFor={inputId} style={{ cursor: "pointer" }}>
+          <div className="b-ghost" style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: done ? "var(--text3)" : "var(--accent)", padding: "3px 10px", fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}>
+            {uploading ? <Spinner size={10} color="var(--accent)" /> : done ? "Replace" : "Upload"}
+          </div>
+          <input id={inputId} type="file" accept={accept} style={{ display: "none" }} onChange={e => e.target.files[0] && handle(e.target.files[0])} />
+        </label>
       </div>
-      <label htmlFor={inputId} style={{ cursor: "pointer" }}>
-        <div className="b-ghost" style={{ background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: 6, color: done ? "var(--text3)" : "var(--accent)", padding: "3px 10px", fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}>
-          {uploading ? <Spinner size={10} color="var(--accent)" /> : done ? "Replace" : "Upload"}
+      {hint && showHint && (
+        <div className="slide-down" style={{ background: "var(--bg3)", border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: "12px 14px", marginTop: 10 }}>
+          {hint.map(([title, desc], i) => (
+            <div key={i} style={{ display: "flex", gap: 10, marginBottom: i < hint.length - 1 ? 9 : 0, alignItems: "flex-start" }}>
+              <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#fff" }}>{i + 1}</span>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}>{title}</div>
+                <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 1 }}>{desc}</div>
+              </div>
+            </div>
+          ))}
         </div>
-        <input id={inputId} type="file" accept={accept} style={{ display: "none" }} onChange={e => e.target.files[0] && handle(e.target.files[0])} />
-      </label>
+      )}
     </div>
   );
 }
@@ -3279,7 +3304,13 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
           {/* Data sources */}
           <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "18px 20px" }}>
             <SecHead style={{ marginBottom: 14 }}>Data Sources</SecHead>
-            <UploadRow label="LinkedIn PDF" icon="user" done={hasLinkedin} accept=".pdf" onFile={f => uploadFile(f, "linkedin")} />
+            <UploadRow label="LinkedIn PDF" icon="user" done={hasLinkedin} accept=".pdf" onFile={f => uploadFile(f, "linkedin")}
+              hint={[
+                ["Go to your LinkedIn profile", "Click your profile photo → View Profile"],
+                ['Click the "…" More button', "Below your name and headline"],
+                ['Select "Save to PDF"', "Downloads your profile instantly as a PDF"],
+              ]}
+            />
             <UploadRow label="Resume / CV" icon="file" done={hasResume} accept=".pdf,.docx,.pptx,.txt" onFile={f => uploadFile(f, "resume")} />
             {/* GitHub */}
             <div style={{ marginTop: 4 }}>
