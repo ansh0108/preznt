@@ -682,7 +682,7 @@ Rules:
 - tech_stack can include non-technical tools and methods (e.g. "SAP Analytics Cloud", "Van Westendorp", "Figma")
 
 Document:
-{text[:4000]}"""
+{text[:7000]}"""
     try:
         raw = call_groq([{"role": "user", "content": prompt}], max_tokens=1500, temperature=0.1)
         raw = raw.replace("```json", "").replace("```", "").strip()
