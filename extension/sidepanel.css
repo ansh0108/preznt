@@ -316,3 +316,27 @@ body {
   font-weight: 600;
   padding: 4px 0;
 }
+
+/* Job bar edit button row */
+.job-bar-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Input area textarea */
+#job-input-area textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.6;
+  padding: 10px 12px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+}
+#job-input-area textarea:focus { border-color: var(--accent); }

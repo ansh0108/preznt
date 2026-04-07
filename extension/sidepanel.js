@@ -6,6 +6,7 @@ let authToken = null;
 let userId = null;
 let userName = null;
 let currentJob = null;
+let lastJobTs = 0;
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const viewLogin = document.getElementById("view-login");
@@ -16,10 +17,17 @@ const logoutBtn = document.getElementById("logout-btn");
 const userNameEl = document.getElementById("user-name");
 
 const jobBar = document.getElementById("job-bar");
-const noJob = document.getElementById("no-job");
-const tabBar = document.getElementById("tab-bar");
 const jobTitleDisplay = document.getElementById("job-title-display");
 const jobCompanyDisplay = document.getElementById("job-company-display");
+const editJobBtn = document.getElementById("edit-job-btn");
+
+const jobInputArea = document.getElementById("job-input-area");
+const inputTitle = document.getElementById("input-title");
+const inputCompany = document.getElementById("input-company");
+const inputDesc = document.getElementById("input-desc");
+const confirmJobBtn = document.getElementById("confirm-job-btn");
+
+const tabBar = document.getElementById("tab-bar");
 
 const runGapBtn = document.getElementById("run-gap-btn");
 const gapLoading = document.getElementById("gap-loading");
@@ -41,25 +49,33 @@ chrome.storage.local.get(["token", "userId", "userName"], (data) => {
     userId = data.userId;
     userName = data.userName;
     showMain();
+    pollForJob();
   } else {
     showLogin();
   }
 });
 
-// Poll for job data injected by content script
-setInterval(() => {
-  chrome.storage.session.get(["pendingJob"], (data) => {
-    if (data.pendingJob && (!currentJob || data.pendingJob.title !== currentJob.title)) {
-      currentJob = data.pendingJob;
-      showJobBar();
-      // Clear previous results
-      gapResult.innerHTML = "";
-      gapResult.classList.add("hidden");
-      coverResult.classList.add("hidden");
-      coverText.value = "";
+// Poll for job scraped by background.js
+function pollForJob() {
+  chrome.storage.session.get(["pendingJob", "pendingJobTs"], (data) => {
+    const ts = data.pendingJobTs || 0;
+    if (data.pendingJob && ts > lastJobTs) {
+      lastJobTs = ts;
+      populateJobInput(data.pendingJob);
     }
   });
-}, 1000);
+  setTimeout(pollForJob, 800);
+}
+
+function populateJobInput(job) {
+  inputTitle.value = job.title || "";
+  inputCompany.value = job.company || "";
+  inputDesc.value = job.description || "";
+  // If we got a good scrape, auto-confirm it
+  if (job.description && job.description.length > 100) {
+    confirmJob(job);
+  }
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 loginBtn.addEventListener("click", async () => {
@@ -86,6 +102,7 @@ loginBtn.addEventListener("click", async () => {
 
     chrome.storage.local.set({ token: authToken, userId, userName });
     showMain();
+    pollForJob();
   } catch (e) {
     loginError.textContent = e.message;
   } finally {
@@ -110,14 +127,57 @@ function showMain() {
   viewLogin.classList.add("hidden");
   viewMain.classList.remove("hidden");
   userNameEl.textContent = userName || "";
+  // Default: show input area for manual entry
+  showInputArea();
 }
 
-function showJobBar() {
-  noJob.classList.add("hidden");
+function showInputArea() {
+  jobBar.classList.add("hidden");
+  jobInputArea.classList.remove("hidden");
+  tabBar.classList.add("hidden");
+}
+
+function showJobConfirmed() {
   jobBar.classList.remove("hidden");
+  jobInputArea.classList.add("hidden");
   tabBar.classList.remove("hidden");
-  jobTitleDisplay.textContent = currentJob.title || "Untitled Role";
-  jobCompanyDisplay.textContent = currentJob.company || "";
+}
+
+// ── Job input ─────────────────────────────────────────────────────────────────
+confirmJobBtn.addEventListener("click", () => {
+  const desc = inputDesc.value.trim();
+  if (!desc) {
+    inputDesc.style.borderColor = "var(--red)";
+    return;
+  }
+  inputDesc.style.borderColor = "";
+  confirmJob({
+    title: inputTitle.value.trim(),
+    company: inputCompany.value.trim(),
+    description: desc,
+  });
+});
+
+editJobBtn.addEventListener("click", () => {
+  showInputArea();
+  // Restore previous values
+  if (currentJob) {
+    inputTitle.value = currentJob.title || "";
+    inputCompany.value = currentJob.company || "";
+    inputDesc.value = currentJob.description || "";
+  }
+});
+
+function confirmJob(job) {
+  currentJob = job;
+  jobTitleDisplay.textContent = job.title || "Untitled Role";
+  jobCompanyDisplay.textContent = job.company || "";
+  showJobConfirmed();
+  // Clear previous results
+  gapResult.innerHTML = "";
+  gapResult.classList.add("hidden");
+  coverResult.classList.add("hidden");
+  coverText.value = "";
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -133,10 +193,7 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 
 // ── Gap Analysis ──────────────────────────────────────────────────────────────
 runGapBtn.addEventListener("click", async () => {
-  if (!currentJob?.description) {
-    alert("No job loaded yet. Go to a LinkedIn job page and click ⚡ Analyze with Prolio.");
-    return;
-  }
+  if (!currentJob?.description) return;
 
   runGapBtn.disabled = true;
   gapLoading.classList.remove("hidden");
@@ -149,10 +206,7 @@ runGapBtn.addEventListener("click", async () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify({
-        user_id: userId,
-        job_description: currentJob.description,
-      }),
+      body: JSON.stringify({ user_id: userId, job_description: currentJob.description }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Analysis failed");
@@ -187,21 +241,15 @@ function renderGapResult(data) {
       </div>
       <div class="score-right">
         <span class="fit-badge" style="color:${fitColor};background:${fitBg}">${fit} Match</span>
-        <div class="score-bar-bg">
-          <div class="score-bar-fill" style="width:${score}%;background:${col}"></div>
-        </div>
+        <div class="score-bar-bg"><div class="score-bar-fill" style="width:${score}%;background:${col}"></div></div>
       </div>
     </div>`;
 
-  if (data.summary) {
-    html += `<div class="card" style="margin-top:0">${data.summary}</div>`;
-  }
+  if (data.summary) html += `<div class="card">${data.summary}</div>`;
 
   if (data.matching_keywords?.length) {
     html += `<div class="section-title">Matching Keywords</div><div class="pill-row">`;
-    data.matching_keywords.slice(0, 10).forEach(k => {
-      html += `<span class="pill match">${k}</span>`;
-    });
+    data.matching_keywords.slice(0, 10).forEach(k => { html += `<span class="pill match">${k}</span>`; });
     html += `</div>`;
   }
 
@@ -239,15 +287,11 @@ function renderGapResult(data) {
 runCoverBtn.addEventListener("click", () => generateCoverLetter());
 refineBtn.addEventListener("click", () => {
   const refinement = refineInput.value.trim();
-  if (!refinement) return;
-  generateCoverLetter(refinement);
+  if (refinement) generateCoverLetter(refinement);
 });
 
 async function generateCoverLetter(refinement = null) {
-  if (!currentJob?.description) {
-    alert("No job loaded yet. Go to a LinkedIn job page and click ⚡ Analyze with Prolio.");
-    return;
-  }
+  if (!currentJob?.description) return;
 
   runCoverBtn.disabled = true;
   coverLoading.classList.remove("hidden");
@@ -267,10 +311,7 @@ async function generateCoverLetter(refinement = null) {
 
     const res = await fetch(`${API}/cover-letter`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
       body: JSON.stringify(body),
     });
     const data = await res.json();

@@ -33,17 +33,30 @@
         <button id="logout-btn" class="btn-ghost-sm">Sign out</button>
       </div>
 
-      <!-- Job info bar -->
+      <!-- Job detected bar -->
       <div id="job-bar" class="job-bar hidden">
-        <div id="job-title-display" class="job-title-text"></div>
-        <div id="job-company-display" class="job-company-text"></div>
+        <div class="job-bar-top">
+          <div>
+            <div id="job-title-display" class="job-title-text"></div>
+            <div id="job-company-display" class="job-company-text"></div>
+          </div>
+          <button id="edit-job-btn" class="btn-ghost-sm">Edit</button>
+        </div>
       </div>
 
-      <!-- No job yet -->
-      <div id="no-job" class="empty-state">
-        <div class="empty-icon">💼</div>
-        <div class="empty-title">No job loaded</div>
-        <div class="empty-sub">Open a LinkedIn job posting and click the <strong>⚡ Analyze with Prolio</strong> button to get started.</div>
+      <!-- Job input (manual / edit mode) -->
+      <div id="job-input-area">
+        <div class="section-title" style="margin-bottom:6px">Job Details</div>
+        <div class="form-group">
+          <input type="text" id="input-title" placeholder="Job title (e.g. Data Scientist)" />
+        </div>
+        <div class="form-group">
+          <input type="text" id="input-company" placeholder="Company name" />
+        </div>
+        <div class="form-group">
+          <textarea id="input-desc" rows="7" placeholder="Paste the job description here…"></textarea>
+        </div>
+        <button id="confirm-job-btn" class="btn-primary">Use this job →</button>
       </div>
 
       <!-- Tab bar -->
