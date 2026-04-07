@@ -250,6 +250,9 @@ function renderGapResult(data) {
   const fitBg = fit === "Strong" ? "rgba(74,222,128,0.1)" : fit === "Moderate" ? "rgba(251,191,36,0.1)" : "rgba(248,113,113,0.1)";
   const col = scoreColor(score);
 
+  // Score + fit + 1-line summary
+  const summaryShort = (data.summary || "").split(". ").slice(0, 1).join(". ");
+
   let html = `
     <div class="score-row">
       <div>
@@ -259,39 +262,48 @@ function renderGapResult(data) {
       <div class="score-right">
         <span class="fit-badge" style="color:${fitColor};background:${fitBg}">${fit} Match</span>
         <div class="score-bar-bg"><div class="score-bar-fill" style="width:${score}%;background:${col}"></div></div>
+        ${summaryShort ? `<div style="font-size:11.5px;color:var(--text3);margin-top:5px;line-height:1.4">${summaryShort}.</div>` : ""}
       </div>
     </div>`;
 
-  if (data.summary) html += `<div class="card">${data.summary}</div>`;
-
-  if (data.matching_keywords?.length) {
-    html += `<div class="section-title">Matching Keywords</div><div class="pill-row">`;
-    data.matching_keywords.slice(0, 10).forEach(k => { html += `<span class="pill match">${k}</span>`; });
-    html += `</div>`;
-  }
-
-  if (data.missing_keywords?.length) {
-    html += `<div class="section-title">Gaps</div><div class="pill-row">`;
-    data.missing_keywords.slice(0, 8).forEach(k => {
+  // Keywords as compact pills — matching + missing in one row
+  if (data.matching_keywords?.length || data.missing_keywords?.length) {
+    html += `<div class="section-title">Keywords</div><div class="pill-row">`;
+    (data.matching_keywords || []).slice(0, 6).forEach(k => { html += `<span class="pill match">${k}</span>`; });
+    (data.missing_keywords || []).slice(0, 5).forEach(k => {
       const kw = typeof k === "string" ? k : k.keyword;
       html += `<span class="pill missing">${kw}</span>`;
     });
     html += `</div>`;
   }
 
+  // Strengths — title only, no long detail
   if (data.strengths?.length) {
-    html += `<div class="section-title">Strengths</div>`;
+    html += `<div class="section-title">Strengths</div><div class="compact-list">`;
     data.strengths.slice(0, 3).forEach(s => {
       const point = typeof s === "string" ? s : s.point;
-      const detail = typeof s === "object" ? s.detail : "";
-      html += `<div class="card"><div class="card-title">✓ ${point}</div>${detail ? `<div>${detail}</div>` : ""}</div>`;
+      html += `<div class="compact-item"><span class="ci-dot" style="color:#4ade80">✓</span>${point}</div>`;
     });
+    html += `</div>`;
   }
 
+  // Gaps — title only
+  if (data.missing_keywords?.length) {
+    html += `<div class="section-title">Missing</div><div class="compact-list">`;
+    data.missing_keywords.slice(0, 4).forEach(k => {
+      const kw = typeof k === "string" ? k : k.keyword;
+      const imp = typeof k === "object" ? k.importance : "";
+      html += `<div class="compact-item"><span class="ci-dot" style="color:var(--red)">✗</span>${kw}${imp ? ` <span style="font-size:10px;color:var(--text3)">(${imp})</span>` : ""}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Quick wins — numbered, short
   if (data.quick_wins?.length) {
-    html += `<div class="section-title">Quick Wins</div><div class="card">`;
+    html += `<div class="section-title">Quick Wins</div><div class="compact-list">`;
     data.quick_wins.slice(0, 3).forEach((w, i) => {
-      html += `<div class="quick-win"><span class="qw-num">${i + 1}</span><span>${w}</span></div>`;
+      const short = w.length > 80 ? w.slice(0, 78) + "…" : w;
+      html += `<div class="compact-item"><span class="qw-num">${i + 1}</span>${short}</div>`;
     });
     html += `</div>`;
   }
@@ -351,4 +363,18 @@ copyBtn.addEventListener("click", () => {
     copyConfirm.classList.remove("hidden");
     setTimeout(() => copyConfirm.classList.add("hidden"), 2000);
   });
+});
+
+document.getElementById("download-pdf-btn").addEventListener("click", () => {
+  const letter = coverText.value;
+  if (!letter) return;
+  const win = window.open("", "_blank");
+  win.document.write(`<!DOCTYPE html><html><head><title>Cover Letter</title>
+  <style>
+    body { font-family: Georgia, serif; font-size: 12pt; line-height: 1.8; max-width: 680px; margin: 60px auto; color: #111; }
+    p { margin: 0 0 1em; }
+    @media print { body { margin: 0; } }
+  </style></head><body>${letter.split("\n").map(l => l.trim() ? `<p>${l}</p>` : "<p>&nbsp;</p>").join("")}
+  <script>window.onload=()=>{window.print();}<\/script></body></html>`);
+  win.document.close();
 });

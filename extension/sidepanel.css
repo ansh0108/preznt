@@ -317,6 +317,41 @@ body {
   padding: 4px 0;
 }
 
+.btn-row { display: flex; gap: 8px; }
+.btn-half {
+  flex: 1;
+  padding: 11px;
+  border-radius: var(--r);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-half.btn-primary, .btn-half:not(.btn-outline) {
+  background: var(--accent); color: #fff; border: none;
+}
+.btn-half.btn-outline {
+  background: transparent; color: var(--accent);
+  border: 1.5px solid var(--accent);
+}
+.btn-half:hover { opacity: 0.85; }
+
+/* Compact list for gap analysis */
+.compact-list { display: flex; flex-direction: column; gap: 4px; }
+.compact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.45;
+  padding: 5px 10px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.ci-dot { font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+
 /* Job bar edit button row */
 .job-bar-top {
   display: flex;
