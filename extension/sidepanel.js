@@ -43,11 +43,27 @@ const copyBtn = document.getElementById("copy-btn");
 const copyConfirm = document.getElementById("copy-confirm");
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-chrome.storage.local.get(["token", "userId", "userName"], (data) => {
+chrome.storage.local.get(["token", "userId", "userName"], async (data) => {
   if (data.token) {
     authToken = data.token;
     userId = data.userId;
     userName = data.userName;
+    // Re-validate and refresh portfolio ID via /auth/me
+    try {
+      const res = await fetch(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        const me = await res.json();
+        userName = me.profile_name || me.name || userName;
+        userId = me.primary_portfolio_id || me.portfolio_ids?.[0] || userId;
+        chrome.storage.local.set({ userId, userName });
+      } else {
+        // Token expired
+        chrome.storage.local.remove(["token", "userId", "userName"]);
+        showLogin(); return;
+      }
+    } catch (e) { /* offline, use cached values */ }
     showMain();
     pollForJob();
   } else {
@@ -97,7 +113,8 @@ loginBtn.addEventListener("click", async () => {
     if (!res.ok) throw new Error(data.detail || "Login failed");
 
     authToken = data.token;
-    userId = data.user_id;
+    // gap-analysis/cover-letter use portfolio ID not user ID
+    userId = data.primary_portfolio_id || data.portfolio_id || data.user_id;
     userName = data.name || email.split("@")[0];
 
     chrome.storage.local.set({ token: authToken, userId, userName });
