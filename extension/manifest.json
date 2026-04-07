@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Preznt — AI Job Fit",
+  "name": "Prolio — AI Job Fit",
   "version": "1.0.0",
   "description": "Instantly analyze your fit for any LinkedIn job posting and generate a cover letter.",
   "permissions": ["storage", "sidePanel", "activeTab"],
@@ -19,7 +19,7 @@
     "default_path": "sidepanel.html"
   },
   "action": {
-    "default_title": "Preznt",
+    "default_title": "Prolio",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

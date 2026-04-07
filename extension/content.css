@@ -1,4 +1,4 @@
-#preznt-btn {
+#prolio-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -15,11 +15,11 @@
   box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
 }
 
-#preznt-btn:hover {
+#prolio-btn:hover {
   opacity: 0.9;
   transform: translateY(-1px);
 }
 
-.preznt-icon {
+.prolio-icon {
   font-size: 13px;
 }

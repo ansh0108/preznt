@@ -1,6 +1,6 @@
-# Preznt Chrome Extension
+# Prolio Chrome Extension
 
-Instantly analyze your LinkedIn job fit and generate a cover letter — powered by your Preznt profile.
+Instantly analyze your LinkedIn job fit and generate a cover letter — powered by your Prolio profile.
 
 ## Install (Developer Mode)
 
@@ -8,13 +8,13 @@ Instantly analyze your LinkedIn job fit and generate a cover letter — powered 
 2. Enable **Developer mode** (top right toggle)
 3. Click **Load unpacked**
 4. Select this `extension/` folder
-5. The Preznt icon appears in your toolbar
+5. The Prolio icon appears in your toolbar
 
 ## Usage
 
 1. Go to any LinkedIn job posting
-2. Click the **⚡ Analyze with Preznt** button (injected below the job title)
-3. The side panel opens — sign in with your Preznt credentials
+2. Click the **⚡ Analyze with Prolio** button (injected below the job title)
+3. The side panel opens — sign in with your Prolio credentials
 4. Run **Gap Analysis** or **Generate Cover Letter**
 
 ## Icons

@@ -134,7 +134,7 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 // ── Gap Analysis ──────────────────────────────────────────────────────────────
 runGapBtn.addEventListener("click", async () => {
   if (!currentJob?.description) {
-    alert("No job loaded yet. Go to a LinkedIn job page and click ⚡ Analyze with Preznt.");
+    alert("No job loaded yet. Go to a LinkedIn job page and click ⚡ Analyze with Prolio.");
     return;
   }
 
@@ -245,7 +245,7 @@ refineBtn.addEventListener("click", () => {
 
 async function generateCoverLetter(refinement = null) {
   if (!currentJob?.description) {
-    alert("No job loaded yet. Go to a LinkedIn job page and click ⚡ Analyze with Preznt.");
+    alert("No job loaded yet. Go to a LinkedIn job page and click ⚡ Analyze with Prolio.");
     return;
   }
 

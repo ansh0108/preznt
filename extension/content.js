@@ -1,5 +1,5 @@
-// ── Preznt Content Script ─────────────────────────────────────────────────────
-// Runs on LinkedIn job pages. Scrapes job data and injects the Preznt button.
+// ── Prolio Content Script ─────────────────────────────────────────────────────
+// Runs on LinkedIn job pages. Scrapes job data and injects the Prolio button.
 
 let lastUrl = location.href;
 let buttonInjected = false;
@@ -32,7 +32,7 @@ function scrapeJobData() {
 }
 
 function injectButton() {
-  if (buttonInjected && document.getElementById("preznt-btn")) return;
+  if (buttonInjected && document.getElementById("prolio-btn")) return;
 
   // Find the apply button area to inject next to it
   const applyArea =
@@ -43,11 +43,11 @@ function injectButton() {
   if (!applyArea) return;
 
   // Don't inject twice
-  if (document.getElementById("preznt-btn")) return;
+  if (document.getElementById("prolio-btn")) return;
 
   const btn = document.createElement("button");
-  btn.id = "preznt-btn";
-  btn.innerHTML = `<span class="preznt-icon">⚡</span> Analyze with Preznt`;
+  btn.id = "prolio-btn";
+  btn.innerHTML = `<span class="prolio-icon">⚡</span> Analyze with Prolio`;
 
   btn.addEventListener("click", () => {
     const job = scrapeJobData();
