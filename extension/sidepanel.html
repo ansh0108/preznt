@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preznt</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- LOGIN VIEW -->
+    <div id="view-login" class="view">
+      <div class="logo">⚡ Preznt</div>
+      <p class="subtitle">Sign in to analyze your job fit and generate cover letters instantly.</p>
+      <div class="form-group">
+        <input type="email" id="login-email" placeholder="Email" />
+      </div>
+      <div class="form-group">
+        <input type="password" id="login-password" placeholder="Password" />
+      </div>
+      <button id="login-btn" class="btn-primary">Sign In</button>
+      <div id="login-error" class="error-msg"></div>
+    </div>
+
+    <!-- MAIN VIEW -->
+    <div id="view-main" class="view hidden">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <span class="logo-sm">⚡ Preznt</span>
+          <span id="user-name" class="user-name"></span>
+        </div>
+        <button id="logout-btn" class="btn-ghost-sm">Sign out</button>
+      </div>
+
+      <!-- Job info bar -->
+      <div id="job-bar" class="job-bar hidden">
+        <div id="job-title-display" class="job-title-text"></div>
+        <div id="job-company-display" class="job-company-text"></div>
+      </div>
+
+      <!-- No job yet -->
+      <div id="no-job" class="empty-state">
+        <div class="empty-icon">💼</div>
+        <div class="empty-title">No job loaded</div>
+        <div class="empty-sub">Open a LinkedIn job posting and click the <strong>⚡ Analyze with Preznt</strong> button to get started.</div>
+      </div>
+
+      <!-- Tab bar -->
+      <div id="tab-bar" class="tab-bar hidden">
+        <button class="tab-btn active" data-tab="gap">Gap Analysis</button>
+        <button class="tab-btn" data-tab="cover">Cover Letter</button>
+      </div>
+
+      <!-- GAP ANALYSIS TAB -->
+      <div id="tab-gap" class="tab-content">
+        <button id="run-gap-btn" class="btn-primary full-width">⚡ Analyze My Fit</button>
+        <div id="gap-loading" class="loading hidden">
+          <div class="spinner"></div>
+          <span>Analyzing your profile against this role…</span>
+        </div>
+        <div id="gap-result" class="hidden"></div>
+      </div>
+
+      <!-- COVER LETTER TAB -->
+      <div id="tab-cover" class="tab-content hidden">
+        <button id="run-cover-btn" class="btn-primary full-width">✉️ Generate Cover Letter</button>
+        <div id="cover-loading" class="loading hidden">
+          <div class="spinner"></div>
+          <span>Writing your cover letter…</span>
+        </div>
+        <div id="cover-result" class="hidden">
+          <textarea id="cover-text" rows="16" spellcheck="true"></textarea>
+          <div class="cover-actions">
+            <input type="text" id="refine-input" placeholder="Refine: e.g. make it shorter, emphasise Python…" />
+            <button id="refine-btn" class="btn-secondary">Refine</button>
+          </div>
+          <button id="copy-btn" class="btn-primary full-width">Copy to Clipboard</button>
+          <div id="copy-confirm" class="copy-confirm hidden">Copied!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
