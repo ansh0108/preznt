@@ -370,14 +370,40 @@ copyBtn.addEventListener("click", () => {
 });
 
 document.getElementById("download-pdf-btn").addEventListener("click", () => {
-  const letter = coverText.value;
+  const letter = coverText.value.trim();
   if (!letter) return;
-  const name = (currentJob?.company || "Cover_Letter").replace(/\s+/g, "_");
-  const blob = new Blob([letter], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${name}_Cover_Letter.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "letter" });
+
+  const margin = 72; // 1 inch
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const maxW = pageW - margin * 2;
+
+  doc.setFont("times", "normal");
+  doc.setFontSize(12);
+
+  let y = margin;
+  const lineHeight = 18;
+
+  const paragraphs = letter.split("\n");
+  for (const para of paragraphs) {
+    if (para.trim() === "") {
+      y += lineHeight * 0.6; // blank line gap
+      continue;
+    }
+    const lines = doc.splitTextToSize(para, maxW);
+    for (const line of lines) {
+      if (y + lineHeight > pageH - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += lineHeight;
+    }
+  }
+
+  const name = (currentJob?.company || "Cover_Letter").replace(/[^a-zA-Z0-9]/g, "_");
+  doc.save(`${name}_Cover_Letter.pdf`);
 });
