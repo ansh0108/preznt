@@ -266,14 +266,18 @@ function renderGapResult(data) {
       </div>
     </div>`;
 
-  // Keywords as compact pills — matching + missing in one row
-  if (data.matching_keywords?.length || data.missing_keywords?.length) {
+  // Filter out junk keywords (meta-words that aren't real skills)
+  const JUNK = new Set(["job description", "job posting", "requirements", "responsibilities", "qualifications", "experience", "skills", "apply", "candidate"]);
+  const cleanKw = (k) => { const s = typeof k === "string" ? k : k.keyword; return s; };
+  const isJunk = (k) => JUNK.has(cleanKw(k).toLowerCase().trim());
+
+  const matchKws = (data.matching_keywords || []).filter(k => !isJunk(k));
+  const missKws = (data.missing_keywords || []).filter(k => !isJunk(k));
+
+  if (matchKws.length || missKws.length) {
     html += `<div class="section-title">Keywords</div><div class="pill-row">`;
-    (data.matching_keywords || []).slice(0, 6).forEach(k => { html += `<span class="pill match">${k}</span>`; });
-    (data.missing_keywords || []).slice(0, 5).forEach(k => {
-      const kw = typeof k === "string" ? k : k.keyword;
-      html += `<span class="pill missing">${kw}</span>`;
-    });
+    matchKws.slice(0, 6).forEach(k => { html += `<span class="pill match">${k}</span>`; });
+    missKws.slice(0, 5).forEach(k => { html += `<span class="pill missing">${cleanKw(k)}</span>`; });
     html += `</div>`;
   }
 
@@ -287,11 +291,11 @@ function renderGapResult(data) {
     html += `</div>`;
   }
 
-  // Gaps — title only
-  if (data.missing_keywords?.length) {
+  // Gaps — title only, using filtered list
+  if (missKws.length) {
     html += `<div class="section-title">Missing</div><div class="compact-list">`;
-    data.missing_keywords.slice(0, 4).forEach(k => {
-      const kw = typeof k === "string" ? k : k.keyword;
+    missKws.slice(0, 4).forEach(k => {
+      const kw = cleanKw(k);
       const imp = typeof k === "object" ? k.importance : "";
       html += `<div class="compact-item"><span class="ci-dot" style="color:var(--red)">✗</span>${kw}${imp ? ` <span style="font-size:10px;color:var(--text3)">(${imp})</span>` : ""}</div>`;
     });
@@ -368,13 +372,12 @@ copyBtn.addEventListener("click", () => {
 document.getElementById("download-pdf-btn").addEventListener("click", () => {
   const letter = coverText.value;
   if (!letter) return;
-  const win = window.open("", "_blank");
-  win.document.write(`<!DOCTYPE html><html><head><title>Cover Letter</title>
-  <style>
-    body { font-family: Georgia, serif; font-size: 12pt; line-height: 1.8; max-width: 680px; margin: 60px auto; color: #111; }
-    p { margin: 0 0 1em; }
-    @media print { body { margin: 0; } }
-  </style></head><body>${letter.split("\n").map(l => l.trim() ? `<p>${l}</p>` : "<p>&nbsp;</p>").join("")}
-  <script>window.onload=()=>{window.print();}<\/script></body></html>`);
-  win.document.close();
+  const name = (currentJob?.company || "Cover_Letter").replace(/\s+/g, "_");
+  const blob = new Blob([letter], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${name}_Cover_Letter.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
 });
