@@ -20,11 +20,14 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(false);
   const chatContainerRef = useRef(null);
-  const bottomRef = useRef(null);
   const isFirstRender = useRef(true);
 
   const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    requestAnimationFrame(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    });
   };
 
   useEffect(() => {
@@ -97,7 +100,6 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
             </div>
           </div>
         )}
-        <div ref={bottomRef} />
       </div>
 
       {!loading && (
