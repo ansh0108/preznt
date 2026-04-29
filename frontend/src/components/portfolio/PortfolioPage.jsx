@@ -88,7 +88,7 @@ function PortfolioPage({ userId, onBack }) {
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
 
-  const TabBar = () => (
+  const tabBar = (
     <div style={{ display: "flex", gap: 2, marginBottom: 22, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content" }}>
       {TABS.map(t => (
         <button key={t.id} onClick={() => switchTab(t.id)} className="b-tab" data-active={tab === t.id} style={{
@@ -106,7 +106,7 @@ function PortfolioPage({ userId, onBack }) {
     </div>
   );
 
-  const ContentPanel = () => (
+  const contentPanel = (
     <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "28px 30px", minHeight: 520 }}>
       <div style={{ display: tab === "overview" ? "block" : "none" }}><Overview profile={profile} hideSections={hideSections} /></div>
       <div style={{ display: tab === "projects" ? "block" : "none" }}><Projects profile={profile} hideSections={hideSections} featuredRepos={featuredRepos} /></div>
@@ -152,8 +152,8 @@ function PortfolioPage({ userId, onBack }) {
               </a>
             )}
           </div>
-          <TabBar />
-          <ContentPanel />
+          {tabBar}
+          {contentPanel}
         </div>
       ) : (
         <div style={{ maxWidth: 1440, margin: "0 auto", padding: "40px 48px", display: "grid", gridTemplateColumns: "300px 1fr", gap: 36, alignItems: "start" }}>
