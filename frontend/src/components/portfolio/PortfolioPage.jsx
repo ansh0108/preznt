@@ -243,8 +243,8 @@ function PortfolioPage({ userId, onBack }) {
 
           {/* Main */}
           <div style={{ animation: "fadeUp 0.38s ease" }}>
-            <TabBar />
-            <ContentPanel />
+            {tabBar}
+            {contentPanel}
           </div>
         </div>
       )}
