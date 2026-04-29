@@ -23,20 +23,20 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
   const isFirstRender = useRef(true);
 
   const scrollToBottom = () => {
-    requestAnimationFrame(() => {
-      if (chatContainerRef.current) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-      }
-    });
+    // Use 99999 — browser clamps to max valid scrollTop automatically
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = 99999;
+    }
   };
 
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return; }
-    scrollToBottom();
+    // Defer past React paint so scrollHeight reflects new content
+    setTimeout(scrollToBottom, 30);
   }, [messages]);
 
   useEffect(() => {
-    if (loading) scrollToBottom();
+    if (loading) setTimeout(scrollToBottom, 30);
   }, [loading]);
 
   const send = async (text) => {
@@ -59,10 +59,19 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
     }
   };
 
+  const renderInline = (text) =>
+    text.split(/\*\*(.*?)\*\*/g).map((part, i) =>
+      i % 2 === 1 ? <strong key={i} style={{ color: "var(--text)", fontWeight: 600 }}>{part}</strong> : part
+    );
+
   const renderMsg = (content) => {
     const lines = content.split('\n').filter(l => l.trim());
-    if (lines.length <= 1) return <span style={{ lineHeight: 1.6 }}>{content}</span>;
-    return <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{lines.map((l, i) => <div key={i} style={{ lineHeight: 1.55 }}>{l}</div>)}</div>;
+    if (lines.length <= 1) return <span style={{ lineHeight: 1.6 }}>{renderInline(content)}</span>;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+        {lines.map((l, i) => <div key={i} style={{ lineHeight: 1.6 }}>{renderInline(l)}</div>)}
+      </div>
+    );
   };
 
   return (
