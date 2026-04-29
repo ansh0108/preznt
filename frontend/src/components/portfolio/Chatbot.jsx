@@ -100,7 +100,7 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
       )}
 
       <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)", display: "flex", gap: 8 }}>
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder="Ask anything..." style={{ flex: 1, borderRadius: 100, padding: "10px 18px" }} />
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder="Ask about my background, skills, or projects…" style={{ flex: 1, borderRadius: 100, padding: "10px 18px" }} />
         <button onClick={() => send()} disabled={loading || cooldown || !input.trim()} style={{ background: "var(--accent)", color: "#fff", borderRadius: "50%", width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", opacity: loading || cooldown || !input.trim() ? 0.35 : 1, flexShrink: 0 }}>
           <Icon name="arrow" size={16} color="#fff" />
         </button>
