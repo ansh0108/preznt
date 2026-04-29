@@ -20,14 +20,21 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(false);
   const chatContainerRef = useRef(null);
+  const bottomRef = useRef(null);
   const isFirstRender = useRef(true);
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return; }
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
+    scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (loading) scrollToBottom();
+  }, [loading]);
 
   const send = async (text) => {
     const q = text || input;
@@ -77,14 +84,20 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
         ))}
         {loading && (
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-d)", border: "1px solid var(--accent-b)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-d)", border: "1px solid var(--accent-b)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <Icon name="zap" size={13} color="var(--accent)" />
             </div>
-            <div style={{ display: "flex", gap: 4 }}>
-              {[0, 1, 2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--text3)", animation: "pulse 1.2s ease infinite", animationDelay: `${i * 0.2}s` }} />)}
+            <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "16px 16px 16px 4px", padding: "10px 15px", display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 13, color: "var(--text3)" }}>Thinking</span>
+              <div style={{ display: "flex", gap: 3 }}>
+                {[0, 1, 2].map(i => (
+                  <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent)", opacity: 0.7, animation: "chatDot 1.2s ease-in-out infinite", animationDelay: `${i * 0.2}s` }} />
+                ))}
+              </div>
             </div>
           </div>
         )}
+        <div ref={bottomRef} />
       </div>
 
       {!loading && (
