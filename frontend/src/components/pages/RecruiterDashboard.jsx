@@ -6,21 +6,104 @@ import Icon from "../ui/Icon";
 import CandidateEvaluator from "./CandidateEvaluator";
 import ProfileCard from "./ProfileCard";
 
+function AddByUrl({ onAdd }) {
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const add = async () => {
+    setError("");
+    const idMatch = url.match(/([0-9a-f]{8})(?:[^0-9a-f]|$)/);
+    const id = idMatch ? idMatch[1] : url.trim();
+    if (!id || id.length !== 8) return setError("Paste a valid portfolio URL.");
+    setLoading(true);
+    try {
+      const r = await axios.get(`${API}/profile/${id}`);
+      onAdd(r.data);
+      setUrl("");
+    } catch { setError("Could not find that portfolio. Check the URL."); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <>
+      <div style={{ display: "flex", gap: 10, maxWidth: 640, marginBottom: 8 }}>
+        <input value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && add()}
+          placeholder="Paste portfolio URL, e.g. prolio.co/#/portfolio/name-id" style={{ flex: 1 }} />
+        <Btn onClick={add} disabled={loading || !url.trim()}>
+          {loading ? <Spinner size={14} color="#fff" /> : "Add Candidate"}
+        </Btn>
+      </div>
+      {error && <div style={{ color: "var(--red)", fontSize: 13 }}>{error}</div>}
+    </>
+  );
+}
+
+function AddByUpload({ onAdd }) {
+  const [name, setName] = useState("");
+  const [resume, setResume] = useState(null);
+  const [linkedin, setLinkedin] = useState(null);
+  const [github, setGithub] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async () => {
+    if (!resume && !linkedin && !github.trim()) return setError("Add at least one file or GitHub URL.");
+    setError(""); setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("name", name.trim());
+      fd.append("github_url", github.trim());
+      if (resume) fd.append("resume", resume);
+      if (linkedin) fd.append("linkedin", linkedin);
+      const r = await axios.post(`${API}/evaluate/upload`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+      onAdd(r.data);
+      setName(""); setResume(null); setLinkedin(null); setGithub("");
+    } catch { setError("Upload failed. Please try again."); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px 24px", maxWidth: 640 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Candidate Name</div>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Full name (optional)" style={{ width: "100%" }} />
+        </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>GitHub Profile URL</div>
+          <input value={github} onChange={e => setGithub(e.target.value)} placeholder="github.com/username" style={{ width: "100%" }} />
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 18 }}>
+        {[
+          { label: "Resume / CV", accept: ".pdf,.docx,.pptx,.txt", file: resume, setFile: setResume },
+          { label: "LinkedIn PDF", accept: ".pdf", file: linkedin, setFile: setLinkedin },
+        ].map(({ label, accept, file, setFile }) => (
+          <label key={label} style={{ cursor: "pointer" }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+            <div style={{ border: `1px dashed ${file ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "12px 14px", display: "flex", alignItems: "center", gap: 8, background: file ? "rgba(45,212,191,0.06)" : "var(--bg2)", transition: "all 0.15s" }}>
+              <Icon name={file ? "check" : "file"} size={14} color={file ? "var(--teal)" : "var(--text3)"} />
+              <span style={{ fontSize: 12.5, color: file ? "var(--teal)" : "var(--text3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file ? file.name : `Upload ${label}`}</span>
+            </div>
+            <input type="file" accept={accept} style={{ display: "none" }} onChange={e => setFile(e.target.files[0] || null)} />
+          </label>
+        ))}
+      </div>
+      {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 12 }}>{error}</div>}
+      <Btn onClick={submit} disabled={loading || (!resume && !linkedin && !github.trim())}>
+        {loading ? <><Spinner size={14} color="#fff" /> Analyzing…</> : <><Icon name="zap" size={14} color="#fff" /> Analyze Candidate</>}
+      </Btn>
+    </div>
+  );
+}
+
 function RecruiterDashboard({ auth, onLogout }) {
   const [profiles, setProfiles] = useState([]);
   const [poolLoading, setPoolLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [candidates, setCandidates] = useState([]);
   const [addMode, setAddMode] = useState("url");
-  const [candidateUrl, setCandidateUrl] = useState("");
-  const [candidateLoading, setCandidateLoading] = useState(false);
-  const [candidateError, setCandidateError] = useState("");
-  const [uploadName, setUploadName] = useState("");
-  const [uploadResume, setUploadResume] = useState(null);
-  const [uploadLinkedin, setUploadLinkedin] = useState(null);
-  const [uploadGithub, setUploadGithub] = useState("");
-  const [uploadLoading, setUploadLoading] = useState(false);
-  const [uploadError, setUploadError] = useState("");
 
   useEffect(() => {
     axios.get(`${API}/profiles/list`)
@@ -28,37 +111,6 @@ function RecruiterDashboard({ auth, onLogout }) {
       .catch(() => {})
       .finally(() => setPoolLoading(false));
   }, []);
-
-  const addCandidate = async () => {
-    setCandidateError("");
-    const idMatch = candidateUrl.match(/([0-9a-f]{8})(?:[^0-9a-f]|$)/);
-    const id = idMatch ? idMatch[1] : candidateUrl.trim();
-    if (!id || id.length !== 8) return setCandidateError("Paste a valid portfolio URL.");
-    if (candidates.some(c => c.user_id === id)) return setCandidateError("Already added.");
-    setCandidateLoading(true);
-    try {
-      const r = await axios.get(`${API}/profile/${id}`);
-      setCandidates(prev => [...prev, r.data]);
-      setCandidateUrl("");
-    } catch { setCandidateError("Could not find that portfolio. Check the URL."); }
-    finally { setCandidateLoading(false); }
-  };
-
-  const addByUpload = async () => {
-    if (!uploadResume && !uploadLinkedin && !uploadGithub.trim()) return setUploadError("Add at least one file or GitHub URL.");
-    setUploadError(""); setUploadLoading(true);
-    try {
-      const fd = new FormData();
-      fd.append("name", uploadName.trim());
-      fd.append("github_url", uploadGithub.trim());
-      if (uploadResume) fd.append("resume", uploadResume);
-      if (uploadLinkedin) fd.append("linkedin", uploadLinkedin);
-      const r = await axios.post(`${API}/evaluate/upload`, fd, { headers: { "Content-Type": "multipart/form-data" } });
-      setCandidates(prev => [...prev, r.data]);
-      setUploadName(""); setUploadResume(null); setUploadLinkedin(null); setUploadGithub("");
-    } catch { setUploadError("Upload failed. Please try again."); }
-    finally { setUploadLoading(false); }
-  };
 
   const filtered = profiles.filter(p => {
     if (!search.trim()) return true;
@@ -79,64 +131,22 @@ function RecruiterDashboard({ auth, onLogout }) {
       </div>
 
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px" }}>
-        {/* Evaluate a Candidate */}
         <div style={{ marginBottom: 52 }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", fontFamily: "var(--serif)", marginBottom: 6 }}>Evaluate a Candidate</div>
           <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 20 }}>Add a candidate via their prolio portfolio link, or upload their resume / LinkedIn / GitHub directly.</div>
 
           <div style={{ display: "flex", gap: 2, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content", marginBottom: 20 }}>
             {[{ id: "url", label: "By Portfolio URL" }, { id: "upload", label: "Upload Files" }].map(m => (
-              <button key={m.id} onClick={() => { setAddMode(m.id); setCandidateError(""); setUploadError(""); }}
+              <button key={m.id} onClick={() => setAddMode(m.id)}
                 style={{ background: addMode === m.id ? "var(--bg3)" : "transparent", color: addMode === m.id ? "var(--text)" : "var(--text3)", padding: "7px 16px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: addMode === m.id ? 600 : 400, border: addMode === m.id ? "1px solid var(--line2)" : "1px solid transparent", cursor: "pointer" }}>
                 {m.label}
               </button>
             ))}
           </div>
 
-          {addMode === "url" ? (
-            <>
-              <div style={{ display: "flex", gap: 10, maxWidth: 640, marginBottom: 8 }}>
-                <input value={candidateUrl} onChange={e => setCandidateUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && addCandidate()}
-                  placeholder="Paste portfolio URL, e.g. prolio.co/#/portfolio/name-id" style={{ flex: 1 }} />
-                <Btn onClick={addCandidate} disabled={candidateLoading || !candidateUrl.trim()}>
-                  {candidateLoading ? <Spinner size={14} color="#fff" /> : "Add Candidate"}
-                </Btn>
-              </div>
-              {candidateError && <div style={{ color: "var(--red)", fontSize: 13 }}>{candidateError}</div>}
-            </>
-          ) : (
-            <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px 24px", maxWidth: 640 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Candidate Name</div>
-                  <input value={uploadName} onChange={e => setUploadName(e.target.value)} placeholder="Full name (optional)" style={{ width: "100%" }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>GitHub Profile URL</div>
-                  <input value={uploadGithub} onChange={e => setUploadGithub(e.target.value)} placeholder="github.com/username" style={{ width: "100%" }} />
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 18 }}>
-                {[
-                  { label: "Resume / CV", accept: ".pdf,.docx,.pptx,.txt", file: uploadResume, setFile: setUploadResume },
-                  { label: "LinkedIn PDF", accept: ".pdf", file: uploadLinkedin, setFile: setUploadLinkedin },
-                ].map(({ label, accept, file, setFile }) => (
-                  <label key={label} style={{ cursor: "pointer" }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
-                    <div style={{ border: `1px dashed ${file ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", padding: "12px 14px", display: "flex", alignItems: "center", gap: 8, background: file ? "rgba(45,212,191,0.06)" : "var(--bg2)", transition: "all 0.15s" }}>
-                      <Icon name={file ? "check" : "file"} size={14} color={file ? "var(--teal)" : "var(--text3)"} />
-                      <span style={{ fontSize: 12.5, color: file ? "var(--teal)" : "var(--text3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file ? file.name : `Upload ${label}`}</span>
-                    </div>
-                    <input type="file" accept={accept} style={{ display: "none" }} onChange={e => setFile(e.target.files[0] || null)} />
-                  </label>
-                ))}
-              </div>
-              {uploadError && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 12 }}>{uploadError}</div>}
-              <Btn onClick={addByUpload} disabled={uploadLoading || (!uploadResume && !uploadLinkedin && !uploadGithub.trim())}>
-                {uploadLoading ? <><Spinner size={14} color="#fff" /> Analyzing…</> : <><Icon name="zap" size={14} color="#fff" /> Analyze Candidate</>}
-              </Btn>
-            </div>
-          )}
+          {addMode === "url"
+            ? <AddByUrl onAdd={c => setCandidates(prev => [...prev, c])} />
+            : <AddByUpload onAdd={c => setCandidates(prev => [...prev, c])} />}
 
           {candidates.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 24 }}>
@@ -149,7 +159,6 @@ function RecruiterDashboard({ auth, onLogout }) {
 
         <Divider my={0} />
 
-        {/* Talent Pool */}
         <div style={{ marginTop: 40 }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", fontFamily: "var(--serif)", marginBottom: 6 }}>Talent Pool</div>
           <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 24 }}>Browse AI-powered portfolios from registered job seekers.</div>

@@ -4,6 +4,38 @@ import { API } from "../../lib/api";
 import { Spinner, Btn, SecHead } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
+function QuestionCard({ q, i, copied, onCopy, typeColor, typeLabel }) {
+  const color = typeColor[q.type] || "var(--accent)";
+  return (
+    <div className="c-hover" style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px", borderLeft: `3px solid ${color}` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color, background: color + "18", border: `1px solid ${color}40`, padding: "2px 8px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            {typeLabel[q.type] || q.type}
+          </span>
+          <span style={{ fontSize: 12, color: "var(--text3)" }}>Q{i + 1}</span>
+        </div>
+        <button onClick={() => onCopy(i, `Q: ${q.question}\n\nTalking point: ${q.talking_point}`)}
+          className="b-ghost"
+          style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-sm)", color: copied === i ? "var(--teal)" : "var(--text3)", padding: "3px 9px", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+          <Icon name={copied === i ? "check" : "copy"} size={11} color={copied === i ? "var(--teal)" : "var(--text3)"} />
+          {copied === i ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--text)", marginBottom: 8, lineHeight: 1.5 }}>"{q.question}"</div>
+      {q.why_asked && (
+        <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 10, fontStyle: "italic" }}>
+          Why asked: {q.why_asked}
+        </div>
+      )}
+      <div style={{ background: "var(--bg1)", borderRadius: "var(--r-md)", padding: "12px 14px", borderLeft: `2px solid ${color}` }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Your talking point</div>
+        <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.75 }}>{q.talking_point}</div>
+      </div>
+    </div>
+  );
+}
+
 const INTERVIEW_TYPES = [
   { id: "behavioral", label: "Behavioral", color: "var(--rose)" },
   { id: "technical", label: "Technical / Coding", color: "var(--teal)" },
@@ -87,37 +119,9 @@ function InterviewPrep({ userId, jd: initialJd }) {
       {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
       {result && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "fadeUp 0.3s ease" }}>
-          {result.map((q, i) => {
-            const color = TYPE_COLOR[q.type] || "var(--accent)";
-            return (
-              <div key={i} className="c-hover" style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px", borderLeft: `3px solid ${color}` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color, background: color + "18", border: `1px solid ${color}40`, padding: "2px 8px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                      {TYPE_LABEL[q.type] || q.type}
-                    </span>
-                    <span style={{ fontSize: 12, color: "var(--text3)" }}>Q{i + 1}</span>
-                  </div>
-                  <button onClick={() => copyQ(i, `Q: ${q.question}\n\nTalking point: ${q.talking_point}`)}
-                    className="b-ghost"
-                    style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-sm)", color: copied === i ? "var(--teal)" : "var(--text3)", padding: "3px 9px", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-                    <Icon name={copied === i ? "check" : "copy"} size={11} color={copied === i ? "var(--teal)" : "var(--text3)"} />
-                    {copied === i ? "Copied" : "Copy"}
-                  </button>
-                </div>
-                <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--text)", marginBottom: 8, lineHeight: 1.5 }}>"{q.question}"</div>
-                {q.why_asked && (
-                  <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 10, fontStyle: "italic" }}>
-                    Why asked: {q.why_asked}
-                  </div>
-                )}
-                <div style={{ background: "var(--bg1)", borderRadius: "var(--r-md)", padding: "12px 14px", borderLeft: `2px solid ${color}` }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Your talking point</div>
-                  <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.75 }}>{q.talking_point}</div>
-                </div>
-              </div>
-            );
-          })}
+          {result.map((q, i) => (
+            <QuestionCard key={i} q={q} i={i} copied={copied} onCopy={copyQ} typeColor={TYPE_COLOR} typeLabel={TYPE_LABEL} />
+          ))}
         </div>
       )}
     </div>

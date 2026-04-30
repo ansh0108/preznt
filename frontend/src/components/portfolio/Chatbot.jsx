@@ -9,6 +9,71 @@ const SUGGESTIONS = [
   "Tell me about your most recent role", "What tools do you work with?", "What are you looking for next?",
 ];
 
+function renderInline(text) {
+  return text.split(/\*\*(.*?)\*\*/g).map((part, i) =>
+    i % 2 === 1 ? <strong key={i} style={{ color: "var(--text)", fontWeight: 600 }}>{part}</strong> : part
+  );
+}
+
+function renderMsg(content) {
+  const lines = content.split('\n').filter(l => l.trim());
+  if (lines.length <= 1) return <span style={{ lineHeight: 1.6 }}>{renderInline(content)}</span>;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {lines.map((l, i) => {
+        const isBullet = /^[-•]\s/.test(l);
+        if (isBullet) {
+          return (
+            <div key={i} style={{ display: "flex", gap: 8, lineHeight: 1.6, alignItems: "flex-start" }}>
+              <span style={{ color: "var(--accent)", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>•</span>
+              <span>{renderInline(l.replace(/^[-•]\s/, ""))}</span>
+            </div>
+          );
+        }
+        return <div key={i} style={{ lineHeight: 1.6 }}>{renderInline(l)}</div>;
+      })}
+    </div>
+  );
+}
+
+function MessageBubble({ msg }) {
+  return (
+    <div style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.2s ease" }}>
+      {msg.role === "assistant" && (
+        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-d)", border: "1px solid var(--accent-b)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginRight: 10, marginTop: 2 }}>
+          <Icon name="zap" size={13} color="var(--accent)" />
+        </div>
+      )}
+      <div style={{
+        maxWidth: "78%",
+        background: msg.isError ? "rgba(248,113,113,0.08)" : msg.role === "user" ? "var(--accent)" : "var(--bg2)",
+        color: msg.isError ? "var(--red)" : msg.role === "user" ? "#fff" : "var(--text2)",
+        padding: "11px 15px",
+        borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+        fontSize: 13.5, border: msg.isError ? "1px solid rgba(248,113,113,0.25)" : msg.role === "assistant" ? "1px solid var(--line2)" : "none"
+      }}>{renderMsg(msg.content)}</div>
+    </div>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-d)", border: "1px solid var(--accent-b)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Icon name="zap" size={13} color="var(--accent)" />
+      </div>
+      <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "16px 16px 16px 4px", padding: "10px 15px", display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 13, color: "var(--text3)" }}>Thinking</span>
+        <div style={{ display: "flex", gap: 3 }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent)", opacity: 0.7, animation: "chatDot 1.2s ease-in-out infinite", animationDelay: `${i * 0.2}s` }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMessagesProp }) {
   const defaultMsg = [{ role: "assistant", content: `Hi — I'm ${userName}'s portfolio assistant. Ask me anything about their background, projects, or skills.` }];
   const [localMessages, setLocalMessages] = useState(defaultMsg);
@@ -24,9 +89,7 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
 
   const scrollToBottom = () => {
     // Use 99999 — browser clamps to max valid scrollTop automatically
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = 99999;
-    }
+    if (chatContainerRef.current) chatContainerRef.current.scrollTop = 99999;
   };
 
   useEffect(() => {
@@ -59,56 +122,11 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
     }
   };
 
-  const renderInline = (text) =>
-    text.split(/\*\*(.*?)\*\*/g).map((part, i) =>
-      i % 2 === 1 ? <strong key={i} style={{ color: "var(--text)", fontWeight: 600 }}>{part}</strong> : part
-    );
-
-  const renderMsg = (content) => {
-    const lines = content.split('\n').filter(l => l.trim());
-    if (lines.length <= 1) return <span style={{ lineHeight: 1.6 }}>{renderInline(content)}</span>;
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-        {lines.map((l, i) => <div key={i} style={{ lineHeight: 1.6 }}>{renderInline(l)}</div>)}
-      </div>
-    );
-  };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div ref={chatContainerRef} style={{ flex: 1, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
-        {messages.map((msg, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.2s ease" }}>
-            {msg.role === "assistant" && (
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-d)", border: "1px solid var(--accent-b)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginRight: 10, marginTop: 2 }}>
-                <Icon name="zap" size={13} color="var(--accent)" />
-              </div>
-            )}
-            <div style={{
-              maxWidth: "78%",
-              background: msg.isError ? "rgba(248,113,113,0.08)" : msg.role === "user" ? "var(--accent)" : "var(--bg2)",
-              color: msg.isError ? "var(--red)" : msg.role === "user" ? "#fff" : "var(--text2)",
-              padding: "11px 15px",
-              borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-              fontSize: 13.5, border: msg.isError ? "1px solid rgba(248,113,113,0.25)" : msg.role === "assistant" ? "1px solid var(--line2)" : "none"
-            }}>{renderMsg(msg.content)}</div>
-          </div>
-        ))}
-        {loading && (
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-d)", border: "1px solid var(--accent-b)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Icon name="zap" size={13} color="var(--accent)" />
-            </div>
-            <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "16px 16px 16px 4px", padding: "10px 15px", display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 13, color: "var(--text3)" }}>Thinking</span>
-              <div style={{ display: "flex", gap: 3 }}>
-                {[0, 1, 2].map(i => (
-                  <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent)", opacity: 0.7, animation: "chatDot 1.2s ease-in-out infinite", animationDelay: `${i * 0.2}s` }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        {messages.map((msg, i) => <MessageBubble key={i} msg={msg} />)}
+        {loading && <TypingIndicator />}
       </div>
 
       {!loading && (

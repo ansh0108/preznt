@@ -5,6 +5,111 @@ import { nameToSlug } from "../../lib/utils";
 import { Spinner, Btn, Pill } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
+function SLabel({ children }) {
+  return (
+    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
+      {children}
+    </div>
+  );
+}
+
+function FitResult({ fitResult }) {
+  const score = fitResult.ats_score;
+  const scoreColor = score >= 70 ? "var(--teal)" : score >= 45 ? "var(--amber)" : "var(--red)";
+  const fitColor = fitResult.overall_fit === "Strong" ? "var(--teal)" : fitResult.overall_fit === "Moderate" ? "var(--amber)" : "var(--red)";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeUp 0.3s ease" }}>
+      <div style={{ background: "var(--bg2)", border: `1px solid ${fitColor}33`, borderRadius: "var(--r-xl)", padding: "18px 20px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div style={{ textAlign: "center", flexShrink: 0 }}>
+          <div style={{ fontSize: 48, fontWeight: 800, color: scoreColor, lineHeight: 1, fontFamily: "var(--serif)" }}>{score}</div>
+          <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>ATS Score</div>
+          <div style={{ marginTop: 8, width: 64, height: 4, background: "var(--bg3)", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${score}%`, background: scoreColor, borderRadius: 2 }} />
+          </div>
+          <div style={{ marginTop: 8 }}><Pill color={fitColor}>{fitResult.overall_fit} Fit</Pill></div>
+        </div>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <SLabel>Summary</SLabel>
+          <div style={{ color: "var(--text2)", fontSize: 14, lineHeight: 1.7 }}>{fitResult.summary}</div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+          <SLabel>Matching Keywords</SLabel>
+          {fitResult.matching_keywords?.length > 0
+            ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{fitResult.matching_keywords.map((k, i) => <Pill key={i} color="var(--teal)">{k}</Pill>)}</div>
+            : <div style={{ fontSize: 13, color: "var(--text3)" }}>No matches found.</div>}
+        </div>
+        <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+          <SLabel>Missing Keywords</SLabel>
+          {fitResult.missing_keywords?.length > 0
+            ? <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                {fitResult.missing_keywords.map((k, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 10px", background: "var(--bg3)", borderRadius: "var(--r-md)" }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)" }}>{k.keyword}</div>
+                      <div style={{ color: "var(--text3)", fontSize: 12, marginTop: 2 }}>{k.context}</div>
+                    </div>
+                    <Pill color={k.importance === "Must Have" ? "var(--red)" : "var(--amber)"}>{k.importance}</Pill>
+                  </div>
+                ))}
+              </div>
+            : <div style={{ fontSize: 13, color: "var(--text3)" }}>No critical gaps!</div>}
+        </div>
+      </div>
+
+      {fitResult.strengths?.length > 0 && (
+        <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+          <SLabel>Strengths</SLabel>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {fitResult.strengths.map((s, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, padding: "10px 12px", background: "var(--bg3)", borderRadius: "var(--r-md)" }}>
+                <Icon name="check" size={14} color="var(--teal)" style={{ flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)", marginBottom: 2 }}>{s.point}</div>
+                  <div style={{ fontSize: 13, color: "var(--text3)", lineHeight: 1.6 }}>{s.detail}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {fitResult.suggested_skills?.length > 0 && (
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+            <SLabel>Skills Gaps</SLabel>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {fitResult.suggested_skills.map((s, i) => <Pill key={i} color="var(--amber)">{s}</Pill>)}
+            </div>
+          </div>
+        )}
+        {fitResult.quick_wins?.length > 0 && (
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+            <SLabel>Quick Wins</SLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              {fitResult.quick_wins.map((w, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: "var(--text2)", lineHeight: 1.5 }}>
+                  <span style={{ color: "var(--accent)", flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
+                  {w}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {fitResult.tone_feedback && (
+        <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+          <SLabel>Positioning Feedback</SLabel>
+          <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.7 }}>{fitResult.tone_feedback}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CandidateEvaluator({ candidate: c, onRemove }) {
   const [tab, setTab] = useState("portfolio");
   const [jd, setJd] = useState("");
@@ -67,103 +172,7 @@ function CandidateEvaluator({ candidate: c, onRemove }) {
             {fitLoading ? <><Spinner size={14} color="#fff" /> Analyzing…</> : <><Icon name="target" size={14} color="#fff" /> Analyze Fit</>}
           </Btn>
           {fitError && <div style={{ color: "var(--red)", fontSize: 14 }}>{fitError}</div>}
-          {fitResult && !fitResult.error && (() => {
-            const score = fitResult.ats_score;
-            const scoreColor = score >= 70 ? "var(--teal)" : score >= 45 ? "var(--amber)" : "var(--red)";
-            const fitColor = fitResult.overall_fit === "Strong" ? "var(--teal)" : fitResult.overall_fit === "Moderate" ? "var(--amber)" : "var(--red)";
-            const SLabel = ({ children }) => <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{children}</div>;
-            return (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeUp 0.3s ease" }}>
-                <div style={{ background: "var(--bg2)", border: `1px solid ${fitColor}33`, borderRadius: "var(--r-xl)", padding: "18px 20px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
-                  <div style={{ textAlign: "center", flexShrink: 0 }}>
-                    <div style={{ fontSize: 48, fontWeight: 800, color: scoreColor, lineHeight: 1, fontFamily: "var(--serif)" }}>{score}</div>
-                    <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>ATS Score</div>
-                    <div style={{ marginTop: 8, width: 64, height: 4, background: "var(--bg3)", borderRadius: 2, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${score}%`, background: scoreColor, borderRadius: 2 }} />
-                    </div>
-                    <div style={{ marginTop: 8 }}><Pill color={fitColor}>{fitResult.overall_fit} Fit</Pill></div>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 180 }}>
-                    <SLabel>Summary</SLabel>
-                    <div style={{ color: "var(--text2)", fontSize: 14, lineHeight: 1.7 }}>{fitResult.summary}</div>
-                  </div>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
-                    <SLabel>Matching Keywords</SLabel>
-                    {fitResult.matching_keywords?.length > 0
-                      ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{fitResult.matching_keywords.map((k, i) => <Pill key={i} color="var(--teal)">{k}</Pill>)}</div>
-                      : <div style={{ fontSize: 13, color: "var(--text3)" }}>No matches found.</div>}
-                  </div>
-                  <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
-                    <SLabel>Missing Keywords</SLabel>
-                    {fitResult.missing_keywords?.length > 0
-                      ? <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                          {fitResult.missing_keywords.map((k, i) => (
-                            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 10px", background: "var(--bg3)", borderRadius: "var(--r-md)" }}>
-                              <div>
-                                <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)" }}>{k.keyword}</div>
-                                <div style={{ color: "var(--text3)", fontSize: 12, marginTop: 2 }}>{k.context}</div>
-                              </div>
-                              <Pill color={k.importance === "Must Have" ? "var(--red)" : "var(--amber)"}>{k.importance}</Pill>
-                            </div>
-                          ))}
-                        </div>
-                      : <div style={{ fontSize: 13, color: "var(--text3)" }}>No critical gaps!</div>}
-                  </div>
-                </div>
-
-                {fitResult.strengths?.length > 0 && (
-                  <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
-                    <SLabel>Strengths</SLabel>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {fitResult.strengths.map((s, i) => (
-                        <div key={i} style={{ display: "flex", gap: 10, padding: "10px 12px", background: "var(--bg3)", borderRadius: "var(--r-md)" }}>
-                          <Icon name="check" size={14} color="var(--teal)" style={{ flexShrink: 0, marginTop: 2 }} />
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)", marginBottom: 2 }}>{s.point}</div>
-                            <div style={{ fontSize: 13, color: "var(--text3)", lineHeight: 1.6 }}>{s.detail}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  {fitResult.suggested_skills?.length > 0 && (
-                    <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
-                      <SLabel>Skills Gaps</SLabel>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {fitResult.suggested_skills.map((s, i) => <Pill key={i} color="var(--amber)">{s}</Pill>)}
-                      </div>
-                    </div>
-                  )}
-                  {fitResult.quick_wins?.length > 0 && (
-                    <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
-                      <SLabel>Quick Wins</SLabel>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                        {fitResult.quick_wins.map((w, i) => (
-                          <div key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: "var(--text2)", lineHeight: 1.5 }}>
-                            <span style={{ color: "var(--accent)", flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
-                            {w}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {fitResult.tone_feedback && (
-                  <div style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
-                    <SLabel>Positioning Feedback</SLabel>
-                    <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.7 }}>{fitResult.tone_feedback}</div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+          {fitResult && !fitResult.error && <FitResult fitResult={fitResult} />}
         </div>
       )}
     </div>

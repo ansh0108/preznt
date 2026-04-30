@@ -3,6 +3,53 @@ import { extractTechTags } from "../../lib/utils";
 import { BulletText, Pill } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
+function GithubProjectCard({ repo, featuredRepos }) {
+  return (
+    <a href={repo.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+      <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px", cursor: "pointer" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: repo.description ? 10 : 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Icon name="github" size={16} color="var(--text2)" />
+            <span style={{ fontFamily: "var(--sans)", fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{repo.name}</span>
+            {featuredRepos.includes(repo.name) && <Pill color="var(--accent)" size="sm">Featured</Pill>}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+            {repo.stars > 0 && <span style={{ fontSize: 12, color: "var(--text3)", display: "flex", alignItems: "center", gap: 4 }}><Icon name="star" size={12} color="var(--amber)" />{repo.stars}</span>}
+            {repo.forks > 0 && <span style={{ fontSize: 12, color: "var(--text3)", display: "flex", alignItems: "center", gap: 4 }}><Icon name="fork" size={12} color="var(--text3)" />{repo.forks}</span>}
+            <span style={{ fontSize: 12, color: "var(--accent)", background: "var(--accent-d)", border: "1px solid var(--accent-b)", padding: "3px 10px", borderRadius: 100, fontWeight: 600 }}>↗ View</span>
+          </div>
+        </div>
+        {repo.description && <BulletText text={repo.description} style={{ color: "var(--text2)", fontSize: 13.5, lineHeight: 1.75, marginBottom: 14 }} />}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {extractTechTags(repo.description, repo.topics, repo.language).map((tag, j) => (
+            <Pill key={j} color="var(--teal)" size="sm">{tag}</Pill>
+          ))}
+        </div>
+      </div>
+    </a>
+  );
+}
+
+function ResumeProjectCard({ proj }) {
+  return (
+    <div className="c-hover" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: proj.description ? 10 : 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Icon name="code" size={16} color="var(--text2)" />
+          <span style={{ fontFamily: "var(--sans)", fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{proj.name}</span>
+        </div>
+        {proj.type && <Pill color="var(--rose)" size="sm">{proj.type}</Pill>}
+      </div>
+      {proj.description && <BulletText text={proj.description} style={{ color: "var(--text2)", fontSize: 13.5, lineHeight: 1.75, marginBottom: proj.tech_stack?.length ? 14 : 0 }} />}
+      {proj.tech_stack?.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {proj.tech_stack.map((t, j) => <Pill key={j} size="sm">{t}</Pill>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Projects({ profile, hideSections = [], featuredRepos = [] }) {
   const githubRepos = [...(profile.github_repos || [])].sort((a, b) => {
     const aF = featuredRepos.includes(a.name) ? 0 : 1;
@@ -53,28 +100,7 @@ function Projects({ profile, hideSections = [], featuredRepos = [] }) {
       {sub === "github" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "fadeIn 0.2s ease" }}>
           {githubRepos.map((repo, i) => (
-            <a key={i} href={repo.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-              <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px", cursor: "pointer" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: repo.description ? 10 : 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <Icon name="github" size={16} color="var(--text2)" />
-                    <span style={{ fontFamily: "var(--sans)", fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{repo.name}</span>
-                    {featuredRepos.includes(repo.name) && <Pill color="var(--accent)" size="sm">Featured</Pill>}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-                    {repo.stars > 0 && <span style={{ fontSize: 12, color: "var(--text3)", display: "flex", alignItems: "center", gap: 4 }}><Icon name="star" size={12} color="var(--amber)" />{repo.stars}</span>}
-                    {repo.forks > 0 && <span style={{ fontSize: 12, color: "var(--text3)", display: "flex", alignItems: "center", gap: 4 }}><Icon name="fork" size={12} color="var(--text3)" />{repo.forks}</span>}
-                    <span style={{ fontSize: 12, color: "var(--accent)", background: "var(--accent-d)", border: "1px solid var(--accent-b)", padding: "3px 10px", borderRadius: 100, fontWeight: 600 }}>↗ View</span>
-                  </div>
-                </div>
-                {repo.description && <BulletText text={repo.description} style={{ color: "var(--text2)", fontSize: 13.5, lineHeight: 1.75, marginBottom: 14 }} />}
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  {extractTechTags(repo.description, repo.topics, repo.language).map((tag, j) => (
-                    <Pill key={j} color="var(--teal)" size="sm">{tag}</Pill>
-                  ))}
-                </div>
-              </div>
-            </a>
+            <GithubProjectCard key={i} repo={repo} featuredRepos={featuredRepos} />
           ))}
         </div>
       )}
@@ -82,21 +108,7 @@ function Projects({ profile, hideSections = [], featuredRepos = [] }) {
       {sub === "resume" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "fadeIn 0.2s ease" }}>
           {resumeProjects.map((proj, i) => (
-            <div key={i} className="c-hover" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: proj.description ? 10 : 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Icon name="code" size={16} color="var(--text2)" />
-                  <span style={{ fontFamily: "var(--sans)", fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{proj.name}</span>
-                </div>
-                {proj.type && <Pill color="var(--rose)" size="sm">{proj.type}</Pill>}
-              </div>
-              {proj.description && <BulletText text={proj.description} style={{ color: "var(--text2)", fontSize: 13.5, lineHeight: 1.75, marginBottom: proj.tech_stack?.length ? 14 : 0 }} />}
-              {proj.tech_stack?.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {proj.tech_stack.map((t, j) => <Pill key={j} size="sm">{t}</Pill>)}
-                </div>
-              )}
-            </div>
+            <ResumeProjectCard key={i} proj={proj} />
           ))}
         </div>
       )}

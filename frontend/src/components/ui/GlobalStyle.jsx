@@ -1,5 +1,4 @@
-const GlobalStyle = () => (
-  <style>{`
+const css = `
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -157,7 +156,10 @@ const GlobalStyle = () => (
       50%  { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-  `}</style>
-);
+`;
+
+function GlobalStyle() {
+  return <style>{css}</style>;
+}
 
 export default GlobalStyle;

@@ -20,11 +20,13 @@ from gap_analysis import analyze_gap
 from groq_client import call_groq
 from auth import init_db, create_user, get_user_by_email, get_user_by_id, verify_password, make_token, get_current_user, link_portfolio, add_portfolio_to_user, set_primary_portfolio, remove_portfolio_from_user
 from analytics import init_analytics_db, log_event, get_analytics as get_analytics_data
+from saved_analyses import init_saved_analyses_db, save_analysis, get_saved_analyses, delete_saved_analysis
 
 load_dotenv()
 app = FastAPI()
 init_db()
 init_analytics_db()
+init_saved_analyses_db()
 
 app.add_middleware(CORSMiddleware, allow_origins=[
                    "*"], allow_methods=["*"], allow_headers=["*"])
@@ -1177,6 +1179,29 @@ Rules:
         return {"cover_letter": letter}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class SaveAnalysisRequest(BaseModel):
+    user_id: str
+    type: str  # "gap" or "cover"
+    title: str
+    content: dict
+
+@app.post("/analyses/save")
+async def save_analysis_endpoint(req: SaveAnalysisRequest):
+    analysis_id = save_analysis(req.user_id, req.type, req.title, req.content)
+    return {"id": analysis_id}
+
+@app.get("/analyses/{user_id}")
+async def get_analyses_endpoint(user_id: str, type: str | None = None):
+    return {"analyses": get_saved_analyses(user_id, type)}
+
+@app.delete("/analyses/{analysis_id}")
+async def delete_analysis_endpoint(analysis_id: str, user_id: str = Query(...)):
+    ok = delete_saved_analysis(analysis_id, user_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"ok": True}
 
 
 @app.get("/resume/{user_id}")

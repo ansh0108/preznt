@@ -41,6 +41,17 @@ export default function App() {
 
   const logout = () => { clearAuth(); setAuth(null); window.location.hash = ""; setPage("landing"); };
 
+  const goSeeker = () => { setDefaultUserType("seeker"); window.location.hash = "#/signup"; setPage("signup"); };
+  const goRecruiter = () => { setDefaultUserType("recruiter"); window.location.hash = "#/signup"; setPage("signup"); };
+  const goLogin = () => { window.location.hash = "#/login"; setPage("login"); };
+
+  const landingJsx = (
+    <>
+      <GlobalStyle />
+      <LandingPage onSeeker={goSeeker} onRecruiter={goRecruiter} onLogin={goLogin} />
+    </>
+  );
+
   // Public portfolio view — no auth required
   if (page === "portfolio") {
     return (
@@ -77,18 +88,7 @@ export default function App() {
 
   // Dashboard — requires auth
   if (page === "dashboard" || (auth && page === "landing")) {
-    if (!auth) {
-      return (
-        <>
-          <GlobalStyle />
-          <LandingPage
-            onSeeker={() => { setDefaultUserType("seeker"); window.location.hash = "#/signup"; setPage("signup"); }}
-            onRecruiter={() => { setDefaultUserType("recruiter"); window.location.hash = "#/signup"; setPage("signup"); }}
-            onLogin={() => { window.location.hash = "#/login"; setPage("login"); }}
-          />
-        </>
-      );
-    }
+    if (!auth) return landingJsx;
     if (auth.user_type === "recruiter") {
       return (
         <>
@@ -106,14 +106,5 @@ export default function App() {
   }
 
   // Default landing page
-  return (
-    <>
-      <GlobalStyle />
-      <LandingPage
-        onSeeker={() => { setDefaultUserType("seeker"); window.location.hash = "#/signup"; setPage("signup"); }}
-        onRecruiter={() => { setDefaultUserType("recruiter"); window.location.hash = "#/signup"; setPage("signup"); }}
-        onLogin={() => { window.location.hash = "#/login"; setPage("login"); }}
-      />
-    </>
-  );
+  return landingJsx;
 }

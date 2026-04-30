@@ -243,74 +243,81 @@ function scoreColor(score) {
   return "#f87171";
 }
 
+const JUNK = new Set(["job description", "job posting", "requirements", "responsibilities", "qualifications", "experience", "skills", "apply", "candidate"]);
+const cleanKw = (k) => typeof k === "string" ? k : k.keyword;
+const isJunk = (k) => JUNK.has(cleanKw(k).toLowerCase().trim());
+
+function buildScoreHeader(data, col, fit, fitColor, fitBg, summaryShort) {
+  return `
+    <div class="score-row">
+      <div>
+        <div class="score-num" style="color:${col}">${data.ats_score || 0}</div>
+        <div class="score-label">ATS Score</div>
+      </div>
+      <div class="score-right">
+        <span class="fit-badge" style="color:${fitColor};background:${fitBg}">${fit} Match</span>
+        <div class="score-bar-bg"><div class="score-bar-fill" style="width:${data.ats_score || 0}%;background:${col}"></div></div>
+        ${summaryShort ? `<div style="font-size:11.5px;color:var(--text3);margin-top:5px;line-height:1.4">${summaryShort}.</div>` : ""}
+      </div>
+    </div>`;
+}
+
+function buildKeywordsHtml(matchKws, missKws) {
+  if (!matchKws.length && !missKws.length) return "";
+  let html = `<div class="section-title">Keywords</div><div class="pill-row">`;
+  matchKws.slice(0, 6).forEach(k => { html += `<span class="pill match">${k}</span>`; });
+  missKws.slice(0, 5).forEach(k => { html += `<span class="pill missing">${cleanKw(k)}</span>`; });
+  return html + `</div>`;
+}
+
+function buildStrengthsHtml(strengths) {
+  if (!strengths?.length) return "";
+  let html = `<div class="section-title">Strengths</div><div class="compact-list">`;
+  strengths.slice(0, 3).forEach(s => {
+    const point = typeof s === "string" ? s : s.point;
+    html += `<div class="compact-item"><span class="ci-dot" style="color:#4ade80">✓</span>${point}</div>`;
+  });
+  return html + `</div>`;
+}
+
+function buildMissingHtml(missKws) {
+  if (!missKws.length) return "";
+  let html = `<div class="section-title">Missing</div><div class="compact-list">`;
+  missKws.slice(0, 4).forEach(k => {
+    const kw = cleanKw(k);
+    const imp = typeof k === "object" ? k.importance : "";
+    html += `<div class="compact-item"><span class="ci-dot" style="color:var(--red)">✗</span>${kw}${imp ? ` <span style="font-size:10px;color:var(--text3)">(${imp})</span>` : ""}</div>`;
+  });
+  return html + `</div>`;
+}
+
+function buildQuickWinsHtml(wins) {
+  if (!wins?.length) return "";
+  let html = `<div class="section-title">Quick Wins</div><div class="compact-list">`;
+  wins.slice(0, 3).forEach((w, i) => {
+    const short = w.length > 80 ? w.slice(0, 78) + "…" : w;
+    html += `<div class="compact-item"><span class="qw-num">${i + 1}</span>${short}</div>`;
+  });
+  return html + `</div>`;
+}
+
 function renderGapResult(data) {
   const score = data.ats_score || 0;
   const fit = data.overall_fit || "";
   const fitColor = fit === "Strong" ? "#4ade80" : fit === "Moderate" ? "#fbbf24" : "#f87171";
   const fitBg = fit === "Strong" ? "rgba(74,222,128,0.1)" : fit === "Moderate" ? "rgba(251,191,36,0.1)" : "rgba(248,113,113,0.1)";
   const col = scoreColor(score);
-
-  // Score + fit + 1-line summary
   const summaryShort = (data.summary || "").split(". ").slice(0, 1).join(". ");
-
-  let html = `
-    <div class="score-row">
-      <div>
-        <div class="score-num" style="color:${col}">${score}</div>
-        <div class="score-label">ATS Score</div>
-      </div>
-      <div class="score-right">
-        <span class="fit-badge" style="color:${fitColor};background:${fitBg}">${fit} Match</span>
-        <div class="score-bar-bg"><div class="score-bar-fill" style="width:${score}%;background:${col}"></div></div>
-        ${summaryShort ? `<div style="font-size:11.5px;color:var(--text3);margin-top:5px;line-height:1.4">${summaryShort}.</div>` : ""}
-      </div>
-    </div>`;
-
-  // Filter out junk keywords (meta-words that aren't real skills)
-  const JUNK = new Set(["job description", "job posting", "requirements", "responsibilities", "qualifications", "experience", "skills", "apply", "candidate"]);
-  const cleanKw = (k) => { const s = typeof k === "string" ? k : k.keyword; return s; };
-  const isJunk = (k) => JUNK.has(cleanKw(k).toLowerCase().trim());
 
   const matchKws = (data.matching_keywords || []).filter(k => !isJunk(k));
   const missKws = (data.missing_keywords || []).filter(k => !isJunk(k));
 
-  if (matchKws.length || missKws.length) {
-    html += `<div class="section-title">Keywords</div><div class="pill-row">`;
-    matchKws.slice(0, 6).forEach(k => { html += `<span class="pill match">${k}</span>`; });
-    missKws.slice(0, 5).forEach(k => { html += `<span class="pill missing">${cleanKw(k)}</span>`; });
-    html += `</div>`;
-  }
-
-  // Strengths — title only, no long detail
-  if (data.strengths?.length) {
-    html += `<div class="section-title">Strengths</div><div class="compact-list">`;
-    data.strengths.slice(0, 3).forEach(s => {
-      const point = typeof s === "string" ? s : s.point;
-      html += `<div class="compact-item"><span class="ci-dot" style="color:#4ade80">✓</span>${point}</div>`;
-    });
-    html += `</div>`;
-  }
-
-  // Gaps — title only, using filtered list
-  if (missKws.length) {
-    html += `<div class="section-title">Missing</div><div class="compact-list">`;
-    missKws.slice(0, 4).forEach(k => {
-      const kw = cleanKw(k);
-      const imp = typeof k === "object" ? k.importance : "";
-      html += `<div class="compact-item"><span class="ci-dot" style="color:var(--red)">✗</span>${kw}${imp ? ` <span style="font-size:10px;color:var(--text3)">(${imp})</span>` : ""}</div>`;
-    });
-    html += `</div>`;
-  }
-
-  // Quick wins — numbered, short
-  if (data.quick_wins?.length) {
-    html += `<div class="section-title">Quick Wins</div><div class="compact-list">`;
-    data.quick_wins.slice(0, 3).forEach((w, i) => {
-      const short = w.length > 80 ? w.slice(0, 78) + "…" : w;
-      html += `<div class="compact-item"><span class="qw-num">${i + 1}</span>${short}</div>`;
-    });
-    html += `</div>`;
-  }
+  const html =
+    buildScoreHeader(data, col, fit, fitColor, fitBg, summaryShort) +
+    buildKeywordsHtml(matchKws, missKws) +
+    buildStrengthsHtml(data.strengths) +
+    buildMissingHtml(missKws) +
+    buildQuickWinsHtml(data.quick_wins);
 
   gapResult.innerHTML = html;
   gapResult.classList.remove("hidden");

@@ -6,44 +6,39 @@ import { Spinner, Btn } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
 function MinimalProfileSetup({ auth, setAuth, onLogout }) {
-  const [name, setName] = useState("");
-  const [title, setTitle] = useState("");
-  const [bio, setBio] = useState("");
-  const [photo, setPhoto] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
+  const [form, setForm] = useState({ name: "", title: "", bio: "" });
+  const [photo, setPhoto] = useState({ file: null, preview: null });
+  const [reconnect, setReconnect] = useState({ url: "", error: "", show: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [reconnectUrl, setReconnectUrl] = useState("");
-  const [reconnectError, setReconnectError] = useState("");
-  const [showReconnect, setShowReconnect] = useState(false);
 
-  const handlePhoto = (file) => { setPhoto(file); setPhotoPreview(URL.createObjectURL(file)); };
+  const handlePhoto = (file) => setPhoto({ file, preview: URL.createObjectURL(file) });
 
   const submit = async () => {
-    if (!name.trim()) return setError("Name is required");
+    if (!form.name.trim()) return setError("Name is required");
     setLoading(true); setError(null);
     try {
-      const res = await axios.post(`${API}/setup/profile`, { name: name.trim(), title: title.trim(), bio: bio.trim(), github_urls: [], github_username: "", target_roles: [] });
+      const res = await axios.post(`${API}/setup/profile`, { name: form.name.trim(), title: form.title.trim(), bio: form.bio.trim(), github_urls: [], github_username: "", target_roles: [] });
       const uid = res.data.user_id;
-      if (photo) { const f = new FormData(); f.append("file", photo); await axios.post(`${API}/upload/photo/${uid}`, f); }
+      if (photo.file) { const f = new FormData(); f.append("file", photo.file); await axios.post(`${API}/upload/photo/${uid}`, f); }
       await axios.post(`${API}/auth/link-portfolio`, { portfolio_id: uid }, { headers: { Authorization: `Bearer ${auth.token}` } });
-      const updated = { ...auth, portfolio_id: uid, profile_name: name.trim() };
+      const updated = { ...auth, portfolio_id: uid, profile_name: form.name.trim() };
       saveAuth(updated); setAuth(updated);
     } catch { setError("Something went wrong. Please try again."); }
     finally { setLoading(false); }
   };
 
   const handleReconnect = async () => {
-    setReconnectError("");
-    const idMatch = reconnectUrl.match(/([0-9a-f]{8})(?:[^0-9a-f]|$)/);
-    const id = idMatch ? idMatch[1] : reconnectUrl.trim();
-    if (!id || id.length !== 8) return setReconnectError("Paste your full portfolio URL.");
+    setReconnect(r => ({ ...r, error: "" }));
+    const idMatch = reconnect.url.match(/([0-9a-f]{8})(?:[^0-9a-f]|$)/);
+    const id = idMatch ? idMatch[1] : reconnect.url.trim();
+    if (!id || id.length !== 8) return setReconnect(r => ({ ...r, error: "Paste your full portfolio URL." }));
     try {
       const r = await axios.get(`${API}/profile/${id}`);
       await axios.post(`${API}/auth/link-portfolio`, { portfolio_id: id }, { headers: { Authorization: `Bearer ${auth.token}` } });
       const updated = { ...auth, portfolio_id: id, profile_name: r.data.name };
       saveAuth(updated); setAuth(updated);
-    } catch { setReconnectError("Could not find that portfolio."); }
+    } catch { setReconnect(r => ({ ...r, error: "Could not find that portfolio." })); }
   };
 
   return (
@@ -60,33 +55,33 @@ function MinimalProfileSetup({ auth, setAuth, onLogout }) {
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
           <label htmlFor="mps-photo" style={{ cursor: "pointer" }}>
             <div style={{ width: 80, height: 80, borderRadius: "50%", background: "var(--bg3)", border: "2px dashed var(--line2)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-              {photoPreview ? <img src={photoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon name="camera" size={22} color="var(--text3)" />}
+              {photo.preview ? <img src={photo.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon name="camera" size={22} color="var(--text3)" />}
             </div>
             <input id="mps-photo" type="file" accept="image/*" style={{ display: "none" }} onChange={e => e.target.files[0] && handlePhoto(e.target.files[0])} />
           </label>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Full name *" onKeyDown={e => e.key === "Enter" && submit()} />
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Professional title (optional)" />
-          <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Short bio (optional)" rows={3} style={{ resize: "vertical" }} />
+          <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Full name *" onKeyDown={e => e.key === "Enter" && submit()} />
+          <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Professional title (optional)" />
+          <textarea value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} placeholder="Short bio (optional)" rows={3} style={{ resize: "vertical" }} />
         </div>
         {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 12 }}>{error}</div>}
-        <Btn onClick={submit} disabled={loading || !name.trim()} style={{ width: "100%", justifyContent: "center", marginBottom: 24 }}>
+        <Btn onClick={submit} disabled={loading || !form.name.trim()} style={{ width: "100%", justifyContent: "center", marginBottom: 24 }}>
           {loading ? <><Spinner size={14} color="#fff" /> Creating profile…</> : "Continue to Dashboard"}
         </Btn>
         <div style={{ textAlign: "center" }}>
-          <button onClick={() => setShowReconnect(v => !v)} style={{ background: "transparent", border: "none", color: "var(--text3)", fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}>
+          <button onClick={() => setReconnect(r => ({ ...r, show: !r.show }))} style={{ background: "transparent", border: "none", color: "var(--text3)", fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}>
             Already have a portfolio? Reconnect it
           </button>
         </div>
-        {showReconnect && (
+        {reconnect.show && (
           <div style={{ marginTop: 16, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "16px" }}>
             <div style={{ fontSize: 12.5, color: "var(--text3)", marginBottom: 10 }}>Paste your portfolio URL to link it to this account.</div>
             <div style={{ display: "flex", gap: 8 }}>
-              <input value={reconnectUrl} onChange={e => setReconnectUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && handleReconnect()} placeholder="e.g. prolio.co/#/portfolio/..." style={{ flex: 1, fontSize: 12 }} />
-              <Btn onClick={handleReconnect} disabled={!reconnectUrl.trim()} style={{ flexShrink: 0, padding: "10px 14px" }}>Reconnect</Btn>
+              <input value={reconnect.url} onChange={e => setReconnect(r => ({ ...r, url: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleReconnect()} placeholder="e.g. prolio.co/#/portfolio/..." style={{ flex: 1, fontSize: 12 }} />
+              <Btn onClick={handleReconnect} disabled={!reconnect.url.trim()} style={{ flexShrink: 0, padding: "10px 14px" }}>Reconnect</Btn>
             </div>
-            {reconnectError && <div style={{ color: "var(--red)", fontSize: 12, marginTop: 8 }}>{reconnectError}</div>}
+            {reconnect.error && <div style={{ color: "var(--red)", fontSize: 12, marginTop: 8 }}>{reconnect.error}</div>}
           </div>
         )}
       </div>
