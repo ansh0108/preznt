@@ -1,7 +1,7 @@
 import Icon from "./Icon";
 
 export const Spinner = ({ size = 16, color = "var(--accent)" }) => (
-  <div style={{ width: size, height: size, border: `1.5px solid ${color}30`, borderTop: `1.5px solid ${color}`, borderRadius: "50%", animation: "spin 0.75s linear infinite", display: "inline-block", flexShrink: 0 }} />
+  <div style={{ width: size, height: size, border: "1.5px solid rgba(0,0,0,0.08)", borderTop: `1.5px solid ${color}`, borderRadius: "50%", animation: "spin 0.75s linear infinite", display: "inline-block", flexShrink: 0 }} />
 );
 
 export const BulletText = ({ text, style: s = {} }) => {
@@ -25,7 +25,7 @@ export const Pill = ({ children, color = "var(--accent)", size = "sm" }) => {
   const pad = size === "sm" ? "3px 10px" : "5px 14px";
   const fs = size === "sm" ? 11.5 : 13;
   return (
-    <span style={{ background: `${color}18`, border: `1px solid ${color}35`, color, padding: pad, borderRadius: 100, fontSize: fs, fontWeight: 600, display: "inline-block", letterSpacing: "0.01em", lineHeight: 1.5, whiteSpace: "nowrap" }}>
+    <span style={{ "--pill-c": color, background: "color-mix(in srgb, var(--pill-c) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--pill-c) 30%, transparent)", color, padding: pad, borderRadius: 100, fontSize: fs, fontWeight: 600, display: "inline-block", letterSpacing: "0.01em", lineHeight: 1.5, whiteSpace: "nowrap" }}>
       {children}
     </span>
   );
