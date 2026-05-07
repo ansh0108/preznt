@@ -14,6 +14,24 @@ import GapAnalysis from "../features/GapAnalysis";
 import CoverLetter from "../features/CoverLetter";
 import InterviewPrep from "../features/InterviewPrep";
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const T = {
+  primary: "#4648d4",
+  text: "#111c2d",
+  text2: "#464554",
+  text3: "#767586",
+  bg: "#f9f9ff",
+  card: "#ffffff",
+  bg2: "#f0f3ff",
+  container: "#e7eeff",
+  containerHigh: "#dee8ff",
+  primaryFixed: "#e1e0ff",
+  hairline: "rgba(0,0,0,0.06)",
+  shadow: "0 20px 40px -10px rgba(0,0,0,0.04)",
+  r: "12px",
+};
+
+// ─── useProfileData ────────────────────────────────────────────────────────────
 function useProfileData(activePortfolioId) {
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -56,6 +74,7 @@ function useProfileData(activePortfolioId) {
   return { profile, setProfile, profileLoading, building, buildError, built, loadProfile, buildPortfolio, uploadFile, saveLinks };
 }
 
+// ─── usePortfolioList ──────────────────────────────────────────────────────────
 function usePortfolioList(auth, activePortfolioId, setActivePortfolioId) {
   const [portfolios, setPortfolios] = useState([]);
   const [creatingPortfolio, setCreatingPortfolio] = useState(false);
@@ -100,6 +119,7 @@ function usePortfolioList(auth, activePortfolioId, setActivePortfolioId) {
   return { portfolios, loadPortfolios, creatingPortfolio, setCreatingPortfolio, newRoleName, setNewRoleName, creatingLoading, deletingPortfolioId, setDeletingPortfolioId, deleteLoading, createPortfolio, setPrimary, deletePortfolio };
 }
 
+// ─── usePortfolioManager ───────────────────────────────────────────────────────
 function usePortfolioManager(auth, initialPortfolioId) {
   const [activePortfolioId, setActivePortfolioId] = useState(initialPortfolioId);
   const profileData = useProfileData(activePortfolioId);
@@ -110,6 +130,7 @@ function usePortfolioManager(auth, initialPortfolioId) {
   return { activePortfolioId, setActivePortfolioId, ...profileData, ...portfolioList };
 }
 
+// ─── DeleteModal ───────────────────────────────────────────────────────────────
 function DeleteModal({ portfolioId, portfolios, deleteLoading, onConfirm, onCancel }) {
   const name = portfolios.find(p => p.id === portfolioId)?.role_name;
   return (
@@ -130,6 +151,7 @@ function DeleteModal({ portfolioId, portfolios, deleteLoading, onConfirm, onCanc
   );
 }
 
+// ─── PortfolioSwitcher ─────────────────────────────────────────────────────────
 function PortfolioSwitcher({ portfolios, activePortfolioId, setActivePortfolioId, setProfile, creatingPortfolio, setCreatingPortfolio, newRoleName, setNewRoleName, creatingLoading, createPortfolio, deletingPortfolioId, setDeletingPortfolioId, deletePortfolio, deleteLoading, setPrimary }) {
   if (!portfolios.length) return null;
   return (
@@ -184,6 +206,7 @@ function PortfolioSwitcher({ portfolios, activePortfolioId, setActivePortfolioId
   );
 }
 
+// ─── OnboardingSteps ───────────────────────────────────────────────────────────
 function OnboardingSteps({ hasLinkedin, hasResume, hasGithub, built, building, buildError, uploadFile, setAddingGithub, buildPortfolio }) {
   const steps = [
     { label: "Upload LinkedIn PDF", done: hasLinkedin, id: "onb-li", accept: ".pdf", type: "linkedin", action: "upload", hint: "Go to your LinkedIn profile → More → Save to PDF" },
@@ -195,11 +218,43 @@ function OnboardingSteps({ hasLinkedin, hasResume, hasGithub, built, building, b
 
   return (
     <div style={{ marginBottom: 28 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 0, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", overflow: "hidden" }}>
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 0,
+        background: T.card,
+        border: `1px solid ${T.hairline}`,
+        borderRadius: T.r,
+        overflow: "hidden",
+      }}>
         {steps.map((step, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderBottom: i < steps.length - 1 ? "1px solid var(--line)" : "none", background: step.done ? "rgba(45,212,191,0.03)" : "transparent" }}>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: step.done ? "rgba(45,212,191,0.12)" : "var(--bg3)", border: `1px solid ${step.done ? "rgba(45,212,191,0.4)" : "var(--line2)"}` }}>
-              {step.done ? <Icon name="check" size={13} color="var(--teal)" /> : step.action === "none" && building ? <Spinner size={12} color="var(--accent)" /> : <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text3)" }}>{i + 1}</span>}
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              padding: "14px 18px",
+              borderBottom: i < steps.length - 1 ? `1px solid ${T.hairline}` : "none",
+              background: step.done ? "rgba(13,148,136,0.08)" : "transparent",
+            }}
+          >
+            <div style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: step.done ? "rgba(13,148,136,0.12)" : "var(--bg3)",
+              border: `1px solid ${step.done ? "rgba(13,148,136,0.35)" : "var(--line2)"}`,
+            }}>
+              {step.done
+                ? <Icon name="check" size={13} color="var(--teal)" />
+                : step.action === "none" && building
+                  ? <Spinner size={12} color="var(--accent)" />
+                  : <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text3)" }}>{i + 1}</span>}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: step.done ? "var(--teal)" : "var(--text)" }}>{step.label}</div>
@@ -236,6 +291,7 @@ function OnboardingSteps({ hasLinkedin, hasResume, hasGithub, built, building, b
   );
 }
 
+// ─── SEEKER_TABS ───────────────────────────────────────────────────────────────
 const SEEKER_TABS = [
   { id: "build", label: "Build Portfolio", icon: "zap" },
   { id: "gap", label: "Gap Analysis", icon: "target" },
@@ -246,53 +302,197 @@ const SEEKER_TABS = [
 
 const linkInputSt = { width: "100%", background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text)", fontSize: 12, padding: "7px 10px", outline: "none" };
 
+// ─── DashboardHeader ───────────────────────────────────────────────────────────
 function DashboardHeader({ auth, built, shareUrl, copied, onLogout, onCopy }) {
   return (
-    <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10, backdropFilter: "blur(12px)" }}>
-      <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.01em" }}>prolio<span style={{ color: "var(--accent)" }}>.</span></div>
+    <div style={{
+      borderBottom: "1px solid rgba(0,0,0,0.05)",
+      padding: "0 40px",
+      height: 80,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      position: "sticky",
+      top: 0,
+      background: "rgba(249,249,255,0.85)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      zIndex: 10,
+    }}>
+      {/* Wordmark */}
+      <div style={{
+        fontFamily: "var(--serif, 'Playfair Display', serif)",
+        fontSize: 28,
+        fontWeight: 700,
+        color: T.primary,
+        letterSpacing: "-0.02em",
+        lineHeight: 1,
+      }}>
+        Prolio
+      </div>
+
+      {/* Right side controls */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {built && (
-          <button onClick={onCopy} className="b-ghost"
-            style={{ background: copied ? "rgba(45,212,191,0.1)" : "var(--bg2)", border: `1px solid ${copied ? "var(--teal)" : "var(--line2)"}`, borderRadius: "var(--r-md)", color: copied ? "var(--teal)" : "var(--text2)", padding: "6px 14px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-            <Icon name={copied ? "check" : "link"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
+          <button
+            onClick={onCopy}
+            style={{
+              background: copied ? "rgba(13,148,136,0.08)" : T.card,
+              border: `1px solid ${copied ? "rgba(13,148,136,0.35)" : T.hairline}`,
+              borderRadius: T.r,
+              color: copied ? "var(--teal)" : T.text2,
+              padding: "7px 16px",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              transition: "all 0.15s",
+              fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
+            }}
+          >
+            <Icon name={copied ? "check" : "link"} size={13} color={copied ? "var(--teal)" : T.text2} />
             {copied ? "Copied!" : "Share Portfolio"}
           </button>
         )}
         {built && (
-          <a href={shareUrl} target="_blank" rel="noreferrer" className="b-ghost"
-            style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}>
-            <Icon name="external" size={13} color="var(--text3)" /> View Live
+          <a
+            href={shareUrl}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              background: T.card,
+              border: `1px solid ${T.hairline}`,
+              borderRadius: T.r,
+              color: T.text3,
+              padding: "7px 14px",
+              fontSize: 12,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              textDecoration: "none",
+              fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
+            }}
+          >
+            <Icon name="external" size={13} color={T.text3} /> View Live
           </a>
         )}
-        <div style={{ fontSize: 13, color: "var(--text3)" }}>{auth.email}</div>
-        <button onClick={onLogout} className="b-ghost" style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="logout" size={13} color="var(--text3)" /> Sign out
+        <div style={{
+          fontSize: 13,
+          color: T.text3,
+          fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
+        }}>
+          {auth.email}
+        </div>
+        <button
+          onClick={onLogout}
+          style={{
+            background: "transparent",
+            border: `1px solid ${T.hairline}`,
+            borderRadius: T.r,
+            color: T.text3,
+            padding: "7px 14px",
+            fontSize: 12,
+            fontWeight: 500,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
+          }}
+        >
+          <Icon name="logout" size={13} color={T.text3} /> Sign out
         </button>
       </div>
     </div>
   );
 }
 
+// ─── ProfileCard (local — seeker left sidebar card) ────────────────────────────
 function ProfileCard({ pm }) {
   return (
-    <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "22px", marginBottom: 14, position: "relative", overflow: "hidden" }}>
-      {pm.built && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, var(--accent), var(--teal), var(--accent))", backgroundSize: "200% 100%", animation: "gradient-x 3s ease infinite" }} />}
-      <div style={{ marginBottom: 14 }}>
-        <ProfilePhoto key={`photo-${pm.activePortfolioId}-${pm.profile?.photo_ext || "none"}`} userId={pm.profile?.has_photo ? pm.activePortfolioId : null} name={pm.profile?.name} size={72} onUpload={() => document.getElementById("dash-photo-upload").click()} />
-        <input id="dash-photo-upload" type="file" accept="image/*" style={{ display: "none" }} onChange={async e => {
-          const file = e.target.files[0]; if (!file) return;
-          const fd = new FormData(); fd.append("file", file);
-          try { await axios.post(`${API}/upload/photo/${pm.activePortfolioId}`, fd); pm.loadProfile(); } catch {}
-          e.target.value = "";
+    <div
+      className="card-glow"
+      style={{
+        background: T.card,
+        border: `1px solid ${T.hairline}`,
+        borderRadius: T.r,
+        padding: "22px",
+        marginBottom: 14,
+        position: "relative",
+        overflow: "hidden",
+        boxShadow: T.shadow,
+      }}
+    >
+      {/* Gradient top bar when live — gradient-x animation preserved via className */}
+      {pm.built && (
+        <div style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 2,
+          background: "linear-gradient(90deg, var(--accent), var(--teal), var(--accent))",
+          backgroundSize: "200% 100%",
+          animation: "gradient-x 3s ease infinite",
         }} />
+      )}
+      <div style={{ marginBottom: 14 }}>
+        <ProfilePhoto
+          key={`photo-${pm.activePortfolioId}-${pm.profile?.photo_ext || "none"}`}
+          userId={pm.profile?.has_photo ? pm.activePortfolioId : null}
+          name={pm.profile?.name}
+          size={72}
+          onUpload={() => document.getElementById("dash-photo-upload").click()}
+        />
+        <input
+          id="dash-photo-upload"
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={async e => {
+            const file = e.target.files[0]; if (!file) return;
+            const fd = new FormData(); fd.append("file", file);
+            try { await axios.post(`${API}/upload/photo/${pm.activePortfolioId}`, fd); pm.loadProfile(); } catch {}
+            e.target.value = "";
+          }}
+        />
       </div>
       <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 3 }}>{pm.profile?.name}</div>
-        {pm.profile?.title && <div style={{ fontSize: 12.5, color: "var(--text3)" }}>{pm.profile.title}</div>}
-        {pm.profile?.tagline && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 5, fontStyle: "italic", lineHeight: 1.5 }}>{pm.profile.tagline}</div>}
+        <div style={{ fontSize: 17, fontWeight: 700, color: T.text, marginBottom: 3, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+          {pm.profile?.name}
+        </div>
+        {pm.profile?.title && (
+          <div style={{ fontSize: 12.5, color: T.text3, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+            {pm.profile.title}
+          </div>
+        )}
+        {pm.profile?.tagline && (
+          <div style={{ fontSize: 12, color: T.text3, marginTop: 5, fontStyle: "italic", lineHeight: 1.5, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+            {pm.profile.tagline}
+          </div>
+        )}
         {pm.built && (
-          <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(45,212,191,0.1)", border: "1px solid rgba(45,212,191,0.35)", borderRadius: 100, padding: "3px 10px", fontSize: 11, color: "var(--teal)", fontWeight: 600 }}>
-            <span className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--teal)", display: "inline-block", flexShrink: 0 }} />
+          <div style={{
+            marginTop: 10,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "var(--teal-d, rgba(13,148,136,0.10))",
+            border: "1px solid rgba(13,148,136,0.28)",
+            borderRadius: 100,
+            padding: "3px 10px",
+            fontSize: 11,
+            color: "var(--teal)",
+            fontWeight: 600,
+            fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
+          }}>
+            <span
+              className="live-dot"
+              style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--teal)", display: "inline-block", flexShrink: 0 }}
+            />
             Portfolio Live
           </div>
         )}
@@ -301,6 +501,7 @@ function ProfileCard({ pm }) {
   );
 }
 
+// ─── GithubSection ─────────────────────────────────────────────────────────────
 function GithubSection({ hasGithub, pm, github, setGithub }) {
   return (
     <div style={{ marginTop: 4 }}>
@@ -332,6 +533,7 @@ function GithubSection({ hasGithub, pm, github, setGithub }) {
   );
 }
 
+// ─── LinksPanel ────────────────────────────────────────────────────────────────
 function LinksPanel({ links, saveLinks, link, setLink, profile }) {
   return (
     <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
@@ -388,12 +590,22 @@ function LinksPanel({ links, saveLinks, link, setLink, profile }) {
   );
 }
 
+// ─── LeftSidebar ───────────────────────────────────────────────────────────────
 function LeftSidebar({ pm, hasLinkedin, hasResume, hasGithub, github, setGithub, link, setLink, links }) {
   return (
     <div style={{ width: 300, flexShrink: 0 }}>
       <PortfolioSwitcher portfolios={pm.portfolios} activePortfolioId={pm.activePortfolioId} setActivePortfolioId={pm.setActivePortfolioId} setProfile={pm.setProfile} creatingPortfolio={pm.creatingPortfolio} setCreatingPortfolio={pm.setCreatingPortfolio} newRoleName={pm.newRoleName} setNewRoleName={pm.setNewRoleName} creatingLoading={pm.creatingLoading} createPortfolio={pm.createPortfolio} deletingPortfolioId={pm.deletingPortfolioId} setDeletingPortfolioId={pm.setDeletingPortfolioId} deletePortfolio={pm.deletePortfolio} deleteLoading={pm.deleteLoading} setPrimary={pm.setPrimary} />
       <ProfileCard pm={pm} />
-      <div className="card-glow" style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "18px 20px" }}>
+      <div
+        className="card-glow"
+        style={{
+          background: T.card,
+          border: `1px solid ${T.hairline}`,
+          borderRadius: T.r,
+          padding: "18px 20px",
+          boxShadow: T.shadow,
+        }}
+      >
         <SecHead style={{ marginBottom: 14 }}>Data Sources</SecHead>
         <UploadRow label="LinkedIn PDF" icon="user" done={hasLinkedin} accept=".pdf" onFile={f => pm.uploadFile(f, "linkedin")}
           hint={[["Go to your LinkedIn profile", "Click your profile photo → View Profile"], ['Click the "…" More button', "Below your name and headline"], ['Select "Save to PDF"', "Downloads your profile instantly as a PDF"]]} />
@@ -405,36 +617,97 @@ function LeftSidebar({ pm, hasLinkedin, hasResume, hasGithub, github, setGithub,
   );
 }
 
+// ─── RightPanel ────────────────────────────────────────────────────────────────
 function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClState, hasLinkedin, hasResume, hasGithub, setGithub, shareUrl, auth }) {
   return (
     <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ display: "flex", gap: 2, marginBottom: 20, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content" }}>
+      {/* Tab bar */}
+      <div style={{
+        display: "flex",
+        gap: 3,
+        marginBottom: 20,
+        background: T.card,
+        border: `1px solid ${T.hairline}`,
+        borderRadius: T.r,
+        padding: "4px",
+        width: "fit-content",
+      }}>
         {SEEKER_TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} className="b-tab" data-active={tab === t.id}
-            style={{ background: tab === t.id ? "var(--bg3)" : "transparent", color: tab === t.id ? "var(--text)" : "var(--text3)", padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400, border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent", boxShadow: tab === t.id ? "0 1px 4px rgba(0,0,0,0.07)" : "none", display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
-            <Icon name={t.icon} size={14} color={tab === t.id ? "var(--accent)" : "var(--text3)"} /> {t.label}
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className="b-tab"
+            data-active={tab === t.id}
+            style={{
+              background: tab === t.id ? T.card : "transparent",
+              color: tab === t.id ? T.primary : T.text3,
+              padding: "9px 18px",
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: tab === t.id ? 600 : 400,
+              border: tab === t.id ? `1px solid ${T.hairline}` : "1px solid transparent",
+              boxShadow: tab === t.id ? "0 1px 4px rgba(0,0,0,0.07)" : "none",
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              cursor: "pointer",
+              transition: "all 0.14s",
+              fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
+            }}
+          >
+            <Icon name={t.icon} size={14} color={tab === t.id ? T.primary : T.text3} /> {t.label}
           </button>
         ))}
       </div>
-      <div style={{ background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-xl)", padding: "28px 30px", minHeight: 480 }}>
+
+      {/* Content card */}
+      <div style={{
+        background: T.card,
+        border: `1px solid ${T.hairline}`,
+        borderRadius: T.r,
+        padding: "28px 30px",
+        minHeight: 480,
+        boxShadow: T.shadow,
+      }}>
         <div key={`build-${tab === "build"}`} className={tab === "build" ? "tab-content" : ""} style={{ display: tab === "build" ? "block" : "none" }}>
           <SecHead>Build Portfolio</SecHead>
-          <OnboardingSteps hasLinkedin={hasLinkedin} hasResume={hasResume} hasGithub={hasGithub} built={pm.built} building={pm.building} buildError={pm.buildError} uploadFile={pm.uploadFile} setAddingGithub={v => setGithub(g => ({ ...g, adding: v }))} buildPortfolio={pm.buildPortfolio} />
+          <OnboardingSteps
+            hasLinkedin={hasLinkedin}
+            hasResume={hasResume}
+            hasGithub={hasGithub}
+            built={pm.built}
+            building={pm.building}
+            buildError={pm.buildError}
+            uploadFile={pm.uploadFile}
+            setAddingGithub={v => setGithub(g => ({ ...g, adding: v }))}
+            buildPortfolio={pm.buildPortfolio}
+          />
           {pm.built && !pm.building && (
-            <div className="slide-down" style={{ marginTop: 20, background: "linear-gradient(135deg, rgba(13,148,136,0.07), rgba(70,72,212,0.05))", border: "1px solid rgba(13,148,136,0.28)", borderRadius: "var(--r-lg)", padding: "18px 22px", animation: "live-border 2.5s ease-in-out infinite" }}>
+            <div
+              className="slide-down"
+              style={{
+                marginTop: 20,
+                background: "linear-gradient(135deg, var(--teal-d, rgba(13,148,136,0.07)), rgba(70,72,212,0.05))",
+                border: "1px solid rgba(13,148,136,0.28)",
+                borderRadius: "var(--r-lg)",
+                padding: "18px 22px",
+                animation: "live-border 2.5s ease-in-out infinite",
+              }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                 <span className="live-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--teal)", display: "inline-block", flexShrink: 0 }} />
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--teal)" }}>Portfolio is live!</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <a href={shareUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12.5, color: "var(--teal)", wordBreak: "break-all", flex: 1, opacity: 0.85 }}>{shareUrl}</a>
-                <a href={shareUrl} target="_blank" rel="noreferrer" className="b-ghost" style={{ background: "rgba(45,212,191,0.1)", border: "1px solid rgba(45,212,191,0.35)", borderRadius: "var(--r-md)", color: "var(--teal)", padding: "5px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>
+                <a href={shareUrl} target="_blank" rel="noreferrer" className="b-ghost"
+                  style={{ background: "rgba(45,212,191,0.1)", border: "1px solid rgba(45,212,191,0.35)", borderRadius: "var(--r-md)", color: "var(--teal)", padding: "5px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>
                   <Icon name="external" size={12} color="var(--teal)" /> Open
                 </a>
               </div>
             </div>
           )}
-          <div style={{ marginTop: 36, borderTop: "1px solid var(--line)", paddingTop: 28 }}>
+          <div style={{ marginTop: 36, borderTop: `1px solid ${T.hairline}`, paddingTop: 28 }}>
             <CustomizeTab portfolioId={pm.activePortfolioId} auth={auth} profile={pm.profile} onPrefsChange={p => pm.setProfile(prev => ({ ...prev, preferences: p }))} onProfileChange={pm.loadProfile} />
           </div>
         </div>
@@ -451,6 +724,7 @@ function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClStat
   );
 }
 
+// ─── SeekerProfileDashboard ────────────────────────────────────────────────────
 function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId }) {
   const pm = usePortfolioManager(auth, initialPortfolioId);
   const [tab, setTab] = useState("build");
@@ -460,23 +734,59 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
   const [gapState, setGapState] = useState({ role: "", result: null, error: null });
   const [clState, setClState] = useState({ jd: "", company: "", role: "", result: null });
 
-  if (pm.profileLoading) return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}><Spinner size={32} /></div>;
+  if (pm.profileLoading) return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+      <Spinner size={32} />
+    </div>
+  );
 
   const hasLinkedin = (pm.profile?.experience?.length > 0) || !!pm.profile?.linkedin_summary;
   const hasResume = pm.profile?.resume_projects?.length > 0;
   const hasGithub = pm.profile?.github_urls?.length > 0;
   const activePortfolio = pm.portfolios.find(p => p.id === pm.activePortfolioId);
   const roleSlug = activePortfolio?.role_name ? `-${nameToSlug(activePortfolio.role_name)}` : "";
-  const shareUrl = auth.profile_name ? `${window.location.origin}${window.location.pathname}#/portfolio/${nameToSlug(auth.profile_name)}${roleSlug}-${pm.activePortfolioId}` : `${window.location.origin}${window.location.pathname}#/portfolio/${pm.activePortfolioId}`;
+  const shareUrl = auth.profile_name
+    ? `${window.location.origin}${window.location.pathname}#/portfolio/${nameToSlug(auth.profile_name)}${roleSlug}-${pm.activePortfolioId}`
+    : `${window.location.origin}${window.location.pathname}#/portfolio/${pm.activePortfolioId}`;
   const links = pm.profile?.links || [];
 
   return (
-    <div style={{ minHeight: "100vh" }}>
-      <DashboardHeader auth={auth} built={pm.built} shareUrl={shareUrl} copied={copied} onLogout={onLogout}
-        onCopy={() => { navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }} />
+    <div style={{ minHeight: "100vh", background: T.bg }}>
+      <DashboardHeader
+        auth={auth}
+        built={pm.built}
+        shareUrl={shareUrl}
+        copied={copied}
+        onLogout={onLogout}
+        onCopy={() => { navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      />
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", display: "flex", gap: 24, alignItems: "flex-start" }}>
-        <LeftSidebar pm={pm} hasLinkedin={hasLinkedin} hasResume={hasResume} hasGithub={hasGithub} github={github} setGithub={setGithub} link={link} setLink={setLink} links={links} />
-        <RightPanel tab={tab} setTab={setTab} pm={pm} gapState={gapState} setGapState={setGapState} clState={clState} setClState={setClState} hasLinkedin={hasLinkedin} hasResume={hasResume} hasGithub={hasGithub} setGithub={setGithub} shareUrl={shareUrl} auth={auth} />
+        <LeftSidebar
+          pm={pm}
+          hasLinkedin={hasLinkedin}
+          hasResume={hasResume}
+          hasGithub={hasGithub}
+          github={github}
+          setGithub={setGithub}
+          link={link}
+          setLink={setLink}
+          links={links}
+        />
+        <RightPanel
+          tab={tab}
+          setTab={setTab}
+          pm={pm}
+          gapState={gapState}
+          setGapState={setGapState}
+          clState={clState}
+          setClState={setClState}
+          hasLinkedin={hasLinkedin}
+          hasResume={hasResume}
+          hasGithub={hasGithub}
+          setGithub={setGithub}
+          shareUrl={shareUrl}
+          auth={auth}
+        />
       </div>
     </div>
   );
