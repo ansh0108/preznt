@@ -124,7 +124,7 @@ function BulletSection({ bullets, copyText, copied }) {
               <div style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic", lineHeight: 1.6 }}>{b.original}</div>
             </div>
             <div onClick={() => copyText(b.improved, i)}
-              style={{ padding: "12px 14px", background: copied === i ? "rgba(45,212,191,0.1)" : "rgba(129,140,248,0.06)", cursor: "pointer", transition: "background 0.15s" }}>
+              style={{ padding: "12px 14px", background: copied === i ? "rgba(13,148,136,0.1)" : "rgba(70,72,212,0.05)", cursor: "pointer", transition: "background 0.15s" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
                 <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6, flex: 1 }}>{b.improved}</div>
                 <div style={{ flexShrink: 0 }}>

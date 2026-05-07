@@ -5,6 +5,7 @@ import { Spinner, Btn, Divider } from "../ui/primitives";
 import Icon from "../ui/Icon";
 import CandidateEvaluator from "./CandidateEvaluator";
 import ProfileCard from "./ProfileCard";
+import CandidateProfileView from "./CandidateProfileView";
 
 function AddByUrl({ onAdd }) {
   const [url, setUrl] = useState("");
@@ -104,6 +105,7 @@ function RecruiterDashboard({ auth, onLogout }) {
   const [search, setSearch] = useState("");
   const [candidates, setCandidates] = useState([]);
   const [addMode, setAddMode] = useState("url");
+  const [selectedProfile, setSelectedProfile] = useState(null);
 
   useEffect(() => {
     axios.get(`${API}/profiles/list`)
@@ -117,6 +119,16 @@ function RecruiterDashboard({ auth, onLogout }) {
     const q = search.toLowerCase();
     return p.name?.toLowerCase().includes(q) || p.title?.toLowerCase().includes(q) || p.tagline?.toLowerCase().includes(q) || p.current_role?.toLowerCase().includes(q) || p.skills?.some(s => s.toLowerCase().includes(q));
   });
+
+  if (selectedProfile) {
+    return (
+      <CandidateProfileView
+        profile={selectedProfile}
+        onBack={() => setSelectedProfile(null)}
+        onShortlist={() => {}}
+      />
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
@@ -172,7 +184,11 @@ function RecruiterDashboard({ auth, onLogout }) {
             <div style={{ textAlign: "center", padding: 60, color: "var(--text3)", fontSize: 14 }}>{search ? "No candidates match your search." : "No profiles available yet."}</div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
-              {filtered.map(p => <ProfileCard key={p.user_id} profile={p} />)}
+              {filtered.map(p => (
+                <div key={p.user_id} onClick={() => setSelectedProfile(p)} style={{ cursor: "pointer" }}>
+                  <ProfileCard profile={p} />
+                </div>
+              ))}
             </div>
           )}
         </div>

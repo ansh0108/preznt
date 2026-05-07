@@ -13,22 +13,22 @@ import Chatbot from "./Chatbot";
 const CSS_VARS = ["--bg","--bg1","--bg2","--bg3","--line","--line2","--text","--text2","--text3","--accent","--accent-d","--accent-b"];
 
 function applyThemeVars(profile) {
-  const { accent = "#818cf8", dark_mode: darkMode = true } = profile.preferences || {};
+  const { accent = "#4648d4", dark_mode: darkMode = false } = profile.preferences || {};
   const root = document.documentElement;
-  if (!darkMode) {
-    root.style.setProperty("--bg", "#f8f8fb");
-    root.style.setProperty("--bg1", "#ffffff");
-    root.style.setProperty("--bg2", "#f1f1f5");
-    root.style.setProperty("--bg3", "#e8e8ef");
-    root.style.setProperty("--line", "rgba(0,0,0,0.07)");
-    root.style.setProperty("--line2", "rgba(0,0,0,0.12)");
-    root.style.setProperty("--text", "#0d0d14");
-    root.style.setProperty("--text2", "#3a3a50");
-    root.style.setProperty("--text3", "#7a7a96");
+  if (darkMode) {
+    root.style.setProperty("--bg",    "#08080a");
+    root.style.setProperty("--bg1",   "#0e0e11");
+    root.style.setProperty("--bg2",   "#141418");
+    root.style.setProperty("--bg3",   "#1c1c22");
+    root.style.setProperty("--line",  "rgba(255,255,255,0.065)");
+    root.style.setProperty("--line2", "rgba(255,255,255,0.11)");
+    root.style.setProperty("--text",  "#ededef");
+    root.style.setProperty("--text2", "#b4b4bc");
+    root.style.setProperty("--text3", "#7c7c88");
   }
-  root.style.setProperty("--accent", accent);
-  root.style.setProperty("--accent-d", accent + "1a");
-  root.style.setProperty("--accent-b", accent + "40");
+  root.style.setProperty("--accent",   accent);
+  root.style.setProperty("--accent-d", accent + "14");
+  root.style.setProperty("--accent-b", accent + "33");
 }
 
 function TabBar({ tabs, activeTab, onSwitch }) {
@@ -41,7 +41,7 @@ function TabBar({ tabs, activeTab, onSwitch }) {
           padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: activeTab === t.id ? 600 : 400,
           display: "flex", alignItems: "center", gap: 7,
           border: activeTab === t.id ? "1px solid var(--line2)" : "1px solid transparent",
-          boxShadow: activeTab === t.id ? "0 1px 3px rgba(0,0,0,0.3)" : "none"
+          boxShadow: activeTab === t.id ? "0 1px 4px rgba(0,0,0,0.07)" : "none"
         }}>
           <Icon name={t.icon} size={14} color={activeTab === t.id ? "var(--accent)" : "var(--text3)"} />
           {t.label}

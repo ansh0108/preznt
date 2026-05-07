@@ -411,7 +411,7 @@ function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClStat
       <div style={{ display: "flex", gap: 2, marginBottom: 20, background: "var(--bg1)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "4px", width: "fit-content" }}>
         {SEEKER_TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} className="b-tab" data-active={tab === t.id}
-            style={{ background: tab === t.id ? "var(--bg3)" : "transparent", color: tab === t.id ? "var(--text)" : "var(--text3)", padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400, border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent", boxShadow: tab === t.id ? "0 1px 3px rgba(0,0,0,0.3)" : "none", display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
+            style={{ background: tab === t.id ? "var(--bg3)" : "transparent", color: tab === t.id ? "var(--text)" : "var(--text3)", padding: "9px 18px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: tab === t.id ? 600 : 400, border: tab === t.id ? "1px solid var(--line2)" : "1px solid transparent", boxShadow: tab === t.id ? "0 1px 4px rgba(0,0,0,0.07)" : "none", display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
             <Icon name={t.icon} size={14} color={tab === t.id ? "var(--accent)" : "var(--text3)"} /> {t.label}
           </button>
         ))}
@@ -421,7 +421,7 @@ function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClStat
           <SecHead>Build Portfolio</SecHead>
           <OnboardingSteps hasLinkedin={hasLinkedin} hasResume={hasResume} hasGithub={hasGithub} built={pm.built} building={pm.building} buildError={pm.buildError} uploadFile={pm.uploadFile} setAddingGithub={v => setGithub(g => ({ ...g, adding: v }))} buildPortfolio={pm.buildPortfolio} />
           {pm.built && !pm.building && (
-            <div className="slide-down" style={{ marginTop: 20, background: "linear-gradient(135deg, rgba(45,212,191,0.08), rgba(129,140,248,0.06))", border: "1px solid rgba(45,212,191,0.35)", borderRadius: "var(--r-lg)", padding: "18px 22px", animation: "live-border 2.5s ease-in-out infinite" }}>
+            <div className="slide-down" style={{ marginTop: 20, background: "linear-gradient(135deg, rgba(13,148,136,0.07), rgba(70,72,212,0.05))", border: "1px solid rgba(13,148,136,0.28)", borderRadius: "var(--r-lg)", padding: "18px 22px", animation: "live-border 2.5s ease-in-out infinite" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                 <span className="live-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--teal)", display: "inline-block", flexShrink: 0 }} />
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--teal)" }}>Portfolio is live!</div>

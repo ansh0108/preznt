@@ -7,7 +7,7 @@ const INITIALS_ONLY = new Set([
   "business intelligence group",
 ]);
 
-const PALETTE = ["#818cf8", "#f472b6", "#2dd4bf", "#fbbf24", "#a78bfa", "#34d399"];
+const PALETTE = ["#4648d4", "#db2777", "#0d9488", "#d97706", "#7c3aed", "#16a34a"];
 
 function OrgLogo({ name, size = 40 }) {
   const lower = (name || "").toLowerCase().trim();

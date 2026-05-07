@@ -11,10 +11,10 @@ const ALL_TABS = [
 ];
 
 const COLORS = [
-  { label: "Indigo", value: "#818cf8" }, { label: "Rose", value: "#f472b6" },
-  { label: "Teal", value: "#2dd4bf" },   { label: "Amber", value: "#fbbf24" },
-  { label: "Green", value: "#4ade80" },  { label: "Blue", value: "#60a5fa" },
-  { label: "Violet", value: "#a78bfa" }, { label: "Orange", value: "#fb923c" },
+  { label: "Indigo", value: "#4648d4" }, { label: "Violet", value: "#7c3aed" },
+  { label: "Rose",   value: "#db2777" }, { label: "Teal",   value: "#0d9488" },
+  { label: "Amber",  value: "#d97706" }, { label: "Blue",   value: "#1d4ed8" },
+  { label: "Green",  value: "#16a34a" }, { label: "Slate",  value: "#374151" },
 ];
 
 const SECTIONS = [
@@ -157,7 +157,7 @@ function LayoutRow({ prefs, update }) {
   );
 }
 
-const DEFAULT_PREFS = { accent: "#818cf8", dark_mode: true, template: "sidebar", hide_sections: [], featured_repos: [] };
+const DEFAULT_PREFS = { accent: "#4648d4", dark_mode: false, template: "sidebar", hide_sections: [], featured_repos: [] };
 
 function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChange }) {
   const [prefs, setPrefs] = useState(profile?.preferences || DEFAULT_PREFS);

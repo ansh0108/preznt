@@ -60,8 +60,8 @@ export const Btn = ({ children, onClick, variant = "primary", disabled, style: s
   };
   return (
     <button onClick={onClick} disabled={disabled} style={{ ...styles[variant], ...s }}
-      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.transform = "translateY(-1px)"; if (variant === "primary") e.currentTarget.style.background = "#6d78f0"; } }}
-      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; if (variant === "primary") e.currentTarget.style.background = "var(--accent)"; }}>
+      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.transform = "translateY(-1px)"; if (variant === "primary") e.currentTarget.style.filter = "brightness(1.12)"; } }}
+      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; if (variant === "primary") e.currentTarget.style.filter = ""; }}>
       {icon && <Icon name={icon} size={14} />}
       {children}
     </button>
