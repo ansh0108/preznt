@@ -58,7 +58,7 @@ function Nav({ onLogin }) {
   );
 }
 
-function Hero({ onLogin }) {
+function Hero({ onLogin, onViewExamples }) {
   return (
     <section style={{ padding: "96px 40px 128px", maxWidth: 1280, margin: "0 auto", position: "relative", overflow: "hidden" }}>
       <div style={{
@@ -87,7 +87,7 @@ function Hero({ onLogin }) {
               onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
               Start Building Free
             </button>
-            <button
+            <button onClick={onViewExamples}
               style={{ background: "transparent", color: T1, border: "1px solid rgba(0,0,0,0.05)", borderRadius: 100, padding: "16px 32px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "var(--sans)", transition: "all 0.15s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(70,72,212,0.3)"; e.currentTarget.style.background = BG1; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.05)"; e.currentTarget.style.background = "transparent"; }}>
@@ -101,9 +101,13 @@ function Hero({ onLogin }) {
           <div style={{ ...glass, borderRadius: 12, padding: 8, transform: "rotate(2deg)", transition: "transform 0.5s ease", cursor: "default" }}
             onMouseEnter={e => e.currentTarget.style.transform = "rotate(0deg)"}
             onMouseLeave={e => e.currentTarget.style.transform = "rotate(2deg)"}>
-            <div style={{ width: "100%", aspectRatio: "4/5", borderRadius: 8, overflow: "hidden", background: `linear-gradient(135deg, ${BGH} 0%, ${BG2} 100%)`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
-              <div style={{ width: 88, height: 88, borderRadius: "50%", background: BGFIX, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>👤</div>
-              <span style={{ fontSize: 13, color: T3, fontWeight: 500, fontFamily: "var(--sans)" }}>Professional Headshot</span>
+            <div style={{ width: "100%", aspectRatio: "4/5", borderRadius: 8, overflow: "hidden", background: `linear-gradient(135deg, ${BGH} 0%, ${BG2} 100%)`, position: "relative" }}>
+              <img
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=80"
+                alt="Professional headshot"
+                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }}
+              />
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "30%", background: `linear-gradient(to top, rgba(222,232,255,0.6), transparent)`, pointerEvents: "none" }} />
             </div>
             {/* Floating badge */}
             <div style={{
@@ -136,7 +140,7 @@ function FeatIcon({ children }) {
 
 function Features() {
   return (
-    <section style={{ padding: "48px 40px", maxWidth: 1280, margin: "0 auto" }}>
+    <section id="features" style={{ padding: "48px 40px", maxWidth: 1280, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 64 }}>
         <h2 style={{ fontFamily: "var(--serif)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.01em", color: T1, marginBottom: 16, margin: "0 0 16px" }}>
           Crafted for Excellence
@@ -213,10 +217,11 @@ function Footer() {
 }
 
 function LandingPage({ onLogin }) {
+  const scrollToFeatures = () => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "var(--sans)" }}>
       <Nav onLogin={onLogin} />
-      <Hero onLogin={onLogin} />
+      <Hero onLogin={onLogin} onViewExamples={scrollToFeatures} />
       <Features />
       <Footer />
     </div>
