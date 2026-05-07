@@ -1,234 +1,240 @@
 import { useState } from "react";
-import Icon from "../ui/Icon";
 
-const P = "#4648d4";
-const PL = "rgba(70,72,212,0.08)";
-const PB = "rgba(70,72,212,0.2)";
-const BG = "#f9f9ff";
-const S0 = "#ffffff";
-const T1 = "#111c2d";
-const T2 = "#3a3a50";
-const T3 = "#7a7a96";
-const BD = "rgba(0,0,0,0.06)";
-const BD2 = "rgba(0,0,0,0.10)";
+const P    = "#4648d4";
+const T1   = "#111c2d";
+const T2   = "#464554";
+const T3   = "#767586";
+const BG   = "#f9f9ff";
+const BG1  = "#ffffff";
+const BG2  = "#f0f3ff";
+const BGC  = "#e7eeff";
+const BGH  = "#dee8ff";
+const BGFIX = "#e1e0ff";
+const BD   = "rgba(0,0,0,0.06)";
+const BD2  = "rgba(0,0,0,0.06)";
+const card = { background: BG1, border: `1px solid ${BD2}`, borderRadius: 12 };
 
-function Avatar({ name, size = 72 }) {
-  const initials = name ? name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "?";
+function TopNav({ onBack }) {
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: PL, border: `2px solid ${PB}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      <span style={{ fontFamily: "var(--serif)", fontSize: size * 0.34, fontWeight: 700, color: P }}>{initials}</span>
-    </div>
-  );
-}
-
-function Tag({ children, color = T3, bg = BG }) {
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", fontSize: 12, fontWeight: 600, color, background: bg, border: `1px solid ${BD}`, borderRadius: 100, padding: "4px 12px" }}>
-      {children}
-    </span>
-  );
-}
-
-function StrengthCard({ icon, title, metric, desc }) {
-  return (
-    <div style={{ background: S0, border: `1px solid ${BD}`, borderRadius: 16, padding: "20px", flex: "1 1 180px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-        <div style={{ width: 34, height: 34, borderRadius: 10, background: PL, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name={icon} size={16} color={P} />
+    <nav style={{
+      background: "rgba(249,249,255,0.85)", backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,0.05)",
+      display: "flex", justifyContent: "space-between", alignItems: "center",
+      padding: "0 40px", height: 80, position: "sticky", top: 0, zIndex: 50,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+        <span style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 700, color: P }}>Prolio</span>
+        <div style={{ display: "flex", gap: 24, marginLeft: 24 }}>
+          {["Discover", "Analytics", "Templates", "Help"].map((l, i) => (
+            <a key={l} href="#" onClick={e => e.preventDefault()}
+              style={{ color: i === 0 ? P : T2, textDecoration: "none", fontSize: 16, fontFamily: "var(--sans)", fontWeight: i === 0 ? 700 : 400, borderBottom: i === 0 ? `2px solid ${P}` : "none", paddingBottom: i === 0 ? 4 : 0, transition: "color 0.15s" }}
+              onMouseEnter={e => { if (i > 0) e.target.style.color = P; }}
+              onMouseLeave={e => { if (i > 0) e.target.style.color = T2; }}>{l}</a>
+          ))}
         </div>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: T2 }}>{title}</div>
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, color: T1, fontFamily: "var(--serif)", letterSpacing: "-0.02em", marginBottom: 6 }}>{metric}</div>
-      <div style={{ fontSize: 12, color: T3, lineHeight: 1.5 }}>{desc}</div>
-    </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+        <button style={{ background: "none", border: "none", color: T2, fontSize: 16, cursor: "pointer", fontFamily: "var(--sans)", transition: "color 0.15s" }}
+          onMouseEnter={e => e.currentTarget.style.color = P}
+          onMouseLeave={e => e.currentTarget.style.color = T2}>
+          Sign In
+        </button>
+        <button style={{ background: P, color: "#fff", border: "none", borderRadius: 4, padding: "8px 24px", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "opacity 0.15s" }}
+          onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
+          onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+          Upgrade
+        </button>
+      </div>
+    </nav>
   );
 }
 
-function ExperienceItem({ company, role, period, current, bullets }) {
+const DEFAULT_CANDIDATE = {
+  name: "Elena Rostova",
+  title: "SVP, Global Marketing",
+  availability: "Immediate",
+  location: "London, UK",
+  targetComp: "£220k Base",
+  relocation: "Yes (EU/US)",
+  summary: "Visionary marketing executive with 15+ years of experience scaling global brands in the fintech and SaaS sectors. Proven track record of orchestrating high-ROI, multi-channel campaigns and building robust, cross-functional teams that consistently exceed aggressive revenue targets. Adept at navigating complex market dynamics with a data-driven, yet highly creative approach.",
+  skills: ["Brand Strategy", "Go-To-Market", "Team Leadership", "Performance Mktg", "Budget Allocation", "Digital Transformation"],
+  highlightSkills: new Set(["Team Leadership", "Digital Transformation"]),
+  experience: [
+    { role: "SVP, Global Marketing", org: "FinTech Innovations Ltd.", period: "2019 - Present", active: true, desc: "Spearheaded the rebranding initiative that resulted in a 40% increase in brand recognition across EMEA. Managed a global marketing budget of $15M, optimizing spend across digital, events, and PR to achieve a 25% reduction in CAC while scaling enterprise lead generation by 60%.", tags: ["Brand Strategy", "Budget Mgt"] },
+    { role: "VP of Marketing", org: "DataCloud Corp", period: "2015 - 2019", active: false, desc: "Built the marketing department from the ground up during a high-growth phase. Launched three major product lines and orchestrated the marketing strategy for the successful Series C funding round.", tags: [] },
+    { role: "Director of Digital Strategy", org: "OmniMedia Group", period: "2010 - 2015", active: false, desc: "Led digital transformation initiatives for Fortune 500 clients, focusing on data-driven customer acquisition and omnichannel marketing frameworks.", tags: [] },
+  ],
+  education: [
+    { degree: "MBA, Marketing Strategy", school: "London Business School", period: "2008 - 2010" },
+    { degree: "BSc, Economics", school: "University of Oxford", period: "2004 - 2008" },
+  ],
+};
+
+function LeftSidebar({ candidate, onShortlist, shortlisted }) {
+  const initials = candidate.name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div style={{ display: "flex", gap: 18, paddingBottom: 28 }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, flexShrink: 0, width: 20 }}>
-        <div style={{ width: 12, height: 12, borderRadius: "50%", background: current ? P : PB, border: `2px solid ${current ? P : PB}`, flexShrink: 0, marginTop: 4 }} />
-        <div style={{ flex: 1, width: 2, background: BD2, minHeight: 20, marginTop: 4 }} />
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 4 }}>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: T1, marginBottom: 2 }}>{role}</div>
-            <div style={{ fontSize: 13, color: P, fontWeight: 600 }}>{company}</div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-            <span style={{ fontSize: 12, color: T3, whiteSpace: "nowrap" }}>{period}</span>
-            {current && <Tag color={P} bg={PL}>Current</Tag>}
-          </div>
+    <aside style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* Hero card */}
+      <div style={{ ...card, padding: 24, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+        <div style={{ width: 128, height: 128, borderRadius: "50%", background: BGFIX, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--serif)", fontSize: 44, fontWeight: 700, color: P, marginBottom: 12, border: `2px solid ${BGC}` }}>
+          {initials}
         </div>
-        {bullets && (
-          <ul style={{ margin: "10px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
-            {bullets.map((b, i) => (
-              <li key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: T2, lineHeight: 1.6, alignItems: "flex-start" }}>
-                <span style={{ color: P, flexShrink: 0, fontWeight: 700, marginTop: 1 }}>•</span>
-                <span>{b}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <h1 style={{ fontFamily: "var(--serif)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.01em", color: T1, marginBottom: 4, margin: "0 0 4px" }}>{candidate.name}</h1>
+        <p style={{ fontFamily: "var(--sans)", fontSize: 18, color: P, marginBottom: 16, margin: "0 0 16px" }}>{candidate.title}</p>
+        <div style={{ display: "flex", gap: 8, width: "100%", marginTop: 16 }}>
+          <button style={{ flex: 1, background: P, color: "#fff", border: "none", borderRadius: 4, padding: "12px 0", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "opacity 0.15s" }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+            ✉ Message
+          </button>
+          <button style={{ flex: 1, background: "transparent", color: P, border: `1px solid ${BD}`, borderRadius: 4, padding: "12px 0", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.15s" }}
+            onMouseEnter={e => e.currentTarget.style.background = BG2}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+            ↓ Resume
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* Executive Summary */}
+      <div style={{ ...card, padding: 24 }}>
+        <h2 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ color: T3, fontSize: 18 }}>≡</span> Executive Summary
+        </h2>
+        <p style={{ fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.5, color: T2, margin: 0, textAlign: "justify" }}>{candidate.summary}</p>
+      </div>
+
+      {/* Core Competencies */}
+      <div style={{ ...card, padding: 24 }}>
+        <h2 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ color: T3, fontSize: 18 }}>✓</span> Core Competencies
+        </h2>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {candidate.skills.map(skill => {
+            const hl = candidate.highlightSkills.has(skill);
+            return (
+              <span key={skill} style={{ background: hl ? "rgba(70,72,212,0.08)" : BGC, color: hl ? P : T1, border: `1px solid ${hl ? "rgba(70,72,212,0.2)" : BD}`, padding: "4px 12px", borderRadius: 4, fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                {skill}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Quick stats */}
+      <div style={{ ...card, padding: 24, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {[
+          { label: "Availability", value: candidate.availability },
+          { label: "Location", value: candidate.location },
+          { label: "Target Comp", value: candidate.targetComp },
+          { label: "Willing to Relocate", value: candidate.relocation },
+        ].map(({ label, value }) => (
+          <div key={label}>
+            <p style={{ fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, color: T3, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4, margin: "0 0 4px" }}>{label}</p>
+            <p style={{ fontFamily: "var(--sans)", fontSize: 16, color: T1, margin: 0 }}>{value}</p>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function RightContent({ candidate }) {
+  return (
+    <section style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* Professional Trajectory */}
+      <div style={{ ...card, padding: 48 }}>
+        <h2 style={{ fontFamily: "var(--serif)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.01em", color: T1, borderBottom: `1px solid ${BD}`, paddingBottom: 16, marginBottom: 48, margin: "0 0 0 0" }}>
+          Professional Trajectory
+        </h2>
+        {/* Timeline */}
+        <div style={{ position: "relative", borderLeft: `1px solid ${BD}`, marginLeft: 16, display: "flex", flexDirection: "column", gap: 48, paddingTop: 4 }}>
+          {candidate.experience.map((exp, idx) => (
+            <div key={idx} style={{ position: "relative", paddingLeft: 32 }}>
+              <div style={{
+                position: "absolute", width: 12, height: 12, borderRadius: "50%", left: -6, top: 8,
+                background: exp.active ? P : BGH,
+                boxShadow: `0 0 0 4px ${BG1}`,
+              }} />
+              <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8, flexWrap: "wrap", gap: 4 }}>
+                <div>
+                  <h3 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, margin: "0 0 2px" }}>{exp.role}</h3>
+                  <p style={{ fontFamily: "var(--sans)", fontSize: 18, color: exp.active ? P : T2, margin: 0 }}>{exp.org}</p>
+                </div>
+                <span style={{ fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, color: T3 }}>{exp.period}</span>
+              </div>
+              <p style={{ fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.5, color: T2, marginBottom: exp.tags.length ? 16 : 0 }}>{exp.desc}</p>
+              {exp.tags.length > 0 && (
+                <div style={{ display: "flex", gap: 8 }}>
+                  {exp.tags.map(tag => (
+                    <span key={tag} style={{ fontFamily: "var(--sans)", fontSize: 12, color: "#5c5f60", background: BG2, padding: "4px 8px", border: `1px solid rgba(0,0,0,0.04)`, borderRadius: 4 }}>{tag}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Education + Recruiter Notes */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+        {/* Education */}
+        <div style={{ ...card, padding: 24 }}>
+          <h3 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, borderBottom: `1px solid ${BD}`, paddingBottom: 8, marginBottom: 16 }}>Education</h3>
+          {candidate.education.map((edu, i) => (
+            <div key={i} style={{ marginBottom: i < candidate.education.length - 1 ? 16 : 0 }}>
+              <p style={{ fontFamily: "var(--sans)", fontSize: 18, fontWeight: 700, color: T1, margin: "0 0 2px" }}>{edu.degree}</p>
+              <p style={{ fontFamily: "var(--sans)", fontSize: 16, color: P, margin: "0 0 2px" }}>{edu.school}</p>
+              <p style={{ fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, color: T3, margin: 0 }}>{edu.period}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Recruiter Notes */}
+        <div style={{ ...card, padding: 24, position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 0, right: 0, padding: 16, opacity: 0.10, pointerEvents: "none" }}>
+            <span style={{ fontFamily: "var(--serif)", fontSize: 64, color: T1 }}>"</span>
+          </div>
+          <h3 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, borderBottom: `1px solid ${BD}`, paddingBottom: 8, marginBottom: 16, position: "relative", zIndex: 1 }}>Recruiter Notes</h3>
+          <p style={{ fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.5, color: T2, fontStyle: "italic", position: "relative", zIndex: 1, margin: "0 0 16px" }}>
+            "Elena is a powerhouse. Presents incredibly well, possesses deep industry knowledge, and has a clear vision for how marketing drives enterprise value. Highly recommended for C-suite roles requiring immediate impact."
+          </p>
+          <p style={{ fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, color: T3, position: "relative", zIndex: 1, margin: 0 }}>— Interviewed by J. Montgomery (Oct 12)</p>
+        </div>
+      </div>
+    </section>
   );
 }
 
 function CandidateProfileView({ profile, onBack, onShortlist }) {
   const [shortlisted, setShortlisted] = useState(false);
-
-  const name = profile?.name || "Elena Rostova";
-  const role = profile?.title || profile?.current_role || "SVP, Global Marketing";
-  const location = profile?.location || "London, UK";
-  const availability = "Immediate";
-  const compensation = "£220k Base";
-  const tagline = profile?.tagline || "15+ years of fintech & SaaS marketing leadership. Rebranding that delivered 40% brand recognition uplift across EMEA.";
-  const skills = profile?.skills || ["Brand Strategy", "Go-to-Market", "Team Leadership", "Performance Marketing", "Budget Allocation", "Digital Transformation"];
-  const education = profile?.education || [
-    { degree: "MBA in Marketing Strategy", school: "London Business School", year: "2008" },
-    { degree: "BSc Economics", school: "University of Oxford", year: "2006" },
-  ];
-  const experience = profile?.experience || [
-    {
-      company: "FinTech Innovations Ltd.",
-      role: "Global Marketing Director",
-      period: "2019 – Present",
-      current: true,
-      bullets: [
-        "Led rebranding across EMEA, increasing brand recognition by 40%",
-        "Scaled enterprise leads by 60% while reducing CAC by 25%",
-        "Built and managed a $15M+ marketing budget across 12 markets",
-      ],
-    },
-    {
-      company: "NovaPay",
-      role: "Head of Marketing",
-      period: "2015 – 2019",
-      bullets: [
-        "Built the marketing department from scratch during high-growth phase",
-        "Orchestrated omnichannel launch across 6 European markets",
-      ],
-    },
-  ];
-  const recruiterNote = profile?.tagline_note || "Elena is a powerhouse. Presents incredibly well, possesses deep industry knowledge, and has a clear vision for how marketing drives enterprise value.";
+  const candidate = { ...DEFAULT_CANDIDATE, ...(profile || {}) };
 
   const handleShortlist = () => {
     setShortlisted(s => !s);
-    if (onShortlist) onShortlist(profile);
+    onShortlist?.();
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: "var(--sans)" }}>
-      <div style={{ background: S0, borderBottom: `1px solid ${BD}`, padding: "0 40px", height: 56, display: "flex", alignItems: "center", gap: 20, position: "sticky", top: 0, zIndex: 10 }}>
-        <button onClick={onBack}
-          style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: T3, fontSize: 13, fontWeight: 500, cursor: "pointer", padding: "6px 10px", borderRadius: 8, transition: "all 0.15s" }}
-          onMouseEnter={e => { e.currentTarget.style.color = T1; e.currentTarget.style.background = BG; }}
-          onMouseLeave={e => { e.currentTarget.style.color = T3; e.currentTarget.style.background = "transparent"; }}>
-          ← Talent Pool
-        </button>
-        <div style={{ width: 1, height: 20, background: BD }} />
-        <div style={{ fontSize: 14, fontWeight: 600, color: T1 }}>Candidate Profile</div>
-        <div style={{ flex: 1 }} />
-        <button
-          style={{ background: "transparent", border: `1px solid ${BD2}`, color: T2, borderRadius: 10, padding: "7px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, transition: "all 0.15s" }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = P; e.currentTarget.style.color = P; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = BD2; e.currentTarget.style.color = T2; }}>
-          <Icon name="file" size={14} color="currentColor" /> Download CV
-        </button>
-        <button
-          style={{ background: "transparent", border: `1px solid ${BD2}`, color: T2, borderRadius: 10, padding: "7px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, transition: "all 0.15s" }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = P; e.currentTarget.style.color = P; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = BD2; e.currentTarget.style.color = T2; }}>
-          <Icon name="mail" size={14} color="currentColor" /> Contact
-        </button>
-        <button onClick={handleShortlist}
-          style={{ background: shortlisted ? P : S0, border: `1px solid ${shortlisted ? P : BD2}`, color: shortlisted ? "#fff" : T2, borderRadius: 10, padding: "7px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, transition: "all 0.15s", boxShadow: shortlisted ? "0 3px 12px rgba(70,72,212,0.28)" : "none" }}>
-          <Icon name="star" size={14} color={shortlisted ? "#fff" : T3} />
-          {shortlisted ? "Shortlisted" : "Shortlist"}
-        </button>
-      </div>
-
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "36px 24px", display: "grid", gridTemplateColumns: "300px 1fr", gap: 24, alignItems: "flex-start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <div style={{ background: S0, border: `1px solid ${BD}`, borderRadius: 22, padding: "28px 24px", textAlign: "center" }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-              <Avatar name={name} size={80} />
-            </div>
-            <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: T1, letterSpacing: "-0.015em", marginBottom: 5 }}>{name}</div>
-            <div style={{ fontSize: 13.5, color: P, fontWeight: 600, marginBottom: 14 }}>{role}</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {[
-                { icon: "search", label: location },
-                { icon: "zap", label: `Available: ${availability}` },
-                { icon: "chart", label: compensation },
-              ].map(({ icon, label }) => (
-                <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T2 }}>
-                  <Icon name={icon} size={13} color={T3} /> {label}
-                </div>
-              ))}
-            </div>
-            <div style={{ marginTop: 20, paddingTop: 20, borderTop: `1px solid ${BD}` }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T3, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>Open to</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
-                {["EU Markets", "US Markets", "Remote"].map(r => <Tag key={r}>{r}</Tag>)}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ background: S0, border: `1px solid ${BD}`, borderRadius: 20, padding: "22px 20px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: T3, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 14 }}>Core Skills</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-              {skills.map(s => <Tag key={s}>{s}</Tag>)}
-            </div>
-          </div>
-
-          <div style={{ background: S0, border: `1px solid ${BD}`, borderRadius: 20, padding: "22px 20px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: T3, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 16 }}>Education</div>
-            {education.map((e, i) => (
-              <div key={i} style={{ marginBottom: i < education.length - 1 ? 16 : 0, paddingBottom: i < education.length - 1 ? 16 : 0, borderBottom: i < education.length - 1 ? `1px solid ${BD}` : "none" }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: T1, marginBottom: 3 }}>{e.degree}</div>
-                <div style={{ fontSize: 12.5, color: P, fontWeight: 600 }}>{e.school}</div>
-                <div style={{ fontSize: 12, color: T3, marginTop: 2 }}>{e.year}</div>
-              </div>
+    <div style={{ background: BG, minHeight: "100vh", fontFamily: "var(--sans)" }}>
+      <TopNav onBack={onBack} />
+      <main style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 40px", display: "grid", gridTemplateColumns: "1fr 2fr", gap: 24 }}>
+        <LeftSidebar candidate={candidate} onShortlist={handleShortlist} shortlisted={shortlisted} />
+        <RightContent candidate={candidate} />
+      </main>
+      <footer style={{ background: BG, borderTop: "1px solid rgba(0,0,0,0.05)", padding: "48px 40px", marginTop: 48 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 1280, margin: "0 auto", flexWrap: "wrap", gap: 16 }}>
+          <span style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1 }}>Prolio</span>
+          <div style={{ display: "flex", gap: 24 }}>
+            {["Privacy", "Terms", "Career Advice", "Media Kit"].map(l => (
+              <a key={l} href="#" onClick={e => e.preventDefault()}
+                style={{ color: T2, textDecoration: "none", fontSize: 14, fontWeight: 600, fontFamily: "var(--sans)", transition: "color 0.15s" }}
+                onMouseEnter={e => e.target.style.color = P}
+                onMouseLeave={e => e.target.style.color = T2}>{l}</a>
             ))}
           </div>
+          <span style={{ fontFamily: "var(--sans)", fontSize: 14, color: "#5c5f60" }}>© 2024 Prolio Excellence. All rights reserved.</span>
         </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ background: S0, border: `1px solid ${BD}`, borderRadius: 22, padding: "24px 28px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: T3, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 14 }}>Summary</div>
-            <p style={{ fontSize: 14.5, color: T2, lineHeight: 1.75 }}>{tagline}</p>
-          </div>
-
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <StrengthCard icon="trending" title="Brand Recognition Uplift" metric="+40%" desc="EMEA-wide rebranding campaign delivered measurable lift in brand recognition." />
-            <StrengthCard icon="target" title="CAC Reduction" metric="−25%" desc="Scaled enterprise leads by 60% while significantly reducing acquisition costs." />
-            <StrengthCard icon="chart" title="Budget Managed" metric="$15M+" desc="Proven experience allocating and optimising large-scale marketing budgets." />
-          </div>
-
-          <div style={{ background: S0, border: `1px solid ${BD}`, borderRadius: 22, padding: "24px 28px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: T3, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 22 }}>Experience</div>
-            {experience.map((exp, i) => (
-              <ExperienceItem key={i} {...exp} />
-            ))}
-          </div>
-
-          <div style={{ background: `linear-gradient(135deg, ${PL}, rgba(70,72,212,0.03))`, border: `1px solid ${PB}`, borderRadius: 22, padding: "24px 28px" }}>
-            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: PB, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Icon name="star" size={16} color={P} />
-              </div>
-              <div>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: P, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>Recruiter Assessment</div>
-                <p style={{ fontSize: 14.5, color: T1, lineHeight: 1.75, fontStyle: "italic" }}>"{recruiterNote}"</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </footer>
     </div>
   );
 }
