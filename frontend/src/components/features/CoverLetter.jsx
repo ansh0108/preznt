@@ -127,7 +127,7 @@ function CoverLetter({ userId, built, profile, jd, setJd, company, setCompany, r
   useEffect(() => {
     if (!editorRef.current || !result) return;
     const contactHeader = contactLine
-      ? `<p style="margin:0 0 2px 0;font-size:12px;color:#888">${contactLine}</p><p style="margin:0 0 1.2em 0"> </p>`
+      ? `<p style="margin:0 0 2px 0;font-size:12px;color:#767586">${contactLine}</p><p style="margin:0 0 1.2em 0"> </p>`
       : "";
     const html = result.split(/\n\n+/).map(block => `<p style="margin:0 0 1em 0">${block.replace(/\n/g, "<br>")}</p>`).join("");
     editorRef.current.innerHTML = contactHeader + html;

@@ -225,16 +225,16 @@ function PortfolioPage({ userId, onBack }) {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      <header style={{ background: "var(--bg1)", borderBottom: "1px solid var(--line)", padding: "14px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 20, backdropFilter: "blur(12px)" }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 19, fontWeight: 500, letterSpacing: "-0.01em" }}>
-          prolio<span style={{ color: "var(--accent)", fontStyle: "italic" }}>.co</span>
+      <header style={{ background: "rgba(249,249,255,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,0.05)", height: 72, display: "flex", alignItems: "center", padding: "0 40px", position: "sticky", top: 0, zIndex: 50, justifyContent: "space-between" }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 800, color: "var(--accent)", letterSpacing: "-0.02em", lineHeight: 1 }}>
+          Prolio
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <Btn variant="subtle" onClick={copyLink}>
             <Icon name={copied ? "check" : "copy"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
-            {copied ? "Copied!" : "Copy link"}
+            {copied ? "Copied!" : "Share"}
           </Btn>
-          {onBack && <Btn variant="ghost" onClick={onBack} style={{ padding: "7px 14px", fontSize: 12.5 }}>← New Portfolio</Btn>}
+          {onBack && <Btn variant="ghost" onClick={onBack} style={{ padding: "7px 14px", fontSize: 12.5 }}>← Back</Btn>}
         </div>
       </header>
 

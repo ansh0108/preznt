@@ -42,16 +42,18 @@ function MinimalProfileSetup({ auth, setAuth, onLogout }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh" }}>
-      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 40px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "var(--bg)", zIndex: 10 }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>prolio<span style={{ color: "var(--accent)" }}>.</span></div>
-        <button onClick={onLogout} style={{ background: "transparent", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text3)", padding: "6px 12px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div style={{ background: "rgba(249,249,255,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,0.05)", padding: "0 40px", height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 800, color: "var(--accent)", letterSpacing: "-0.02em", lineHeight: 1 }}>Prolio</div>
+        <button onClick={onLogout} style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 8, color: "var(--text3)", padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--sans)", transition: "background 0.15s" }}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(70,72,212,0.06)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <Icon name="logout" size={13} color="var(--text3)" /> Sign out
         </button>
       </div>
       <div style={{ maxWidth: 480, margin: "60px auto", padding: "0 24px" }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 28, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Set up your profile</div>
-        <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 32, lineHeight: 1.6 }}>You can add your resume, LinkedIn and GitHub repos from your dashboard after this.</div>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--text)", marginBottom: 8 }}>Set up your profile</div>
+        <div style={{ color: "var(--text3)", fontSize: 14, marginBottom: 36, lineHeight: 1.65, fontFamily: "var(--sans)" }}>Add your resume, LinkedIn, and GitHub repos from the dashboard after this.</div>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
           <label htmlFor="mps-photo" style={{ cursor: "pointer" }}>
             <div style={{ width: 80, height: 80, borderRadius: "50%", background: "var(--bg3)", border: "2px dashed var(--line2)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>

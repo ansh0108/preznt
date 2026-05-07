@@ -4,13 +4,15 @@ import { API } from "../../lib/api";
 import { Spinner, Btn, SecHead } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
-function QuestionCard({ q, i, copied, onCopy, typeColor, typeLabel }) {
+function QuestionCard({ q, i, copied, onCopy, typeColor, typeBg, typeBorder, typeLabel }) {
   const color = typeColor[q.type] || "var(--accent)";
+  const bg    = typeBg?.[q.type]     || "rgba(70,72,212,0.08)";
+  const border = typeBorder?.[q.type] || "rgba(70,72,212,0.25)";
   return (
     <div className="c-hover" style={{ background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", padding: "20px 22px", borderLeft: `3px solid ${color}` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color, background: color + "18", border: `1px solid ${color}40`, padding: "2px 8px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color, background: bg, border: `1px solid ${border}`, padding: "2px 8px", borderRadius: 100, textTransform: "uppercase", letterSpacing: "0.05em" }}>
             {typeLabel[q.type] || q.type}
           </span>
           <span style={{ fontSize: 12, color: "var(--text3)" }}>Q{i + 1}</span>
@@ -37,11 +39,11 @@ function QuestionCard({ q, i, copied, onCopy, typeColor, typeLabel }) {
 }
 
 const INTERVIEW_TYPES = [
-  { id: "behavioral", label: "Behavioral", color: "var(--rose)" },
-  { id: "technical", label: "Technical / Coding", color: "var(--teal)" },
-  { id: "case_study", label: "Case Study", color: "var(--amber)" },
-  { id: "system_design", label: "System Design", color: "var(--accent)" },
-  { id: "hr_culture", label: "HR / Culture", color: "var(--green)" },
+  { id: "behavioral",    label: "Behavioral",          color: "var(--rose)",   bg: "rgba(219,39,119,0.08)",   border: "rgba(219,39,119,0.25)" },
+  { id: "technical",     label: "Technical / Coding",  color: "var(--teal)",   bg: "rgba(13,148,136,0.08)",   border: "rgba(13,148,136,0.25)" },
+  { id: "case_study",    label: "Case Study",          color: "var(--amber)",  bg: "rgba(217,119,6,0.08)",    border: "rgba(217,119,6,0.25)"  },
+  { id: "system_design", label: "System Design",       color: "var(--accent)", bg: "rgba(70,72,212,0.08)",    border: "rgba(70,72,212,0.25)"  },
+  { id: "hr_culture",    label: "HR / Culture",        color: "var(--green)",  bg: "rgba(22,163,74,0.08)",    border: "rgba(22,163,74,0.25)"  },
 ];
 
 function InterviewPrep({ userId, jd: initialJd }) {
@@ -52,8 +54,10 @@ function InterviewPrep({ userId, jd: initialJd }) {
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(null);
 
-  const TYPE_COLOR = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.color]));
-  const TYPE_LABEL = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.label]));
+  const TYPE_COLOR  = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.color]));
+  const TYPE_BG     = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.bg]));
+  const TYPE_BORDER = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.border]));
+  const TYPE_LABEL  = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.label]));
 
   const toggleType = (id) => {
     setSelectedTypes(prev =>
@@ -92,7 +96,7 @@ function InterviewPrep({ userId, jd: initialJd }) {
               <button key={t.id} onClick={() => toggleType(t.id)}
                 style={{
                   padding: "8px 16px", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  background: active ? t.color + "18" : "var(--bg2)",
+                  background: active ? t.bg : "var(--bg2)",
                   border: `1.5px solid ${active ? t.color : "var(--line2)"}`,
                   color: active ? t.color : "var(--text3)",
                   transition: "all 0.15s", display: "flex", alignItems: "center", gap: 6,
@@ -120,7 +124,7 @@ function InterviewPrep({ userId, jd: initialJd }) {
       {result && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "fadeUp 0.3s ease" }}>
           {result.map((q, i) => (
-            <QuestionCard key={i} q={q} i={i} copied={copied} onCopy={copyQ} typeColor={TYPE_COLOR} typeLabel={TYPE_LABEL} />
+            <QuestionCard key={i} q={q} i={i} copied={copied} onCopy={copyQ} typeColor={TYPE_COLOR} typeBg={TYPE_BG} typeBorder={TYPE_BORDER} typeLabel={TYPE_LABEL} />
           ))}
         </div>
       )}

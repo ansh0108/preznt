@@ -4,10 +4,10 @@ import Icon from "../ui/Icon";
 import OrgLogo from "../ui/OrgLogo";
 
 const LINK_TYPE_META = {
-  publication: { label: "Publications", color: "var(--rose)", icon: "file" },
-  certificate:  { label: "Certifications", color: "var(--teal)", icon: "check" },
-  award:        { label: "Awards", color: "var(--amber)", icon: "star" },
-  other:        { label: "Other Links", color: "var(--accent)", icon: "link" },
+  publication: { label: "Publications",  color: "var(--rose)",   bg: "rgba(219,39,119,0.08)",  border: "rgba(219,39,119,0.25)", icon: "file"  },
+  certificate:  { label: "Certifications", color: "var(--teal)",   bg: "rgba(13,148,136,0.08)",  border: "rgba(13,148,136,0.25)",  icon: "check" },
+  award:        { label: "Awards",         color: "var(--amber)",  bg: "rgba(217,119,6,0.08)",   border: "rgba(217,119,6,0.25)",   icon: "star"  },
+  other:        { label: "Other Links",    color: "var(--accent)", bg: "rgba(70,72,212,0.08)",   border: "rgba(70,72,212,0.25)",   icon: "link"  },
 };
 
 function ExperienceEntry({ exp, isLast }) {
@@ -71,7 +71,7 @@ function LinksSection({ links }) {
               </div>
               {l.url && (
                 <a href={l.url} target="_blank" rel="noreferrer" style={{ flexShrink: 0, alignSelf: "flex-start", paddingTop: 2, textDecoration: "none" }}>
-                  <span style={{ fontSize: 11, color: meta.color, background: meta.color + "18", border: `1px solid ${meta.color}40`, padding: "3px 10px", borderRadius: 100, fontWeight: 600, whiteSpace: "nowrap" }}>↗ View</span>
+                  <span style={{ fontSize: 11, color: meta.color, background: meta.bg, border: `1px solid ${meta.border}`, padding: "3px 10px", borderRadius: 100, fontWeight: 600, whiteSpace: "nowrap" }}>↗ View</span>
                 </a>
               )}
             </div>
