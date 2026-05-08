@@ -7,7 +7,7 @@ import Icon from "../ui/Icon";
 
 function UserTypeToggle({ userType, setUserType }) {
   return (
-    <div style={{ display: "flex", gap: 6, marginBottom: 24, background: "#f0f3ff", borderRadius: 100, padding: 4 }}>
+    <div style={{ display: "flex", gap: 6, marginBottom: 24, background: "var(--bg3)", borderRadius: 100, padding: 4 }}>
       {[["seeker", "Job Seeker"], ["recruiter", "Recruiter"]].map(([val, label]) => (
         <button
           key={val}
@@ -19,8 +19,8 @@ function UserTypeToggle({ userType, setUserType }) {
             fontSize: 13,
             fontFamily: "var(--sans)",
             fontWeight: 600,
-            background: userType === val ? "#4648d4" : "transparent",
-            color: userType === val ? "#fff" : "#767586",
+            background: userType === val ? "var(--accent)" : "transparent",
+            color: userType === val ? "#fff" : "var(--text3)",
             border: "none",
             cursor: "pointer",
             transition: "all 0.2s ease",
@@ -39,7 +39,7 @@ function AuthInputFields({ email, setEmail, password, setPassword, confirm, setC
     <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
       <div style={{ position: "relative" }}>
         <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-          <Icon name="mail" size={15} color="#767586" />
+          <Icon name="mail" size={15} color="var(--text3)" />
         </div>
         <input
           value={email}
@@ -55,21 +55,21 @@ function AuthInputFields({ email, setEmail, password, setPassword, confirm, setC
             paddingBottom: 12,
             fontSize: 14,
             fontFamily: "var(--sans)",
-            color: "#111c2d",
-            background: "#ffffff",
-            border: "1px solid rgba(0,0,0,0.06)",
+            color: "var(--text)",
+            background: "var(--bg2)",
+            border: "1px solid var(--line2)",
             borderRadius: 8,
             outline: "none",
             boxSizing: "border-box",
             transition: "border-color 0.15s ease, box-shadow 0.15s ease",
           }}
-          onFocus={e => { e.target.style.borderColor = "#4648d4"; e.target.style.boxShadow = "0 0 0 3px rgba(70,72,212,0.10)"; }}
-          onBlur={e => { e.target.style.borderColor = "rgba(0,0,0,0.06)"; e.target.style.boxShadow = "none"; }}
+          onFocus={e => { e.target.style.borderColor = "var(--accent)"; e.target.style.boxShadow = "0 0 0 3px var(--accent-d)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--line2)"; e.target.style.boxShadow = "none"; }}
         />
       </div>
       <div style={{ position: "relative" }}>
         <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-          <Icon name="lock" size={15} color="#767586" />
+          <Icon name="lock" size={15} color="var(--text3)" />
         </div>
         <input
           value={password}
@@ -85,22 +85,22 @@ function AuthInputFields({ email, setEmail, password, setPassword, confirm, setC
             paddingBottom: 12,
             fontSize: 14,
             fontFamily: "var(--sans)",
-            color: "#111c2d",
-            background: "#ffffff",
-            border: "1px solid rgba(0,0,0,0.06)",
+            color: "var(--text)",
+            background: "var(--bg2)",
+            border: "1px solid var(--line2)",
             borderRadius: 8,
             outline: "none",
             boxSizing: "border-box",
             transition: "border-color 0.15s ease, box-shadow 0.15s ease",
           }}
-          onFocus={e => { e.target.style.borderColor = "#4648d4"; e.target.style.boxShadow = "0 0 0 3px rgba(70,72,212,0.10)"; }}
-          onBlur={e => { e.target.style.borderColor = "rgba(0,0,0,0.06)"; e.target.style.boxShadow = "none"; }}
+          onFocus={e => { e.target.style.borderColor = "var(--accent)"; e.target.style.boxShadow = "0 0 0 3px var(--accent-d)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--line2)"; e.target.style.boxShadow = "none"; }}
         />
       </div>
       {!isLogin && (
         <div style={{ position: "relative" }}>
           <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-            <Icon name="lock" size={15} color="#767586" />
+            <Icon name="lock" size={15} color="var(--text3)" />
           </div>
           <input
             value={confirm}
@@ -116,16 +116,16 @@ function AuthInputFields({ email, setEmail, password, setPassword, confirm, setC
               paddingBottom: 12,
               fontSize: 14,
               fontFamily: "var(--sans)",
-              color: "#111c2d",
-              background: "#ffffff",
-              border: "1px solid rgba(0,0,0,0.06)",
+              color: "var(--text)",
+              background: "var(--bg2)",
+              border: "1px solid var(--line2)",
               borderRadius: 8,
               outline: "none",
               boxSizing: "border-box",
               transition: "border-color 0.15s ease, box-shadow 0.15s ease",
             }}
-            onFocus={e => { e.target.style.borderColor = "#4648d4"; e.target.style.boxShadow = "0 0 0 3px rgba(70,72,212,0.10)"; }}
-            onBlur={e => { e.target.style.borderColor = "rgba(0,0,0,0.06)"; e.target.style.boxShadow = "none"; }}
+            onFocus={e => { e.target.style.borderColor = "var(--accent)"; e.target.style.boxShadow = "0 0 0 3px var(--accent-d)"; }}
+            onBlur={e => { e.target.style.borderColor = "var(--line2)"; e.target.style.boxShadow = "none"; }}
           />
         </div>
       )}
@@ -166,7 +166,7 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
       {/* Left branding panel */}
       <div style={{
         width: "45%",
-        background: "#4648d4",
+        background: "var(--bg2)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -175,16 +175,17 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
         overflow: "hidden",
         flexShrink: 0,
       }}>
-        {/* Subtle radial glow */}
+        {/* Ambient indigo glow orb */}
         <div style={{
           position: "absolute",
-          top: "30%",
+          top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
           width: 500,
           height: 500,
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)",
+          background: "rgba(129,140,248,0.08)",
+          filter: "blur(100px)",
           pointerEvents: "none",
         }} />
         {/* Bottom decorative ring */}
@@ -195,7 +196,7 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
           width: 360,
           height: 360,
           borderRadius: "50%",
-          border: "1px solid rgba(255,255,255,0.08)",
+          border: "1px solid rgba(255,255,255,0.06)",
           pointerEvents: "none",
         }} />
         <div style={{
@@ -205,7 +206,7 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
           width: 240,
           height: 240,
           borderRadius: "50%",
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.04)",
           pointerEvents: "none",
         }} />
 
@@ -228,7 +229,7 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
           fontFamily: "var(--serif)",
           fontStyle: "italic",
           fontSize: 18,
-          color: "rgba(255,255,255,0.75)",
+          color: "rgba(255,255,255,0.70)",
           marginBottom: 52,
           lineHeight: 1.5,
           fontWeight: 400,
@@ -249,7 +250,7 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
                 width: 28,
                 height: 28,
                 borderRadius: "50%",
-                background: "rgba(255,255,255,0.15)",
+                background: "rgba(255,255,255,0.12)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -270,7 +271,7 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
       {/* Right form panel */}
       <div style={{
         flex: 1,
-        background: "#f9f9ff",
+        background: "var(--bg)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -286,7 +287,7 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
             left: 36,
             background: "transparent",
             border: "none",
-            color: "#767586",
+            color: "var(--text3)",
             fontSize: 13,
             cursor: "pointer",
             display: "flex",
@@ -298,8 +299,8 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
             borderRadius: 6,
             transition: "color 0.15s ease",
           }}
-          onMouseEnter={e => e.currentTarget.style.color = "#111c2d"}
-          onMouseLeave={e => e.currentTarget.style.color = "#767586"}
+          onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+          onMouseLeave={e => e.currentTarget.style.color = "var(--text3)"}
         >
           <Icon name="arrow" size={13} color="currentColor" style={{ transform: "rotate(180deg)" }} />
           Back
@@ -312,7 +313,7 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
             fontFamily: "var(--serif)",
             fontSize: 32,
             fontWeight: 700,
-            color: "#111c2d",
+            color: "var(--text)",
             marginBottom: 8,
             letterSpacing: "-0.02em",
             lineHeight: 1.15,
@@ -320,7 +321,7 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
             {isLogin ? "Welcome back" : "Create your account"}
           </div>
           <div style={{
-            color: "#767586",
+            color: "var(--text3)",
             fontSize: 14,
             marginBottom: 32,
             fontFamily: "var(--sans)",
@@ -345,12 +346,12 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
           {/* Error */}
           {error && (
             <div style={{
-              color: "#c0392b",
+              color: "var(--red)",
               fontSize: 13,
               marginBottom: 16,
               fontFamily: "var(--sans)",
-              background: "rgba(192,57,43,0.06)",
-              border: "1px solid rgba(192,57,43,0.14)",
+              background: "rgba(248,113,113,0.10)",
+              border: "1px solid rgba(248,113,113,0.25)",
               borderRadius: 8,
               padding: "10px 14px",
             }}>
@@ -365,10 +366,10 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
             style={{
               width: "100%",
               padding: "13px 0",
-              background: loading ? "#8486d8" : "#4648d4",
+              background: loading ? "rgba(99,102,241,0.5)" : "var(--accent)",
               color: "#ffffff",
               border: "none",
-              borderRadius: 8,
+              borderRadius: 100,
               fontSize: 14,
               fontFamily: "var(--sans)",
               fontWeight: 600,
@@ -379,11 +380,11 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
               gap: 8,
               marginBottom: 24,
               transition: "background 0.15s ease, box-shadow 0.15s ease",
-              boxShadow: loading ? "none" : "0 4px 14px rgba(70,72,212,0.25)",
+              boxShadow: loading ? "none" : "0 4px 14px rgba(129,140,248,0.25)",
               letterSpacing: "0.01em",
             }}
-            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "#3a3cb8"; }}
-            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = "#4648d4"; }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.opacity = "0.88"; }}
+            onMouseLeave={e => { if (!loading) e.currentTarget.style.opacity = "1"; }}
           >
             {loading
               ? <><Spinner size={14} color="#fff" /> {isLogin ? "Signing in…" : "Creating account…"}</>
@@ -391,20 +392,20 @@ function AuthPage({ mode, defaultType = "seeker", onSuccess, onSwitch, onBack })
           </button>
 
           {/* Switch link */}
-          <div style={{ textAlign: "center", fontSize: 13, color: "#767586", fontFamily: "var(--sans)" }}>
+          <div style={{ textAlign: "center", fontSize: 13, color: "var(--text3)", fontFamily: "var(--sans)" }}>
             {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
             <button
               onClick={onSwitch}
               style={{
                 background: "transparent",
                 border: "none",
-                color: "#4648d4",
+                color: "var(--accent)",
                 cursor: "pointer",
                 fontSize: 13,
                 fontFamily: "var(--sans)",
                 fontWeight: 600,
                 textDecoration: "underline",
-                textDecorationColor: "rgba(70,72,212,0.35)",
+                textDecorationColor: "rgba(129,140,248,0.35)",
                 textUnderlineOffset: 2,
               }}
             >

@@ -5,20 +5,20 @@ import { saveAuth } from "../../lib/auth";
 import { Spinner, Btn } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
-const P    = "#4648d4";
-const T1   = "#111c2d";
-const T2   = "#464554";
-const T3   = "#767586";
-const BG   = "#f9f9ff";
-const BG1  = "#ffffff";
-const BG2  = "#f0f3ff";
-const BGH  = "#dee8ff";
-const BGFIX = "#e1e0ff";
-const BD   = "rgba(0,0,0,0.06)";
+const P    = "var(--accent)";
+const T1   = "var(--text)";
+const T2   = "var(--text2)";
+const T3   = "var(--text3)";
+const BG   = "var(--bg)";
+const BG1  = "var(--bg1)";
+const BG2  = "var(--bg2)";
+const BGH  = "var(--bg3)";
+const BGFIX = "var(--bg4)";
+const BD   = "var(--line)";
 const hairline = { border: `1px solid ${BD}` };
-const luxShadow = "0 20px 40px -10px rgba(0,0,0,0.04)";
+const luxShadow = "0 20px 40px -10px rgba(0,0,0,0.4)";
 
-const INPUT_ST = { width: "100%", background: BG1, border: `1px solid ${BD}`, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: T1, outline: "none", boxSizing: "border-box", fontFamily: "var(--sans)" };
+const INPUT_ST = { width: "100%", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "var(--text)", outline: "none", boxSizing: "border-box", fontFamily: "var(--sans)" };
 
 function MinimalProfileSetup({ auth, setAuth, onLogout }) {
   const [form, setForm] = useState({ name: "", title: "", bio: "" });
@@ -58,10 +58,10 @@ function MinimalProfileSetup({ auth, setAuth, onLogout }) {
 
   return (
     <div style={{ minHeight: "100vh", background: BG }}>
-      <div style={{ background: "rgba(249,249,255,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,0.05)", padding: "0 40px", height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
+      <div style={{ background: "rgba(18,19,25,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid var(--line)", padding: "0 40px", height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 800, color: P, letterSpacing: "-0.02em", lineHeight: 1 }}>Prolio</div>
         <button onClick={onLogout} style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 8, color: T3, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--sans)", transition: "background 0.15s" }}
-          onMouseEnter={e => e.currentTarget.style.background = "rgba(70,72,212,0.06)"}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--accent-d)"}
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <Icon name="logout" size={13} color={T3} /> Sign out
         </button>
@@ -71,7 +71,7 @@ function MinimalProfileSetup({ auth, setAuth, onLogout }) {
         <div style={{ color: T3, fontSize: 14, marginBottom: 36, lineHeight: 1.65, fontFamily: "var(--sans)" }}>Add your resume, LinkedIn, and GitHub repos from the dashboard after this.</div>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
           <label htmlFor="mps-photo" style={{ cursor: "pointer" }}>
-            <div style={{ width: 80, height: 80, borderRadius: "50%", background: BGH, border: photo.preview ? "2px dashed rgba(70,72,212,0.35)" : "2px dashed rgba(0,0,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            <div style={{ width: 80, height: 80, borderRadius: "50%", background: BGH, border: photo.preview ? "2px dashed var(--accent-b)" : "2px dashed var(--line2)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               {photo.preview ? <img src={photo.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon name="camera" size={22} color={T3} />}
             </div>
             <input id="mps-photo" type="file" accept="image/*" style={{ display: "none" }} onChange={e => e.target.files[0] && handlePhoto(e.target.files[0])} />
@@ -84,7 +84,7 @@ function MinimalProfileSetup({ auth, setAuth, onLogout }) {
         </div>
         {error && <div style={{ color: "#ef4444", fontSize: 13, marginBottom: 12 }}>{error}</div>}
         <button onClick={submit} disabled={loading || !form.name.trim()}
-          style={{ width: "100%", background: P, color: "#fff", border: "none", borderRadius: 8, padding: "12px", fontWeight: 600, fontSize: 14, cursor: loading || !form.name.trim() ? "not-allowed" : "pointer", boxShadow: "0 4px 14px rgba(70,72,212,0.20)", opacity: loading || !form.name.trim() ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "var(--sans)", marginBottom: 24 }}>
+          style={{ width: "100%", background: "var(--accent)", color: "#fff", border: "none", borderRadius: 100, padding: "12px", fontWeight: 600, fontSize: 14, cursor: loading || !form.name.trim() ? "not-allowed" : "pointer", boxShadow: "0 4px 20px rgba(129,140,248,0.30)", opacity: loading || !form.name.trim() ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "var(--sans)", marginBottom: 24 }}>
           {loading ? <><Spinner size={14} color="#fff" /> Creating profile…</> : "Continue to Dashboard"}
         </button>
         <div style={{ textAlign: "center" }}>

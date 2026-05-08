@@ -1,7 +1,7 @@
 import Icon from "./Icon";
 
 export const Spinner = ({ size = 16, color = "var(--accent)" }) => (
-  <div style={{ width: size, height: size, border: "1.5px solid rgba(0,0,0,0.08)", borderTop: `1.5px solid ${color}`, borderRadius: "50%", animation: "spin 0.75s linear infinite", display: "inline-block", flexShrink: 0 }} />
+  <div style={{ width: size, height: size, border: "1.5px solid var(--line2)", borderTop: `1.5px solid ${color}`, borderRadius: "50%", animation: "spin 0.75s linear infinite", display: "inline-block", flexShrink: 0 }} />
 );
 
 export const BulletText = ({ text, style: s = {} }) => {

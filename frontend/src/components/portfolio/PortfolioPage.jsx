@@ -10,44 +10,21 @@ import Overview from "./Overview";
 import Projects from "./Projects";
 import Chatbot from "./Chatbot";
 
-// ── Prolio Light Luxury design tokens ──────────────────────────────────────
-const P     = "#4648d4";
-const T1    = "#111c2d";
-const T2    = "#464554";
-const T3    = "#767586";
-const BG    = "#f9f9ff";
-const BG1   = "#ffffff";
-const BG2   = "#f0f3ff";
-const BGH   = "#dee8ff";
-const BGFIX = "#e1e0ff";
-const BD    = "rgba(0,0,0,0.06)";
-const hairline  = { border: `1px solid ${BD}` };
-const luxShadow = "0 20px 40px -10px rgba(0,0,0,0.04)";
+// ── Midnight Elite dark-luxury CSS variable references ──────────────────────
 const glass = {
-  background: "rgba(255,255,255,0.70)",
+  background: "rgba(18,19,25,0.85)",
   backdropFilter: "blur(12px)",
   WebkitBackdropFilter: "blur(12px)",
-  border: `1px solid ${BD}`,
-  boxShadow: "0 10px 30px -10px rgba(0,0,0,0.04)",
+  border: "1px solid var(--line)",
+  boxShadow: "0 10px 30px -10px rgba(0,0,0,0.18)",
 };
 // ───────────────────────────────────────────────────────────────────────────
 
 const CSS_VARS = ["--bg","--bg1","--bg2","--bg3","--line","--line2","--text","--text2","--text3","--accent","--accent-d","--accent-b"];
 
 function applyThemeVars(profile) {
-  const { accent = "#4648d4", dark_mode: darkMode = false } = profile.preferences || {};
+  const { accent = "#818cf8", dark_mode: _darkMode = false } = profile.preferences || {};
   const root = document.documentElement;
-  if (darkMode) {
-    root.style.setProperty("--bg",    "#08080a");
-    root.style.setProperty("--bg1",   "#0e0e11");
-    root.style.setProperty("--bg2",   "#141418");
-    root.style.setProperty("--bg3",   "#1c1c22");
-    root.style.setProperty("--line",  "rgba(255,255,255,0.065)");
-    root.style.setProperty("--line2", "rgba(255,255,255,0.11)");
-    root.style.setProperty("--text",  "#ededef");
-    root.style.setProperty("--text2", "#b4b4bc");
-    root.style.setProperty("--text3", "#7c7c88");
-  }
   root.style.setProperty("--accent",   accent);
   root.style.setProperty("--accent-d", accent + "14");
   root.style.setProperty("--accent-b", accent + "33");
@@ -57,7 +34,7 @@ function TabBar({ tabs, activeTab, onSwitch }) {
   return (
     <div style={{
       display: "flex", gap: 2, marginBottom: 22,
-      background: BG2, border: `1px solid ${BD}`,
+      background: "var(--bg2)", border: "1px solid var(--line)",
       borderRadius: 8, padding: "4px", width: "fit-content",
     }}>
       {tabs.map(t => (
@@ -67,18 +44,18 @@ function TabBar({ tabs, activeTab, onSwitch }) {
           className="b-tab"
           data-active={activeTab === t.id}
           style={{
-            background: activeTab === t.id ? BG1 : "transparent",
-            color: activeTab === t.id ? P : T3,
+            background: activeTab === t.id ? "var(--bg1)" : "transparent",
+            color: activeTab === t.id ? "var(--accent)" : "var(--text3)",
             padding: "9px 18px", borderRadius: 6, fontSize: 13,
             fontWeight: activeTab === t.id ? 700 : 400,
             display: "flex", alignItems: "center", gap: 7,
-            border: activeTab === t.id ? `1px solid ${BD}` : "1px solid transparent",
-            boxShadow: activeTab === t.id ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
+            border: activeTab === t.id ? "1px solid var(--line)" : "1px solid transparent",
+            boxShadow: activeTab === t.id ? "0 1px 4px rgba(0,0,0,0.18)" : "none",
             transition: "all 0.15s",
             fontFamily: "var(--sans)",
           }}
         >
-          <Icon name={t.icon} size={14} color={activeTab === t.id ? P : T3} />
+          <Icon name={t.icon} size={14} color={activeTab === t.id ? "var(--accent)" : "var(--text3)"} />
           {t.label}
         </button>
       ))}
@@ -89,7 +66,7 @@ function TabBar({ tabs, activeTab, onSwitch }) {
 function ContentPanel({ tab, profile, hideSections, featuredRepos, userId, chatMessages, setChatMessages }) {
   return (
     <div style={{
-      background: BG1, border: `1px solid ${BD}`,
+      background: "var(--bg1)", border: "1px solid var(--line)",
       borderRadius: 16, padding: "28px 30px", minHeight: 520,
     }}>
       <div style={{ display: tab === "overview" ? "block" : "none" }}><Overview profile={profile} hideSections={hideSections} /></div>
@@ -108,29 +85,29 @@ function PortfolioSidebar({ profile, hideSections }) {
       <div
         className="card-glow"
         style={{
-          background: BG1, border: `1px solid ${BD}`,
+          background: "var(--bg1)", border: "1px solid var(--line)",
           borderRadius: 16, padding: "28px 22px 22px",
           textAlign: "center", animation: "fadeUp 0.4s ease",
         }}
       >
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-          <div style={{ borderRadius: "50%", background: BGFIX, display: "inline-flex" }}>
+          <div style={{ borderRadius: "50%", background: "var(--bg4)", display: "inline-flex" }}>
             <ProfileAvatar profile={profile} size={100} />
           </div>
         </div>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 22, fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1.2, color: T1 }}>{profile.name}</div>
-        <div style={{ color: P, fontSize: 13, marginTop: 6, fontWeight: 600, letterSpacing: "0.01em" }}>{profile.title}</div>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 22, fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1.2, color: "var(--text)" }}>{profile.name}</div>
+        <div style={{ color: "var(--accent)", fontSize: 13, marginTop: 6, fontWeight: 600, letterSpacing: "0.01em" }}>{profile.title}</div>
         {profile.tagline && (
-          <div style={{ color: T3, fontFamily: "var(--sans)", fontSize: 12.5, marginTop: 8, lineHeight: 1.4, textAlign: "center" }}>{profile.tagline}</div>
+          <div style={{ color: "var(--text3)", fontFamily: "var(--sans)", fontSize: 12.5, marginTop: 8, lineHeight: 1.4, textAlign: "center" }}>{profile.tagline}</div>
         )}
         {(profile.github_username || profile.has_resume || profile.linkedin_url) && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
             {profile.linkedin_url && (
               <a href={profile.linkedin_url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
                 <button
-                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: BG2, border: `1px solid ${BD}`, color: T2, borderRadius: 8, padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--sans)" }}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "var(--bg2)", border: "1px solid var(--line)", color: "var(--text2)", borderRadius: 8, padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--sans)" }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#0a66c2"; e.currentTarget.style.color = "#0a66c2"; e.currentTarget.style.background = "rgba(10,102,194,0.08)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = BD; e.currentTarget.style.color = T2; e.currentTarget.style.background = BG2; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--text2)"; e.currentTarget.style.background = "var(--bg2)"; }}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                   LinkedIn Profile
@@ -140,9 +117,9 @@ function PortfolioSidebar({ profile, hideSections }) {
             {profile.github_username && (
               <a href={`https://github.com/${profile.github_username}`} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
                 <button
-                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: BG2, border: `1px solid ${BD}`, color: T2, borderRadius: 8, padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--sans)" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(70,72,212,0.30)"; e.currentTarget.style.color = P; e.currentTarget.style.background = "rgba(70,72,212,0.08)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = BD; e.currentTarget.style.color = T2; e.currentTarget.style.background = BG2; }}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "var(--bg2)", border: "1px solid var(--line)", color: "var(--text2)", borderRadius: 8, padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--sans)" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-b)"; e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.background = "var(--accent-d)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--text2)"; e.currentTarget.style.background = "var(--bg2)"; }}
                 >
                   <Icon name="github" size={15} color="currentColor" /> GitHub Profile
                 </button>
@@ -152,7 +129,7 @@ function PortfolioSidebar({ profile, hideSections }) {
               <a href={`${API}/resume/${profile.user_id}`} download style={{ textDecoration: "none" }}>
                 <button
                   className="b-primary"
-                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: P, border: "none", color: "#fff", borderRadius: 100, padding: "10px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 14px rgba(70,72,212,0.20)", fontFamily: "var(--sans)" }}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 100, padding: "10px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 14px rgba(129,140,248,0.25)", fontFamily: "var(--sans)" }}
                 >
                   <Icon name="file" size={15} color="#fff" /> Download Resume
                 </button>
@@ -167,16 +144,16 @@ function PortfolioSidebar({ profile, hideSections }) {
         const isCurrentRole = /present|current/i.test(profile.experience[0].dates || "");
         return (
           <div style={{
-            background: BG2, border: "1px solid rgba(70,72,212,0.20)",
+            background: "var(--bg2)", border: "1px solid var(--line2)",
             borderRadius: 12, padding: "16px 20px", animation: "fadeUp 0.44s ease",
           }}>
-            <SecHead style={{ marginBottom: 12, color: P }}>{isCurrentRole ? "Currently" : "Recently"}</SecHead>
+            <SecHead style={{ marginBottom: 12, color: "var(--accent)" }}>{isCurrentRole ? "Currently" : "Recently"}</SecHead>
             <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <OrgLogo name={profile.experience[0].company || profile.experience[0].title} size={34} />
               <div>
-                <div style={{ fontWeight: 700, fontSize: 13, color: T1, lineHeight: 1.3 }}>{profile.experience[0].title}</div>
-                <div style={{ fontSize: 12.5, color: P, marginTop: 3, fontWeight: 600 }}>{profile.experience[0].company}</div>
-                <div style={{ fontSize: 11.5, color: T3, marginTop: 3 }}>{profile.experience[0].dates}</div>
+                <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text)", lineHeight: 1.3 }}>{profile.experience[0].title}</div>
+                <div style={{ fontSize: 12.5, color: "var(--accent)", marginTop: 3, fontWeight: 600 }}>{profile.experience[0].company}</div>
+                <div style={{ fontSize: 11.5, color: "var(--text3)", marginTop: 3 }}>{profile.experience[0].dates}</div>
               </div>
             </div>
           </div>
@@ -188,7 +165,7 @@ function PortfolioSidebar({ profile, hideSections }) {
         <div
           className="card-glow"
           style={{
-            background: BG1, border: `1px solid ${BD}`,
+            background: "var(--bg1)", border: "1px solid var(--line)",
             borderRadius: 12, padding: "18px 20px", animation: "fadeUp 0.46s ease",
           }}
         >
@@ -196,7 +173,7 @@ function PortfolioSidebar({ profile, hideSections }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {Object.entries(getSkillClusters(profile)).map(([cat, skills]) => (
               <div key={cat}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: T3, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, fontFamily: "var(--sans)" }}>{cat}</div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, fontFamily: "var(--sans)" }}>{cat}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                   {skills.map((s, i) => <Pill key={i}>{s}</Pill>)}
                 </div>
@@ -209,12 +186,12 @@ function PortfolioSidebar({ profile, hideSections }) {
       {/* Open to / target roles */}
       {profile.target_roles?.length > 0 && (
         <div style={{
-          background: BG1, border: `1px solid ${BD}`,
+          background: "var(--bg1)", border: "1px solid var(--line)",
           borderRadius: 12, padding: "18px 20px", animation: "fadeUp 0.48s ease",
         }}>
           <SecHead style={{ marginBottom: 12 }}>Open to</SecHead>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {profile.target_roles.map((r, i) => <Pill key={i} color="#db2777">{r}</Pill>)}
+            {profile.target_roles.map((r, i) => <Pill key={i} color="var(--rose)">{r}</Pill>)}
           </div>
         </div>
       )}
@@ -225,26 +202,26 @@ function PortfolioSidebar({ profile, hideSections }) {
 function FullWidthHeader({ profile, hideSections }) {
   return (
     <div style={{
-      background: BG1, border: `1px solid ${BD}`,
+      background: "var(--bg1)", border: "1px solid var(--line)",
       borderRadius: 16, padding: "24px 28px",
       display: "flex", gap: 20, alignItems: "center",
       marginBottom: 28, animation: "fadeUp 0.4s ease",
     }}>
       <ProfileAvatar profile={profile} size={72} />
       <div style={{ flex: 1 }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 22, fontWeight: 600, color: T1, letterSpacing: "-0.01em" }}>{profile.name}</div>
-        <div style={{ color: P, fontSize: 13, fontWeight: 600, marginTop: 4 }}>{profile.title}</div>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 22, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.01em" }}>{profile.name}</div>
+        <div style={{ color: "var(--accent)", fontSize: 13, fontWeight: 600, marginTop: 4 }}>{profile.title}</div>
         {!hideSections.includes("current_role") && profile.experience?.[0] && (
-          <div style={{ fontSize: 12.5, color: T3, marginTop: 6, fontFamily: "var(--sans)" }}>
+          <div style={{ fontSize: 12.5, color: "var(--text3)", marginTop: 6, fontFamily: "var(--sans)" }}>
             {profile.experience[0].title} at {profile.experience[0].company} · {profile.experience[0].dates}
           </div>
         )}
       </div>
       {profile.github_username && (
         <a href={`https://github.com/${profile.github_username}`} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-          <button style={{ display: "flex", alignItems: "center", gap: 6, background: BG2, border: `1px solid ${BD}`, color: T2, borderRadius: 8, padding: "7px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--sans)" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(70,72,212,0.30)"; e.currentTarget.style.color = P; e.currentTarget.style.background = "rgba(70,72,212,0.08)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = BD; e.currentTarget.style.color = T2; e.currentTarget.style.background = BG2; }}
+          <button style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--bg2)", border: "1px solid var(--line)", color: "var(--text2)", borderRadius: 8, padding: "7px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--sans)" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-b)"; e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.background = "var(--accent-d)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--text2)"; e.currentTarget.style.background = "var(--bg2)"; }}
           >
             <Icon name="github" size={13} color="currentColor" /> GitHub
           </button>
@@ -287,13 +264,13 @@ function PortfolioPage({ userId, onBack }) {
   const switchTab = (t) => { setTab(t); axios.post(`${API}/analytics/${userId}/tab`, { tab: t }).catch(() => {}); };
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: BG }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
       <Spinner size={24} />
     </div>
   );
   if (!profile) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16, background: BG }}>
-      <div style={{ color: T3, fontSize: 14, fontFamily: "var(--sans)" }}>Portfolio not found</div>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16, background: "var(--bg)" }}>
+      <div style={{ color: "var(--text3)", fontSize: 14, fontFamily: "var(--sans)" }}>Portfolio not found</div>
       {onBack && <Btn variant="ghost" onClick={onBack}>← Go Back</Btn>}
     </div>
   );
@@ -308,23 +285,22 @@ function PortfolioPage({ userId, onBack }) {
   const copyLink = () => { navigator.clipboard.writeText(portfolioUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
   return (
-    <div style={{ minHeight: "100vh", background: BG }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
       {/* Sticky glassmorphism nav — 72px */}
       <header style={{
         ...glass,
-        background: "rgba(249,249,255,0.88)",
         height: 72,
         display: "flex", alignItems: "center",
         padding: "0 40px",
         position: "sticky", top: 0, zIndex: 50,
         justifyContent: "space-between",
       }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 800, color: P, letterSpacing: "-0.02em", lineHeight: 1 }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 800, color: "var(--accent)", letterSpacing: "-0.02em", lineHeight: 1 }}>
           Prolio
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <Btn variant="subtle" onClick={copyLink}>
-            <Icon name={copied ? "check" : "copy"} size={13} color={copied ? "#0d9488" : T2} />
+            <Icon name={copied ? "check" : "copy"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
             {copied ? "Copied!" : "Share"}
           </Btn>
           {onBack && <Btn variant="ghost" onClick={onBack} style={{ padding: "7px 14px", fontSize: 12.5 }}>← Back</Btn>}

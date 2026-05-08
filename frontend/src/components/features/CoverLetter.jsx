@@ -6,18 +6,6 @@ import { extractCompanyFromJD } from "../../lib/utils";
 import { Spinner, Btn, SecHead } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
-const P      = "#4648d4";
-const T1     = "#111c2d";
-const T2     = "#464554";
-const T3     = "#767586";
-const BG     = "#f9f9ff";
-const BG1    = "#ffffff";
-const BG2    = "#f0f3ff";
-const BGH    = "#dee8ff";
-const BD     = "rgba(0,0,0,0.06)";
-const hairline = { border: `1px solid ${BD}` };
-const luxShadow = "0 20px 40px -10px rgba(0,0,0,0.04)";
-
 function downloadPDF(getEditorText, profile, company, jd) {
   const namePart = (profile?.name || "Cover").replace(/\s+/g, "_");
   const resolvedCompany = company.trim() || extractCompanyFromJD(jd);
@@ -50,7 +38,7 @@ function FmtBtn({ cmd, fmt, label }) {
   return (
     <button
       onMouseDown={e => { e.preventDefault(); fmt(cmd); }}
-      style={{ background: BG2, border: `1px solid ${BD}`, color: T2, borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: "pointer", fontWeight: cmd === "bold" ? 700 : 400, fontStyle: cmd === "italic" ? "italic" : "normal", textDecoration: cmd === "underline" ? "underline" : "none" }}
+      style={{ background: "var(--bg3)", border: "1px solid var(--line)", color: "var(--text2)", borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: "pointer", fontWeight: cmd === "bold" ? 700 : 400, fontStyle: cmd === "italic" ? "italic" : "normal", textDecoration: cmd === "underline" ? "underline" : "none" }}
     >{label}</button>
   );
 }
@@ -59,26 +47,26 @@ function LetterToolbar({ copy, copied, onDownload, saveLetter, saving, savedId, 
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        <div style={{ fontWeight: 600, fontSize: 14, color: T1, marginRight: 8 }}>Your Cover Letter</div>
+        <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text)", marginRight: 8 }}>Your Cover Letter</div>
         <FmtBtn cmd="bold" fmt={fmt} label="B" />
         <FmtBtn cmd="italic" fmt={fmt} label="I" />
         <FmtBtn cmd="underline" fmt={fmt} label="U" />
       </div>
       <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={copy} style={{ background: BG1, border: `1px solid ${BD}`, color: copied ? "#0d9488" : T2, borderRadius: 8, padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
-          onMouseEnter={e => e.currentTarget.style.background = BG2}
-          onMouseLeave={e => e.currentTarget.style.background = BG1}>
-          <Icon name={copied ? "check" : "copy"} size={13} color={copied ? "#0d9488" : T2} />
+        <button onClick={copy} style={{ background: "var(--bg1)", border: "1px solid var(--line)", color: copied ? "var(--teal)" : "var(--text2)", borderRadius: 8, padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--bg2)"}
+          onMouseLeave={e => e.currentTarget.style.background = "var(--bg1)"}>
+          <Icon name={copied ? "check" : "copy"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
           {copied ? "Copied!" : "Copy"}
         </button>
-        <button onClick={onDownload} style={{ background: BG1, border: `1px solid ${BD}`, color: T2, borderRadius: 8, padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
-          onMouseEnter={e => e.currentTarget.style.background = BG2}
-          onMouseLeave={e => e.currentTarget.style.background = BG1}>
-          <Icon name="file" size={13} color={T2} /> Download PDF
+        <button onClick={onDownload} style={{ background: "var(--bg1)", border: "1px solid var(--line)", color: "var(--text2)", borderRadius: 8, padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--bg2)"}
+          onMouseLeave={e => e.currentTarget.style.background = "var(--bg1)"}>
+          <Icon name="file" size={13} color="var(--text2)" /> Download PDF
         </button>
         <button onClick={saveLetter} disabled={saving || !!savedId}
-          style={{ background: savedId ? "rgba(13,148,136,0.08)" : BG1, border: `1px solid ${savedId ? "#0d9488" : BD}`, color: savedId ? "#0d9488" : T2, borderRadius: 8, padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: saving || savedId ? "default" : "pointer", transition: "all 0.15s" }}>
-          <Icon name={savedId ? "check" : "file"} size={13} color={savedId ? "#0d9488" : T2} />
+          style={{ background: savedId ? "rgba(13,148,136,0.08)" : "var(--bg1)", border: `1px solid ${savedId ? "var(--teal)" : "var(--line)"}`, color: savedId ? "var(--teal)" : "var(--text2)", borderRadius: 8, padding: "7px 14px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: saving || savedId ? "default" : "pointer", transition: "all 0.15s" }}>
+          <Icon name={savedId ? "check" : "file"} size={13} color={savedId ? "var(--teal)" : "var(--text2)"} />
           {saving ? "Saving…" : savedId ? "Saved" : "Save"}
         </button>
       </div>
@@ -88,12 +76,12 @@ function LetterToolbar({ copy, copied, onDownload, saveLetter, saving, savedId, 
 
 function RefinementPanel({ value, onChange, onSubmit, refining }) {
   return (
-    <div style={{ background: BG2, ...hairline, borderRadius: 12, padding: "16px 18px" }}>
-      <div style={{ fontSize: 12, color: T3, marginBottom: 10 }}>Want changes? Tell me what to adjust…</div>
+    <div style={{ background: "var(--bg3)", border: "1px solid var(--line)", borderRadius: 12, padding: "16px 18px" }}>
+      <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 10 }}>Want changes? Tell me what to adjust…</div>
       <div style={{ display: "flex", gap: 8 }}>
         <input value={value} onChange={e => onChange(e.target.value)} onKeyDown={e => e.key === "Enter" && onSubmit()}
           placeholder='e.g. "Make it more concise" or "Emphasise my SQL skills more"'
-          style={{ flex: 1, background: BG1, border: `1px solid ${BD}`, borderRadius: 8 }} />
+          style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8 }} />
         <Btn onClick={onSubmit} disabled={refining || !value.trim()} style={{ flexShrink: 0 }}>
           {refining ? <Spinner size={14} color="#fff" /> : "Refine"}
         </Btn>
@@ -105,13 +93,13 @@ function RefinementPanel({ value, onChange, onSubmit, refining }) {
 function CoverLetterPlaceholder() {
   return (
     <div>
-      <div style={{ fontFamily: "var(--serif)", fontSize: 24, color: T1, letterSpacing: "-0.01em", fontWeight: 500, marginBottom: 6 }}>Cover Letter Generator</div>
+      <div style={{ fontFamily: "var(--serif)", fontSize: 24, color: "var(--text)", letterSpacing: "-0.01em", fontWeight: 500, marginBottom: 6 }}>Cover Letter Generator</div>
       <div style={{ marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center", padding: "40px 20px" }}>
-        <div style={{ width: 52, height: 52, borderRadius: "50%", background: BGH, ...hairline, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name="file" size={22} color={T3} />
+        <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--bg3)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name="file" size={22} color="var(--text3)" />
         </div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: T1 }}>Build your portfolio first</div>
-        <div style={{ fontSize: 13, color: T3, maxWidth: 380, lineHeight: 1.65 }}>Upload your LinkedIn PDF and resume, then build your portfolio. The cover letter generator uses your profile to write a personalised letter.</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>Build your portfolio first</div>
+        <div style={{ fontSize: 13, color: "var(--text3)", maxWidth: 380, lineHeight: 1.65 }}>Upload your LinkedIn PDF and resume, then build your portfolio. The cover letter generator uses your profile to write a personalised letter.</div>
       </div>
     </div>
   );
@@ -122,16 +110,16 @@ function JobInputForm({ company, setCompany, role, setRole, jd, setJd, onGenerat
     <>
       <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
         <input value={company} onChange={e => setCompany(e.target.value)} placeholder="Company name (optional)"
-          style={{ flex: 1, background: BG1, border: `1px solid ${BD}`, borderRadius: 8 }} />
+          style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8 }} />
         <input value={role} onChange={e => setRole(e.target.value)} placeholder="Role title (optional)"
-          style={{ flex: 1, background: BG1, border: `1px solid ${BD}`, borderRadius: 8 }} />
+          style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8 }} />
       </div>
       <textarea value={jd} onChange={e => setJd(e.target.value)} placeholder="Paste the job description here..." rows={7}
-        style={{ width: "100%", marginBottom: 12, resize: "vertical", background: BG1, border: `1px solid ${BD}`, borderRadius: 8 }} />
+        style={{ width: "100%", marginBottom: 12, resize: "vertical", background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8 }} />
       <Btn onClick={onGenerate} disabled={loading || !jd.trim()} style={{ marginBottom: 24 }}>
         {loading ? <><Spinner size={14} color="#fff" /> Generating…</> : <><Icon name="zap" size={14} color="#fff" /> Generate Cover Letter</>}
       </Btn>
-      {error && <div style={{ color: "#ef4444", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+      {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
     </>
   );
 }
@@ -189,14 +177,14 @@ function CoverLetter({ userId, built, profile, jd, setJd, company, setCompany, r
 
   return (
     <div>
-      <div style={{ fontFamily: "var(--serif)", fontSize: 24, color: T1, letterSpacing: "-0.01em", fontWeight: 500, marginBottom: 6 }}>Cover Letter Generator</div>
-      <div style={{ color: T3, fontSize: 13, marginBottom: 18 }}>Paste a job description and get a tailored cover letter based on your full portfolio</div>
+      <div style={{ fontFamily: "var(--serif)", fontSize: 24, color: "var(--text)", letterSpacing: "-0.01em", fontWeight: 500, marginBottom: 6 }}>Cover Letter Generator</div>
+      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 18 }}>Paste a job description and get a tailored cover letter based on your full portfolio</div>
       <JobInputForm company={company} setCompany={setCompany} role={role} setRole={setRole} jd={jd} setJd={setJd} onGenerate={generate} loading={status.loading} error={status.error} />
       {result && (
         <div style={{ animation: "fadeUp 0.3s ease" }}>
           <LetterToolbar copy={copy} copied={copied} onDownload={() => downloadPDF(getEditorText, profile, company, jd)} saveLetter={saveLetter} saving={status.saving} savedId={status.savedId} fmt={fmt} />
           <div ref={editorRef} contentEditable suppressContentEditableWarning
-            style={{ background: BG1, border: `1px solid ${BD}`, borderRadius: 12, padding: "24px 28px", fontSize: 14, lineHeight: 1.85, color: T2, marginBottom: 8, outline: "none", minHeight: 260 }} />
+            style={{ background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 12, padding: "24px 28px", fontSize: 14, lineHeight: 1.85, color: "var(--text2)", marginBottom: 8, outline: "none", minHeight: 260 }} />
           <RefinementPanel value={refinement} onChange={setRefinement} onSubmit={refine} refining={status.refining} />
         </div>
       )}

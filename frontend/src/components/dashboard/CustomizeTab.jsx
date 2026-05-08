@@ -4,18 +4,18 @@ import { API } from "../../lib/api";
 import { SecHead } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
-const P    = "#4648d4";
-const T1   = "#111c2d";
-const T2   = "#464554";
-const T3   = "#767586";
-const BG   = "#f9f9ff";
-const BG1  = "#ffffff";
-const BG2  = "#f0f3ff";
-const BGH  = "#dee8ff";
-const BGFIX = "#e1e0ff";
-const BD   = "rgba(0,0,0,0.06)";
+const P    = "var(--accent)";
+const T1   = "var(--text)";
+const T2   = "var(--text2)";
+const T3   = "var(--text3)";
+const BG   = "var(--bg)";
+const BG1  = "var(--bg1)";
+const BG2  = "var(--bg2)";
+const BGH  = "var(--bg3)";
+const BGFIX = "var(--bg4)";
+const BD   = "var(--line)";
 const hairline = { border: `1px solid ${BD}` };
-const luxShadow = "0 20px 40px -10px rgba(0,0,0,0.04)";
+const luxShadow = "0 20px 40px -10px rgba(0,0,0,0.4)";
 
 const ALL_TABS = [
   { id: "overview", label: "Overview" },
@@ -24,7 +24,7 @@ const ALL_TABS = [
 ];
 
 const COLORS = [
-  { label: "Indigo", value: "#4648d4" }, { label: "Violet", value: "#7c3aed" },
+  { label: "Indigo", value: "#818cf8" }, { label: "Violet", value: "#a78bfa" },
   { label: "Rose",   value: "#db2777" }, { label: "Teal",   value: "#0d9488" },
   { label: "Amber",  value: "#d97706" }, { label: "Blue",   value: "#1d4ed8" },
   { label: "Green",  value: "#16a34a" }, { label: "Slate",  value: "#374151" },
@@ -102,7 +102,7 @@ function FeaturedRepos({ repos, prefs, update }) {
               const cur = prefs.featured_repos || [];
               update("featured_repos", cur.includes(r.name) ? cur.filter(x => x !== r.name) : [...cur, r.name]);
             }} className="b-ghost"
-              style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: isFeatured ? "rgba(70,72,212,0.08)" : BG2, border: `1px solid ${isFeatured ? "rgba(70,72,212,0.35)" : BD}`, borderRadius: 8, cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: isFeatured ? "var(--accent-d)" : BG2, border: `1px solid ${isFeatured ? "var(--accent-b)" : BD}`, borderRadius: 8, cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
               <Icon name={isFeatured ? "star" : "github"} size={13} color={isFeatured ? P : T3} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: isFeatured ? P : T1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
@@ -155,11 +155,11 @@ function LayoutRow({ prefs, update }) {
           { id: "fullwidth", label: "Full Width", desc: "No sidebar — single wide column" },
         ].map(t => (
           <button key={t.id} onClick={() => update("template", t.id)}
-            style={{ flex: 1, padding: "14px 16px", borderRadius: 12, border: `1px solid ${prefs.template === t.id ? "rgba(70,72,212,0.35)" : BD}`, background: prefs.template === t.id ? BGFIX : BG2, cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+            style={{ flex: 1, padding: "14px 16px", borderRadius: 12, border: `1px solid ${prefs.template === t.id ? "var(--accent-b)" : BD}`, background: prefs.template === t.id ? BGFIX : BG2, cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
             <div style={{ display: "flex", gap: 4, marginBottom: 10, height: 36 }}>
               {t.id === "sidebar"
-                ? <><div style={{ width: 10, height: "100%", borderRadius: 3, background: prefs.template === t.id ? "rgba(70,72,212,0.20)" : BGH }} /><div style={{ flex: 1, height: "100%", borderRadius: 3, background: prefs.template === t.id ? "rgba(70,72,212,0.08)" : BGH }} /></>
-                : <div style={{ flex: 1, height: "100%", borderRadius: 3, background: prefs.template === t.id ? "rgba(70,72,212,0.08)" : BGH }} />}
+                ? <><div style={{ width: 10, height: "100%", borderRadius: 3, background: prefs.template === t.id ? "rgba(129,140,248,0.20)" : BGH }} /><div style={{ flex: 1, height: "100%", borderRadius: 3, background: prefs.template === t.id ? "var(--accent-d)" : BGH }} /></>
+                : <div style={{ flex: 1, height: "100%", borderRadius: 3, background: prefs.template === t.id ? "var(--accent-d)" : BGH }} />}
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, color: prefs.template === t.id ? P : T3, marginBottom: 3 }}>{t.label}</div>
             <div style={{ fontSize: 12, color: T3 }}>{t.desc}</div>
@@ -170,7 +170,7 @@ function LayoutRow({ prefs, update }) {
   );
 }
 
-const DEFAULT_PREFS = { accent: "#4648d4", dark_mode: false, template: "sidebar", hide_sections: [], featured_repos: [] };
+const DEFAULT_PREFS = { accent: "#818cf8", dark_mode: true, template: "sidebar", hide_sections: [], featured_repos: [] };
 
 function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChange }) {
   const [prefs, setPrefs] = useState(profile?.preferences || DEFAULT_PREFS);
@@ -219,7 +219,7 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
         <div style={{ display: "flex", gap: 10 }}>
           {[{ id: true, label: "Dark" }, { id: false, label: "Light" }].map(m => (
             <button key={String(m.id)} onClick={() => update("dark_mode", m.id)}
-              style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", border: `1px solid ${prefs.dark_mode === m.id ? "rgba(70,72,212,0.35)" : BD}`, background: prefs.dark_mode === m.id ? BGFIX : BG2, color: prefs.dark_mode === m.id ? P : T3, transition: "all 0.15s" }}>
+              style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", border: `1px solid ${prefs.dark_mode === m.id ? "var(--accent-b)" : BD}`, background: prefs.dark_mode === m.id ? BGFIX : BG2, color: prefs.dark_mode === m.id ? P : T3, transition: "all 0.15s" }}>
               {m.label}
             </button>
           ))}

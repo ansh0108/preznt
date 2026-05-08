@@ -4,19 +4,7 @@ import { API } from "../../lib/api";
 import { Spinner, Btn, SecHead, Pill } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
-const P      = "#4648d4";
-const T1     = "#111c2d";
-const T2     = "#464554";
-const T3     = "#767586";
-const BG     = "#f9f9ff";
-const BG1    = "#ffffff";
-const BG2    = "#f0f3ff";
-const BGH    = "#dee8ff";
-const BD     = "rgba(0,0,0,0.06)";
-const hairline = { border: `1px solid ${BD}` };
-const luxShadow = "0 20px 40px -10px rgba(0,0,0,0.04)";
-
-const FIT_COLOR = { "Strong": "#0d9488", "Moderate": "#d97706", "Weak": "#ef4444" };
+const FIT_COLOR = { "Strong": "var(--teal)", "Moderate": "var(--amber)", "Weak": "var(--red)" };
 const FIT_BG    = {
   "Strong":   `rgba(13,148,136,0.06)`,
   "Moderate": `rgba(217,119,6,0.06)`,
@@ -30,10 +18,10 @@ const FIT_BORDER = {
 
 function Section({ title, color, icon, children }) {
   return (
-    <div style={{ background: BG1, ...hairline, borderRadius: 12, padding: "20px 22px" }}>
+    <div style={{ background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 12, padding: "20px 22px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-        {icon && <Icon name={icon} size={14} color={color || T3} />}
-        <div style={{ fontWeight: 700, fontSize: 11, color: T3, textTransform: "uppercase", letterSpacing: "0.08em" }}>{title}</div>
+        {icon && <Icon name={icon} size={14} color={color || "var(--text3)"} />}
+        <div style={{ fontWeight: 700, fontSize: 11, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{title}</div>
       </div>
       {children}
     </div>
@@ -41,22 +29,22 @@ function Section({ title, color, icon, children }) {
 }
 
 function ScoreHeader({ result, score, scoreColor }) {
-  const fitColor  = FIT_COLOR[result.overall_fit] || P;
-  const fitBg     = FIT_BG[result.overall_fit]    || `rgba(70,72,212,0.06)`;
-  const fitBorder = FIT_BORDER[result.overall_fit] || `rgba(70,72,212,0.25)`;
+  const fitColor  = FIT_COLOR[result.overall_fit] || "var(--accent)";
+  const fitBg     = FIT_BG[result.overall_fit]    || `rgba(129,140,248,0.06)`;
+  const fitBorder = FIT_BORDER[result.overall_fit] || `rgba(129,140,248,0.25)`;
   return (
     <div style={{ background: fitBg, border: `1px solid ${fitBorder}`, borderRadius: 16, padding: "22px 24px", display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
       <div style={{ textAlign: "center", flexShrink: 0 }}>
         <div style={{ fontSize: 58, fontWeight: 800, color: scoreColor, lineHeight: 1, fontFamily: "var(--serif)", animation: "scaleIn 0.4s ease" }}>{score}</div>
-        <div style={{ fontSize: 11, color: T3, marginTop: 4, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>ATS Score</div>
-        <div style={{ marginTop: 10, width: 80, height: 4, background: BGH, borderRadius: 2, overflow: "hidden", margin: "10px auto 10px" }}>
+        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>ATS Score</div>
+        <div style={{ marginTop: 10, width: 80, height: 4, background: "var(--bg3)", borderRadius: 2, overflow: "hidden", margin: "10px auto 10px" }}>
           <div style={{ height: "100%", width: `${score}%`, background: scoreColor, borderRadius: 2 }} />
         </div>
         <Pill color={fitColor}>{result.overall_fit} Match</Pill>
       </div>
       <div style={{ flex: 1, minWidth: 200 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: T3, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Summary</div>
-        <div style={{ color: T2, fontSize: 14, lineHeight: 1.75 }}>{result.summary}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Summary</div>
+        <div style={{ color: "var(--text2)", fontSize: 14, lineHeight: 1.75 }}>{result.summary}</div>
       </div>
     </div>
   );
@@ -65,25 +53,25 @@ function ScoreHeader({ result, score, scoreColor }) {
 function KeywordsGrid({ result }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-      <Section title="Matching Keywords" color="#0d9488" icon="check">
+      <Section title="Matching Keywords" color="var(--teal)" icon="check">
         {result.matching_keywords?.length > 0
-          ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{result.matching_keywords.map((k, i) => <Pill key={i} color="#0d9488">{k}</Pill>)}</div>
-          : <div style={{ fontSize: 13, color: T3 }}>No direct keyword matches found.</div>}
+          ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{result.matching_keywords.map((k, i) => <Pill key={i} color="var(--teal)">{k}</Pill>)}</div>
+          : <div style={{ fontSize: 13, color: "var(--text3)" }}>No direct keyword matches found.</div>}
       </Section>
-      <Section title="Missing Keywords" color="#d97706" icon="target">
+      <Section title="Missing Keywords" color="var(--amber)" icon="target">
         {result.missing_keywords?.length > 0
           ? <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {result.missing_keywords.map((k, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 12px", background: BG2, borderRadius: 8 }}>
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 12px", background: "var(--bg2)", borderRadius: 8 }}>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: T1 }}>{k.keyword}</div>
-                    <div style={{ color: T3, fontSize: 12, marginTop: 2 }}>{k.context}</div>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)" }}>{k.keyword}</div>
+                    <div style={{ color: "var(--text3)", fontSize: 12, marginTop: 2 }}>{k.context}</div>
                   </div>
-                  <Pill color={k.importance === "Must Have" ? "#ef4444" : "#d97706"}>{k.importance}</Pill>
+                  <Pill color={k.importance === "Must Have" ? "var(--red)" : "var(--amber)"}>{k.importance}</Pill>
                 </div>
               ))}
             </div>
-          : <div style={{ fontSize: 13, color: T3 }}>Great — no critical gaps found!</div>}
+          : <div style={{ fontSize: 13, color: "var(--text3)" }}>Great — no critical gaps found!</div>}
       </Section>
     </div>
   );
@@ -92,14 +80,14 @@ function KeywordsGrid({ result }) {
 function StrengthsSection({ strengths }) {
   if (!strengths?.length) return null;
   return (
-    <Section title="Strengths" color={P} icon="star">
+    <Section title="Strengths" color="var(--accent)" icon="star">
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {strengths.map((s, i) => (
-          <div key={i} className="c-hover" style={{ display: "flex", gap: 12, padding: "12px 14px", background: BG2, ...hairline, borderRadius: 8 }}>
-            <Icon name="check" size={14} color="#0d9488" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div key={i} className="c-hover" style={{ display: "flex", gap: 12, padding: "12px 14px", background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8 }}>
+            <Icon name="check" size={14} color="var(--teal)" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
-              <div style={{ fontWeight: 600, fontSize: 13, color: T1, marginBottom: 3 }}>{s.point}</div>
-              <div style={{ fontSize: 13, color: T3, lineHeight: 1.6 }}>{s.detail}</div>
+              <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)", marginBottom: 3 }}>{s.point}</div>
+              <div style={{ fontSize: 13, color: "var(--text3)", lineHeight: 1.6 }}>{s.detail}</div>
             </div>
           </div>
         ))}
@@ -111,19 +99,19 @@ function StrengthsSection({ strengths }) {
 function SkillsSection({ skills, copyText, copied }) {
   if (!skills?.length) return null;
   return (
-    <Section title="Skills to Add to Your Resume" color="#0d9488" icon="plus">
-      <div style={{ fontSize: 12, color: T3, marginBottom: 12 }}>
+    <Section title="Skills to Add to Your Resume" color="var(--teal)" icon="plus">
+      <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 12 }}>
         These tools and skills appear in the JD but are missing from your profile. Add them to your skills section if you have experience with them.
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {skills.map((skill, i) => (
           <button key={i} onClick={() => copyText(skill, `skill-${i}`)} className="b-pill"
             style={{ padding: "6px 14px", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: "pointer",
-              background: copied === `skill-${i}` ? "rgba(13,148,136,0.12)" : BG2,
-              border: `1px solid ${copied === `skill-${i}` ? "#0d9488" : BD}`,
-              color: copied === `skill-${i}` ? "#0d9488" : T2,
+              background: copied === `skill-${i}` ? "rgba(13,148,136,0.12)" : "var(--bg2)",
+              border: `1px solid ${copied === `skill-${i}` ? "var(--teal)" : "var(--line)"}`,
+              color: copied === `skill-${i}` ? "var(--teal)" : "var(--text2)",
               display: "flex", alignItems: "center", gap: 5 }}>
-            {copied === `skill-${i}` ? <Icon name="check" size={11} color="#0d9488" /> : <Icon name="plus" size={11} color={T3} />}
+            {copied === `skill-${i}` ? <Icon name="check" size={11} color="var(--teal)" /> : <Icon name="plus" size={11} color="var(--text3)" />}
             {skill}
           </button>
         ))}
@@ -136,28 +124,28 @@ function BulletSection({ bullets, copyText, copied }) {
   const filtered = bullets?.filter(b => b.section?.toLowerCase() !== "skills") || [];
   if (!filtered.length) return null;
   return (
-    <Section title="Resume Bullet Rewrites (STAR Format)" color="#db2777" icon="wrench">
-      <div style={{ fontSize: 12, color: T3, marginBottom: 14 }}>
+    <Section title="Resume Bullet Rewrites (STAR Format)" color="var(--rose)" icon="wrench">
+      <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 14 }}>
         Rewrites match the original length so they slot into your resume without breaking formatting. Click the improved version to copy.
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {filtered.map((b, i) => (
-          <div key={i} style={{ borderRadius: 8, overflow: "hidden", ...hairline }}>
-            <div style={{ padding: "10px 14px", background: BG2, borderBottom: `1px solid ${BD}` }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T3, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>{b.section}</div>
-              <div style={{ fontSize: 13, color: T3, fontStyle: "italic", lineHeight: 1.6 }}>{b.original}</div>
+          <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid var(--line)" }}>
+            <div style={{ padding: "10px 14px", background: "var(--bg2)", borderBottom: "1px solid var(--line)" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>{b.section}</div>
+              <div style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic", lineHeight: 1.6 }}>{b.original}</div>
             </div>
             <div onClick={() => copyText(b.improved, i)}
-              style={{ padding: "12px 14px", background: copied === i ? "rgba(13,148,136,0.08)" : "rgba(70,72,212,0.04)", cursor: "pointer", transition: "background 0.15s" }}
-              onMouseEnter={e => { if (copied !== i) e.currentTarget.style.background = "rgba(70,72,212,0.08)"; }}
-              onMouseLeave={e => { if (copied !== i) e.currentTarget.style.background = "rgba(70,72,212,0.04)"; }}>
+              style={{ padding: "12px 14px", background: copied === i ? "rgba(13,148,136,0.08)" : "rgba(129,140,248,0.04)", cursor: "pointer", transition: "background 0.15s" }}
+              onMouseEnter={e => { if (copied !== i) e.currentTarget.style.background = "rgba(129,140,248,0.08)"; }}
+              onMouseLeave={e => { if (copied !== i) e.currentTarget.style.background = "rgba(129,140,248,0.04)"; }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-                <div style={{ fontSize: 13, color: T1, lineHeight: 1.6, flex: 1 }}>{b.improved}</div>
+                <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6, flex: 1 }}>{b.improved}</div>
                 <div style={{ flexShrink: 0 }}>
-                  <Icon name={copied === i ? "check" : "copy"} size={13} color={copied === i ? "#0d9488" : T3} />
+                  <Icon name={copied === i ? "check" : "copy"} size={13} color={copied === i ? "var(--teal)" : "var(--text3)"} />
                 </div>
               </div>
-              {b.why && <div style={{ fontSize: 11.5, color: P, marginTop: 6, lineHeight: 1.5 }}>{b.why}</div>}
+              {b.why && <div style={{ fontSize: 11.5, color: "var(--accent)", marginTop: 6, lineHeight: 1.5 }}>{b.why}</div>}
             </div>
           </div>
         ))}
@@ -171,16 +159,16 @@ function ToneGrid({ result }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
       {result.tone_feedback && (
-        <Section title="Tone & Positioning" color={T2} icon="user">
-          <div style={{ fontSize: 13.5, color: T2, lineHeight: 1.75 }}>{result.tone_feedback}</div>
+        <Section title="Tone & Positioning" color="var(--text2)" icon="user">
+          <div style={{ fontSize: 13.5, color: "var(--text2)", lineHeight: 1.75 }}>{result.tone_feedback}</div>
         </Section>
       )}
       {result.differentiation_tips?.length > 0 && (
-        <Section title="Stand Out Tips" color="#db2777" icon="trending">
+        <Section title="Stand Out Tips" color="var(--rose)" icon="trending">
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {result.differentiation_tips.map((t, i) => (
-              <div key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: T2, lineHeight: 1.6 }}>
-                <Icon name="arrow" size={13} color="#db2777" style={{ flexShrink: 0, marginTop: 3 }} /> {t}
+              <div key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
+                <Icon name="arrow" size={13} color="var(--rose)" style={{ flexShrink: 0, marginTop: 3 }} /> {t}
               </div>
             ))}
           </div>
@@ -193,11 +181,11 @@ function ToneGrid({ result }) {
 function QuickWinsSection({ wins }) {
   if (!wins?.length) return null;
   return (
-    <Section title="Quick Wins — Do This Week" color="#0d9488" icon="zap">
+    <Section title="Quick Wins — Do This Week" color="var(--teal)" icon="zap">
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {wins.map((w, i) => (
-          <div key={i} className="c-hover" style={{ display: "flex", gap: 10, padding: "10px 12px", background: BG2, ...hairline, borderRadius: 8, fontSize: 13, color: T2, lineHeight: 1.6 }}>
-            <span style={{ color: "#0d9488", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span> {w}
+          <div key={i} className="c-hover" style={{ display: "flex", gap: 10, padding: "10px 12px", background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8, fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
+            <span style={{ color: "var(--teal)", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span> {w}
           </div>
         ))}
       </div>
@@ -243,29 +231,29 @@ function GapAnalysis({ userId, built, role, setRole, result, setResult, error, s
     <div>
       <SecHead>ATS Gap Analysis</SecHead>
       <div style={{ marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center", padding: "40px 20px" }}>
-        <div style={{ width: 52, height: 52, borderRadius: "50%", background: BGH, ...hairline, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name="target" size={22} color={T3} />
+        <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--bg3)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name="target" size={22} color="var(--text3)" />
         </div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: T1 }}>Build your portfolio first</div>
-        <div style={{ fontSize: 13, color: T3, maxWidth: 380, lineHeight: 1.65 }}>Upload your LinkedIn PDF and resume, then build your portfolio. Gap Analysis uses your profile to compare against the job description.</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>Build your portfolio first</div>
+        <div style={{ fontSize: 13, color: "var(--text3)", maxWidth: 380, lineHeight: 1.65 }}>Upload your LinkedIn PDF and resume, then build your portfolio. Gap Analysis uses your profile to compare against the job description.</div>
       </div>
     </div>
   );
 
   const score = result?.ats_score;
-  const scoreColor = score >= 70 ? "#0d9488" : score >= 45 ? "#d97706" : "#ef4444";
+  const scoreColor = score >= 70 ? "var(--teal)" : score >= 45 ? "var(--amber)" : "var(--red)";
 
   return (
     <div>
-      <div style={{ fontFamily: "var(--serif)", fontSize: 24, color: T1, letterSpacing: "-0.01em", fontWeight: 500, marginBottom: 6 }}>ATS Gap Analysis</div>
-      <div style={{ color: T3, fontSize: 13, marginBottom: 18 }}>Paste a full job description to get an ATS-optimised breakdown of your fit — match score, missing keywords, and bullet rewrites.</div>
+      <div style={{ fontFamily: "var(--serif)", fontSize: 24, color: "var(--text)", letterSpacing: "-0.01em", fontWeight: 500, marginBottom: 6 }}>ATS Gap Analysis</div>
+      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 18 }}>Paste a full job description to get an ATS-optimised breakdown of your fit — match score, missing keywords, and bullet rewrites.</div>
 
       <textarea
         value={role}
         onChange={e => setRole(e.target.value)}
         placeholder="Paste the full job description here…"
         rows={7}
-        style={{ width: "100%", marginBottom: 12, resize: "vertical", fontSize: 13, background: BG1, border: `1px solid ${BD}`, borderRadius: 8, padding: 12 }}
+        style={{ width: "100%", marginBottom: 12, resize: "vertical", fontSize: 13, background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8, padding: 12 }}
       />
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
         <Btn onClick={analyze} disabled={loading || !role.trim()}>
@@ -275,13 +263,13 @@ function GapAnalysis({ userId, built, role, setRole, result, setResult, error, s
         </Btn>
         {result && !result.error && (
           <button onClick={saveAnalysis} disabled={saving || !!savedId}
-            style={{ background: savedId ? "rgba(13,148,136,0.08)" : BG1, border: `1px solid ${savedId ? "#0d9488" : BD}`, color: savedId ? "#0d9488" : T2, borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: saving || savedId ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6, transition: "all 0.15s" }}>
-            <Icon name={savedId ? "check" : "file"} size={13} color={savedId ? "#0d9488" : T2} />
+            style={{ background: savedId ? "rgba(13,148,136,0.08)" : "var(--bg1)", border: `1px solid ${savedId ? "var(--teal)" : "var(--line)"}`, color: savedId ? "var(--teal)" : "var(--text2)", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: saving || savedId ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6, transition: "all 0.15s" }}>
+            <Icon name={savedId ? "check" : "file"} size={13} color={savedId ? "var(--teal)" : "var(--text2)"} />
             {saving ? "Saving…" : savedId ? "Saved" : "Save Analysis"}
           </button>
         )}
       </div>
-      {error && <div style={{ color: "#ef4444", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+      {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
 
       {result && !result.error && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeUp 0.35s ease" }}>
@@ -296,7 +284,7 @@ function GapAnalysis({ userId, built, role, setRole, result, setResult, error, s
       )}
 
       {result?.error && (
-        <div style={{ color: "#ef4444", fontSize: 13 }}>Analysis error: {result.error}</div>
+        <div style={{ color: "var(--red)", fontSize: 13 }}>Analysis error: {result.error}</div>
       )}
     </div>
   );

@@ -5,18 +5,18 @@ import { nameToSlug } from "../../lib/utils";
 import { Spinner, Btn, Pill } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
-const P    = "#4648d4";
-const T1   = "#111c2d";
-const T2   = "#464554";
-const T3   = "#767586";
-const BG   = "#f9f9ff";
-const BG1  = "#ffffff";
-const BG2  = "#f0f3ff";
-const BGH  = "#dee8ff";
-const BGFIX = "#e1e0ff";
-const BD   = "rgba(0,0,0,0.06)";
+const P    = "var(--accent)";
+const T1   = "var(--text)";
+const T2   = "var(--text2)";
+const T3   = "var(--text3)";
+const BG   = "var(--bg)";
+const BG1  = "var(--bg1)";
+const BG2  = "var(--bg2)";
+const BGH  = "var(--bg3)";
+const BGFIX = "var(--bg4)";
+const BD   = "var(--line)";
 const hairline = { border: `1px solid ${BD}` };
-const luxShadow = "0 20px 40px -10px rgba(0,0,0,0.04)";
+const luxShadow = "0 20px 40px -10px rgba(0,0,0,0.4)";
 
 function SLabel({ children }) {
   return (

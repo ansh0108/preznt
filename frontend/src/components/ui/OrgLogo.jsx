@@ -7,7 +7,7 @@ const INITIALS_ONLY = new Set([
   "business intelligence group",
 ]);
 
-const PALETTE = ["#4648d4", "#db2777", "#0d9488", "#d97706", "#7c3aed", "#16a34a"];
+const PALETTE = ["#818cf8", "#f472b6", "#2dd4bf", "#fbbf24", "#a78bfa", "#4ade80"];
 
 function OrgLogo({ name, size = 40 }) {
   const lower = (name || "").toLowerCase().trim();
@@ -48,7 +48,7 @@ function OrgLogo({ name, size = 40 }) {
         width: size, height: size,
         borderRadius: size * 0.22,
         objectFit: "contain",
-        background: "#fff",
+        background: "var(--bg2)",
         padding: Math.round(size * 0.07),
         border: "1px solid var(--line2)",
         flexShrink: 0,

@@ -4,17 +4,6 @@ import { API } from "../../lib/api";
 import { Spinner } from "../ui/primitives";
 import Icon from "../ui/Icon";
 
-// ── Prolio Light Luxury design tokens ──────────────────────────────────────
-const P     = "#4648d4";
-const T2    = "#464554";
-const T3    = "#767586";
-const BG    = "#f9f9ff";
-const BG1   = "#ffffff";
-const BG2   = "#f0f3ff";
-const BGFIX = "#e1e0ff";
-const BD    = "rgba(0,0,0,0.06)";
-// ───────────────────────────────────────────────────────────────────────────
-
 const SUGGESTIONS = [
   "What's your background?", "What projects have you built?", "What are your strongest skills?",
   "Tell me about your most recent role", "What tools do you work with?", "What are you looking for next?",
@@ -22,7 +11,7 @@ const SUGGESTIONS = [
 
 function renderInline(text) {
   return text.split(/\*\*(.*?)\*\*/g).map((part, i) =>
-    i % 2 === 1 ? <strong key={i} style={{ color: T2, fontWeight: 600 }}>{part}</strong> : part
+    i % 2 === 1 ? <strong key={i} style={{ color: "var(--text2)", fontWeight: 600 }}>{part}</strong> : part
   );
 }
 
@@ -36,7 +25,7 @@ function renderMsg(content) {
         if (isBullet) {
           return (
             <div key={i} style={{ display: "flex", gap: 8, lineHeight: 1.6, alignItems: "flex-start" }}>
-              <span style={{ color: P, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>•</span>
+              <span style={{ color: "var(--accent)", fontWeight: 700, flexShrink: 0, marginTop: 1 }}>•</span>
               <span>{renderInline(l.replace(/^[-•]\s/, ""))}</span>
             </div>
           );
@@ -53,11 +42,11 @@ function MessageBubble({ msg }) {
       {msg.role === "assistant" && (
         <div style={{
           width: 28, height: 28, borderRadius: "50%",
-          background: BGFIX, border: "1px solid rgba(70,72,212,0.20)",
+          background: "var(--bg4)", border: "1px solid rgba(129,140,248,0.20)",
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0, marginRight: 10, marginTop: 2,
         }}>
-          <Icon name="zap" size={13} color={P} />
+          <Icon name="zap" size={13} color="var(--accent)" />
         </div>
       )}
       <div style={{
@@ -65,13 +54,13 @@ function MessageBubble({ msg }) {
         background: msg.isError
           ? "rgba(239,68,68,0.08)"
           : msg.role === "user"
-          ? P
-          : BG2,
+          ? "var(--accent)"
+          : "var(--bg2)",
         color: msg.isError
-          ? "#ef4444"
+          ? "var(--red)"
           : msg.role === "user"
           ? "#fff"
-          : T2,
+          : "var(--text2)",
         padding: "11px 15px",
         borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
         fontSize: 13.5,
@@ -79,7 +68,7 @@ function MessageBubble({ msg }) {
         border: msg.isError
           ? "1px solid rgba(239,68,68,0.25)"
           : msg.role === "assistant"
-          ? `1px solid ${BD}`
+          ? "1px solid var(--line)"
           : "none",
       }}>
         {renderMsg(msg.content)}
@@ -93,20 +82,20 @@ function TypingIndicator() {
     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
       <div style={{
         width: 28, height: 28, borderRadius: "50%",
-        background: BGFIX, border: "1px solid rgba(70,72,212,0.20)",
+        background: "var(--bg4)", border: "1px solid rgba(129,140,248,0.20)",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
       }}>
-        <Icon name="zap" size={13} color={P} />
+        <Icon name="zap" size={13} color="var(--accent)" />
       </div>
       <div style={{
-        background: BG2, border: `1px solid ${BD}`,
+        background: "var(--bg2)", border: "1px solid var(--line)",
         borderRadius: "16px 16px 16px 4px", padding: "10px 15px",
         display: "flex", alignItems: "center", gap: 8,
       }}>
-        <span style={{ fontSize: 13, color: T3, fontFamily: "var(--sans)" }}>Thinking</span>
+        <span style={{ fontSize: 13, color: "var(--text3)", fontFamily: "var(--sans)" }}>Thinking</span>
         <div style={{ display: "flex", gap: 3 }}>
           {[0, 1, 2].map(i => (
-            <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: P, opacity: 0.7, animation: "chatDot 1.2s ease-in-out infinite", animationDelay: `${i * 0.2}s` }} />
+            <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent)", opacity: 0.7, animation: "chatDot 1.2s ease-in-out infinite", animationDelay: `${i * 0.2}s` }} />
           ))}
         </div>
       </div>
@@ -163,7 +152,7 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: BG, borderRadius: 16, overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--bg1)", borderRadius: 16, overflow: "hidden" }}>
       {/* Message list */}
       <div
         ref={chatContainerRef}
@@ -175,26 +164,26 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
 
       {/* Suggestion chips */}
       {!loading && (
-        <div style={{ padding: "10px 16px 8px", display: "flex", flexWrap: "wrap", gap: 6, borderTop: `1px solid ${BD}` }}>
+        <div style={{ padding: "10px 16px 8px", display: "flex", flexWrap: "wrap", gap: 6, borderTop: "1px solid var(--line)" }}>
           {SUGGESTIONS.filter(s => !messages.some(m => m.content === s)).slice(0, 4).map((s, i) => (
             <button
               key={i}
               onClick={() => send(s)}
               style={{
-                background: BG2, border: `1px solid ${BD}`,
-                color: T3, borderRadius: 100, padding: "5px 13px",
+                background: "var(--bg3)", border: "1px solid var(--line2)",
+                color: "var(--text3)", borderRadius: 100, padding: "5px 13px",
                 fontSize: 12, fontWeight: 500, transition: "all 0.12s",
                 fontFamily: "var(--sans)",
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.color = P;
-                e.currentTarget.style.borderColor = "rgba(70,72,212,0.20)";
-                e.currentTarget.style.background = "rgba(70,72,212,0.08)";
+                e.currentTarget.style.color = "var(--accent)";
+                e.currentTarget.style.borderColor = "rgba(129,140,248,0.20)";
+                e.currentTarget.style.background = "rgba(129,140,248,0.08)";
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.color = T3;
-                e.currentTarget.style.borderColor = BD;
-                e.currentTarget.style.background = BG2;
+                e.currentTarget.style.color = "var(--text3)";
+                e.currentTarget.style.borderColor = "var(--line2)";
+                e.currentTarget.style.background = "var(--bg3)";
               }}
             >
               {s}
@@ -204,7 +193,7 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
       )}
 
       {/* Input row */}
-      <div style={{ padding: "12px 16px", borderTop: `1px solid ${BD}`, display: "flex", gap: 8 }}>
+      <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)", display: "flex", gap: 8 }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
@@ -212,18 +201,18 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
           placeholder="Ask about my background, skills, or projects…"
           style={{
             flex: 1, borderRadius: 100, padding: "10px 18px",
-            background: BG1, border: `1px solid ${BD}`,
-            fontFamily: "var(--sans)", fontSize: 13.5, color: T2,
+            background: "var(--bg1)", border: "1px solid var(--line)",
+            fontFamily: "var(--sans)", fontSize: 13.5, color: "var(--text2)",
             outline: "none", transition: "border-color 0.15s",
           }}
-          onFocus={e => { e.currentTarget.style.borderColor = "rgba(70,72,212,0.40)"; }}
-          onBlur={e => { e.currentTarget.style.borderColor = BD; }}
+          onFocus={e => { e.currentTarget.style.borderColor = "rgba(129,140,248,0.40)"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = "var(--line)"; }}
         />
         <button
           onClick={() => send()}
           disabled={loading || cooldown || !input.trim()}
           style={{
-            background: P, color: "#fff", borderRadius: "50%",
+            background: "var(--accent)", color: "#fff", borderRadius: "50%",
             width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center",
             opacity: loading || cooldown || !input.trim() ? 0.35 : 1,
             flexShrink: 0, border: "none", cursor: loading || cooldown || !input.trim() ? "not-allowed" : "pointer",

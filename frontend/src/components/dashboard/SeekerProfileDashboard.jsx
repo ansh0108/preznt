@@ -14,23 +14,6 @@ import GapAnalysis from "../features/GapAnalysis";
 import CoverLetter from "../features/CoverLetter";
 import InterviewPrep from "../features/InterviewPrep";
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const T = {
-  primary: "#4648d4",
-  text: "#111c2d",
-  text2: "#464554",
-  text3: "#767586",
-  bg: "#f9f9ff",
-  card: "#ffffff",
-  bg2: "#f0f3ff",
-  container: "#e7eeff",
-  containerHigh: "#dee8ff",
-  primaryFixed: "#e1e0ff",
-  hairline: "rgba(0,0,0,0.06)",
-  shadow: "0 20px 40px -10px rgba(0,0,0,0.04)",
-  r: "12px",
-};
-
 // ─── useProfileData ────────────────────────────────────────────────────────────
 function useProfileData(activePortfolioId) {
   const [profile, setProfile] = useState(null);
@@ -222,9 +205,9 @@ function OnboardingSteps({ hasLinkedin, hasResume, hasGithub, built, building, b
         display: "flex",
         flexDirection: "column",
         gap: 0,
-        background: T.card,
-        border: `1px solid ${T.hairline}`,
-        borderRadius: T.r,
+        background: "var(--bg1)",
+        border: `1px solid var(--line)`,
+        borderRadius: "var(--r-md)",
         overflow: "hidden",
       }}>
         {steps.map((step, i) => (
@@ -235,7 +218,7 @@ function OnboardingSteps({ hasLinkedin, hasResume, hasGithub, built, building, b
               alignItems: "center",
               gap: 14,
               padding: "14px 18px",
-              borderBottom: i < steps.length - 1 ? `1px solid ${T.hairline}` : "none",
+              borderBottom: i < steps.length - 1 ? `1px solid var(--line)` : "none",
               background: step.done ? "rgba(13,148,136,0.08)" : "transparent",
             }}
           >
@@ -306,7 +289,7 @@ const linkInputSt = { width: "100%", background: "var(--bg3)", border: "1px soli
 function DashboardHeader({ auth, built, shareUrl, copied, onLogout, onCopy }) {
   return (
     <div style={{
-      borderBottom: "1px solid rgba(0,0,0,0.05)",
+      borderBottom: "1px solid var(--line)",
       padding: "0 40px",
       height: 80,
       display: "flex",
@@ -314,7 +297,7 @@ function DashboardHeader({ auth, built, shareUrl, copied, onLogout, onCopy }) {
       justifyContent: "space-between",
       position: "sticky",
       top: 0,
-      background: "rgba(249,249,255,0.85)",
+      background: "rgba(18,19,25,0.85)",
       backdropFilter: "blur(12px)",
       WebkitBackdropFilter: "blur(12px)",
       zIndex: 10,
@@ -324,7 +307,7 @@ function DashboardHeader({ auth, built, shareUrl, copied, onLogout, onCopy }) {
         fontFamily: "var(--serif, 'Playfair Display', serif)",
         fontSize: 28,
         fontWeight: 700,
-        color: T.primary,
+        color: "var(--accent)",
         letterSpacing: "-0.02em",
         lineHeight: 1,
       }}>
@@ -337,10 +320,10 @@ function DashboardHeader({ auth, built, shareUrl, copied, onLogout, onCopy }) {
           <button
             onClick={onCopy}
             style={{
-              background: copied ? "rgba(13,148,136,0.08)" : T.card,
-              border: `1px solid ${copied ? "rgba(13,148,136,0.35)" : T.hairline}`,
-              borderRadius: T.r,
-              color: copied ? "var(--teal)" : T.text2,
+              background: copied ? "rgba(13,148,136,0.08)" : "var(--bg1)",
+              border: `1px solid ${copied ? "rgba(13,148,136,0.35)" : "var(--line)"}`,
+              borderRadius: "var(--r-md)",
+              color: copied ? "var(--teal)" : "var(--text2)",
               padding: "7px 16px",
               fontSize: 12,
               fontWeight: 600,
@@ -352,7 +335,7 @@ function DashboardHeader({ auth, built, shareUrl, copied, onLogout, onCopy }) {
               fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
             }}
           >
-            <Icon name={copied ? "check" : "link"} size={13} color={copied ? "var(--teal)" : T.text2} />
+            <Icon name={copied ? "check" : "link"} size={13} color={copied ? "var(--teal)" : "var(--text2)"} />
             {copied ? "Copied!" : "Share Portfolio"}
           </button>
         )}
@@ -362,10 +345,10 @@ function DashboardHeader({ auth, built, shareUrl, copied, onLogout, onCopy }) {
             target="_blank"
             rel="noreferrer"
             style={{
-              background: T.card,
-              border: `1px solid ${T.hairline}`,
-              borderRadius: T.r,
-              color: T.text3,
+              background: "var(--bg1)",
+              border: `1px solid var(--line)`,
+              borderRadius: "var(--r-md)",
+              color: "var(--text3)",
               padding: "7px 14px",
               fontSize: 12,
               cursor: "pointer",
@@ -376,12 +359,12 @@ function DashboardHeader({ auth, built, shareUrl, copied, onLogout, onCopy }) {
               fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
             }}
           >
-            <Icon name="external" size={13} color={T.text3} /> View Live
+            <Icon name="external" size={13} color="var(--text3)" /> View Live
           </a>
         )}
         <div style={{
           fontSize: 13,
-          color: T.text3,
+          color: "var(--text3)",
           fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
         }}>
           {auth.email}
@@ -390,9 +373,9 @@ function DashboardHeader({ auth, built, shareUrl, copied, onLogout, onCopy }) {
           onClick={onLogout}
           style={{
             background: "transparent",
-            border: `1px solid ${T.hairline}`,
-            borderRadius: T.r,
-            color: T.text3,
+            border: `1px solid var(--line)`,
+            borderRadius: "var(--r-md)",
+            color: "var(--text3)",
             padding: "7px 14px",
             fontSize: 12,
             fontWeight: 500,
@@ -403,7 +386,7 @@ function DashboardHeader({ auth, built, shareUrl, copied, onLogout, onCopy }) {
             fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
           }}
         >
-          <Icon name="logout" size={13} color={T.text3} /> Sign out
+          <Icon name="logout" size={13} color="var(--text3)" /> Sign out
         </button>
       </div>
     </div>
@@ -416,14 +399,14 @@ function ProfileCard({ pm }) {
     <div
       className="card-glow"
       style={{
-        background: T.card,
-        border: `1px solid ${T.hairline}`,
-        borderRadius: T.r,
+        background: "var(--bg1)",
+        border: `1px solid var(--line)`,
+        borderRadius: "var(--r-md)",
         padding: "22px",
         marginBottom: 14,
         position: "relative",
         overflow: "hidden",
-        boxShadow: T.shadow,
+        boxShadow: "0 20px 40px -10px rgba(0,0,0,0.4)",
       }}
     >
       {/* Gradient top bar when live — gradient-x animation preserved via className */}
@@ -461,16 +444,16 @@ function ProfileCard({ pm }) {
         />
       </div>
       <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 17, fontWeight: 700, color: T.text, marginBottom: 3, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 3, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
           {pm.profile?.name}
         </div>
         {pm.profile?.title && (
-          <div style={{ fontSize: 12.5, color: T.text3, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+          <div style={{ fontSize: 12.5, color: "var(--text3)", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
             {pm.profile.title}
           </div>
         )}
         {pm.profile?.tagline && (
-          <div style={{ fontSize: 12, color: T.text3, marginTop: 5, fontStyle: "italic", lineHeight: 1.5, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+          <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 5, fontStyle: "italic", lineHeight: 1.5, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
             {pm.profile.tagline}
           </div>
         )}
@@ -599,11 +582,11 @@ function LeftSidebar({ pm, hasLinkedin, hasResume, hasGithub, github, setGithub,
       <div
         className="card-glow"
         style={{
-          background: T.card,
-          border: `1px solid ${T.hairline}`,
-          borderRadius: T.r,
+          background: "var(--bg1)",
+          border: `1px solid var(--line)`,
+          borderRadius: "var(--r-md)",
           padding: "18px 20px",
-          boxShadow: T.shadow,
+          boxShadow: "0 20px 40px -10px rgba(0,0,0,0.4)",
         }}
       >
         <SecHead style={{ marginBottom: 14 }}>Data Sources</SecHead>
@@ -626,9 +609,9 @@ function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClStat
         display: "flex",
         gap: 3,
         marginBottom: 20,
-        background: T.card,
-        border: `1px solid ${T.hairline}`,
-        borderRadius: T.r,
+        background: "var(--bg1)",
+        border: `1px solid var(--line)`,
+        borderRadius: "var(--r-md)",
         padding: "4px",
         width: "fit-content",
       }}>
@@ -639,13 +622,13 @@ function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClStat
             className="b-tab"
             data-active={tab === t.id}
             style={{
-              background: tab === t.id ? T.card : "transparent",
-              color: tab === t.id ? T.primary : T.text3,
+              background: tab === t.id ? "var(--bg3)" : "transparent",
+              color: tab === t.id ? "var(--accent)" : "var(--text3)",
               padding: "9px 18px",
               borderRadius: 8,
               fontSize: 13,
               fontWeight: tab === t.id ? 600 : 400,
-              border: tab === t.id ? `1px solid ${T.hairline}` : "1px solid transparent",
+              border: tab === t.id ? `1px solid var(--line)` : "1px solid transparent",
               boxShadow: tab === t.id ? "0 1px 4px rgba(0,0,0,0.07)" : "none",
               display: "flex",
               alignItems: "center",
@@ -655,19 +638,19 @@ function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClStat
               fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
             }}
           >
-            <Icon name={t.icon} size={14} color={tab === t.id ? T.primary : T.text3} /> {t.label}
+            <Icon name={t.icon} size={14} color={tab === t.id ? "var(--accent)" : "var(--text3)"} /> {t.label}
           </button>
         ))}
       </div>
 
       {/* Content card */}
       <div style={{
-        background: T.card,
-        border: `1px solid ${T.hairline}`,
-        borderRadius: T.r,
+        background: "var(--bg1)",
+        border: `1px solid var(--line)`,
+        borderRadius: "var(--r-md)",
         padding: "28px 30px",
         minHeight: 480,
-        boxShadow: T.shadow,
+        boxShadow: "0 20px 40px -10px rgba(0,0,0,0.4)",
       }}>
         <div key={`build-${tab === "build"}`} className={tab === "build" ? "tab-content" : ""} style={{ display: tab === "build" ? "block" : "none" }}>
           <SecHead>Build Portfolio</SecHead>
@@ -687,7 +670,7 @@ function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClStat
               className="slide-down"
               style={{
                 marginTop: 20,
-                background: "linear-gradient(135deg, var(--teal-d, rgba(13,148,136,0.07)), rgba(70,72,212,0.05))",
+                background: "linear-gradient(135deg, rgba(45,212,191,0.07), rgba(129,140,248,0.05))",
                 border: "1px solid rgba(13,148,136,0.28)",
                 borderRadius: "var(--r-lg)",
                 padding: "18px 22px",
@@ -707,7 +690,7 @@ function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClStat
               </div>
             </div>
           )}
-          <div style={{ marginTop: 36, borderTop: `1px solid ${T.hairline}`, paddingTop: 28 }}>
+          <div style={{ marginTop: 36, borderTop: `1px solid var(--line)`, paddingTop: 28 }}>
             <CustomizeTab portfolioId={pm.activePortfolioId} auth={auth} profile={pm.profile} onPrefsChange={p => pm.setProfile(prev => ({ ...prev, preferences: p }))} onProfileChange={pm.loadProfile} />
           </div>
         </div>
@@ -751,42 +734,46 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
   const links = pm.profile?.links || [];
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg }}>
-      <DashboardHeader
-        auth={auth}
-        built={pm.built}
-        shareUrl={shareUrl}
-        copied={copied}
-        onLogout={onLogout}
-        onCopy={() => { navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-      />
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", display: "flex", gap: 24, alignItems: "flex-start" }}>
-        <LeftSidebar
-          pm={pm}
-          hasLinkedin={hasLinkedin}
-          hasResume={hasResume}
-          hasGithub={hasGithub}
-          github={github}
-          setGithub={setGithub}
-          link={link}
-          setLink={setLink}
-          links={links}
-        />
-        <RightPanel
-          tab={tab}
-          setTab={setTab}
-          pm={pm}
-          gapState={gapState}
-          setGapState={setGapState}
-          clState={clState}
-          setClState={setClState}
-          hasLinkedin={hasLinkedin}
-          hasResume={hasResume}
-          hasGithub={hasGithub}
-          setGithub={setGithub}
-          shareUrl={shareUrl}
+    <div style={{ minHeight: "100vh", background: "var(--bg)", position: "relative" }}>
+      {/* Ambient orb */}
+      <div style={{ position: "absolute", top: 80, right: 100, width: 600, height: 600, borderRadius: "50%", background: "rgba(129,140,248,0.04)", filter: "blur(120px)", pointerEvents: "none", zIndex: 0 }} />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <DashboardHeader
           auth={auth}
+          built={pm.built}
+          shareUrl={shareUrl}
+          copied={copied}
+          onLogout={onLogout}
+          onCopy={() => { navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
         />
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", display: "flex", gap: 24, alignItems: "flex-start" }}>
+          <LeftSidebar
+            pm={pm}
+            hasLinkedin={hasLinkedin}
+            hasResume={hasResume}
+            hasGithub={hasGithub}
+            github={github}
+            setGithub={setGithub}
+            link={link}
+            setLink={setLink}
+            links={links}
+          />
+          <RightPanel
+            tab={tab}
+            setTab={setTab}
+            pm={pm}
+            gapState={gapState}
+            setGapState={setGapState}
+            clState={clState}
+            setClState={setClState}
+            hasLinkedin={hasLinkedin}
+            hasResume={hasResume}
+            hasGithub={hasGithub}
+            setGithub={setGithub}
+            shareUrl={shareUrl}
+            auth={auth}
+          />
+        </div>
       </div>
     </div>
   );

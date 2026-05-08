@@ -3,20 +3,11 @@ import { SecHead, BulletText, Pill } from "../ui/primitives";
 import Icon from "../ui/Icon";
 import OrgLogo from "../ui/OrgLogo";
 
-// ── Prolio Light Luxury design tokens ──────────────────────────────────────
-const P     = "#4648d4";
-const T1    = "#111c2d";
-const T2    = "#464554";
-const T3    = "#767586";
-const BG2   = "#f0f3ff";
-const BD    = "rgba(0,0,0,0.06)";
-// ───────────────────────────────────────────────────────────────────────────
-
 const LINK_TYPE_META = {
-  publication: { label: "Publications",  color: "#db2777", bg: "rgba(219,39,119,0.08)",  border: "rgba(219,39,119,0.25)", icon: "file"  },
-  certificate:  { label: "Certifications", color: "#0d9488", bg: "rgba(13,148,136,0.08)",  border: "rgba(13,148,136,0.25)",  icon: "check" },
-  award:        { label: "Awards",         color: "#d97706", bg: "rgba(217,119,6,0.08)",   border: "rgba(217,119,6,0.25)",   icon: "star"  },
-  other:        { label: "Other Links",    color: P,         bg: "rgba(70,72,212,0.08)",   border: "rgba(70,72,212,0.25)",   icon: "link"  },
+  publication: { label: "Publications",  color: "var(--rose)",  bg: "rgba(219,39,119,0.08)",  border: "rgba(219,39,119,0.25)", icon: "file"  },
+  certificate:  { label: "Certifications", color: "var(--teal)", bg: "rgba(45,212,191,0.08)",   border: "rgba(45,212,191,0.25)",  icon: "check" },
+  award:        { label: "Awards",         color: "var(--amber)", bg: "rgba(217,119,6,0.08)",   border: "rgba(217,119,6,0.25)",   icon: "star"  },
+  other:        { label: "Other Links",    color: "var(--accent)", bg: "var(--accent-d)",        border: "var(--accent-b)",        icon: "link"  },
 };
 
 function ExperienceEntry({ exp, isLast }) {
@@ -24,20 +15,20 @@ function ExperienceEntry({ exp, isLast }) {
     <div style={{ display: "flex", gap: 16, paddingBottom: 28 }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 42 }}>
         <OrgLogo name={exp.company || exp.title} size={42} />
-        {!isLast && <div style={{ width: 1, flex: 1, background: `1px solid ${BD}`, marginTop: 12 }} />}
+        {!isLast && <div style={{ width: 1, flex: 1, background: "1px solid var(--line)", marginTop: 12 }} />}
       </div>
       <div style={{ flex: 1, paddingTop: 2 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: T1, lineHeight: 1.3, fontFamily: "var(--sans)" }}>{exp.title}</div>
-        <div style={{ color: P, fontSize: 13, marginTop: 4, fontWeight: 600 }}>{exp.company}</div>
-        <div style={{ color: T3, fontSize: 12, marginTop: 4, fontWeight: 400, fontFamily: "var(--sans)" }}>{exp.dates}</div>
+        <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", lineHeight: 1.3, fontFamily: "var(--sans)" }}>{exp.title}</div>
+        <div style={{ color: "var(--accent)", fontSize: 13, marginTop: 4, fontWeight: 600 }}>{exp.company}</div>
+        <div style={{ color: "var(--text3)", fontSize: 12, marginTop: 4, fontWeight: 400, fontFamily: "var(--sans)" }}>{exp.dates}</div>
         {exp.description && (
           <div
             className="c-hover"
             style={{
-              color: T2, fontSize: 13.5, marginTop: 12, lineHeight: 1.75,
-              padding: "12px 16px", background: BG2,
-              border: `1px solid ${BD}`, borderRadius: 8,
-              borderLeft: "2px solid rgba(70,72,212,0.40)",
+              color: "var(--text2)", fontSize: 13.5, marginTop: 12, lineHeight: 1.75,
+              padding: "12px 16px", background: "var(--bg2)",
+              border: "1px solid var(--line)", borderRadius: 8,
+              borderLeft: "2px solid var(--accent-b)",
               fontFamily: "var(--sans)",
             }}
           >
@@ -54,12 +45,12 @@ function EducationEntry({ edu, isLast }) {
     <div style={{ display: "flex", gap: 16, paddingBottom: 24 }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 42 }}>
         <OrgLogo name={edu.school} size={42} />
-        {!isLast && <div style={{ width: 1, flex: 1, background: `1px solid ${BD}`, marginTop: 12 }} />}
+        {!isLast && <div style={{ width: 1, flex: 1, background: "1px solid var(--line)", marginTop: 12 }} />}
       </div>
       <div style={{ flex: 1, paddingTop: 2 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: T1, fontFamily: "var(--sans)" }}>{edu.school}</div>
-        {edu.degree && <div style={{ color: T2, fontSize: 13, marginTop: 4, fontFamily: "var(--sans)" }}>{edu.degree}</div>}
-        {edu.dates && <div style={{ color: T3, fontSize: 12, marginTop: 4, fontFamily: "var(--sans)" }}>{edu.dates}</div>}
+        <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", fontFamily: "var(--sans)" }}>{edu.school}</div>
+        {edu.degree && <div style={{ color: "var(--text2)", fontSize: 13, marginTop: 4, fontFamily: "var(--sans)" }}>{edu.degree}</div>}
+        {edu.dates && <div style={{ color: "var(--text3)", fontSize: 12, marginTop: 4, fontFamily: "var(--sans)" }}>{edu.dates}</div>}
       </div>
     </div>
   );
@@ -78,7 +69,7 @@ function LinksSection({ links }) {
     return (
       <div key={type}>
         <div style={{
-          fontSize: 11, fontWeight: 700, color: T3,
+          fontSize: 11, fontWeight: 700, color: "var(--text3)",
           letterSpacing: "0.08em", textTransform: "uppercase",
           marginBottom: 10, fontFamily: "var(--sans)",
         }}>{meta.label}</div>
@@ -89,15 +80,15 @@ function LinksSection({ links }) {
               className="c-hover"
               style={{
                 display: "flex", gap: 14, padding: "14px 16px",
-                background: BG2, border: `1px solid ${BD}`,
+                background: "var(--bg2)", border: "1px solid var(--line)",
                 borderRadius: 8, borderLeft: `2px solid ${meta.color}`,
               }}
             >
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: T1, fontFamily: "var(--sans)" }}>{l.title}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text)", fontFamily: "var(--sans)" }}>{l.title}</div>
                 {l.issuer && <div style={{ fontSize: 12.5, color: meta.color, marginTop: 3 }}>{l.issuer}</div>}
-                {l.date && <div style={{ fontSize: 12, color: T3, marginTop: 2, fontFamily: "var(--sans)" }}>{l.date}</div>}
-                {l.description && <div style={{ fontSize: 13, color: T2, marginTop: 6, lineHeight: 1.6, fontFamily: "var(--sans)" }}>{l.description}</div>}
+                {l.date && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 2, fontFamily: "var(--sans)" }}>{l.date}</div>}
+                {l.description && <div style={{ fontSize: 13, color: "var(--text2)", marginTop: 6, lineHeight: 1.6, fontFamily: "var(--sans)" }}>{l.description}</div>}
               </div>
               {l.url && (
                 <a href={l.url} target="_blank" rel="noreferrer" style={{ flexShrink: 0, alignSelf: "flex-start", paddingTop: 2, textDecoration: "none" }}>
@@ -123,8 +114,8 @@ function Overview({ profile, hideSections = [] }) {
   const hasContent = profile.experience?.length || profile.education?.length || profile.skills?.length;
   if (!hasContent) return (
     <div style={{ textAlign: "center", padding: "64px 20px" }}>
-      <Icon name="file" size={36} color={T3} style={{ marginBottom: 16 }} />
-      <div style={{ color: T3, fontSize: 14, fontFamily: "var(--sans)" }}>Upload your LinkedIn PDF in setup to populate this section.</div>
+      <Icon name="file" size={36} color="var(--text3)" style={{ marginBottom: 16 }} />
+      <div style={{ color: "var(--text3)", fontSize: 14, fontFamily: "var(--sans)" }}>Upload your LinkedIn PDF in setup to populate this section.</div>
     </div>
   );
 
@@ -133,7 +124,7 @@ function Overview({ profile, hideSections = [] }) {
       {(profile.bio || profile.linkedin_summary) && !hideSections.includes("about") && (
         <div>
           <SecHead>About</SecHead>
-          <div style={{ color: T2, fontSize: 14, lineHeight: 1.85, fontWeight: 400, fontFamily: "var(--sans)" }}>{profile.bio || profile.linkedin_summary}</div>
+          <div style={{ color: "var(--text2)", fontSize: 14, lineHeight: 1.85, fontWeight: 400, fontFamily: "var(--sans)" }}>{profile.bio || profile.linkedin_summary}</div>
         </div>
       )}
 
@@ -166,7 +157,7 @@ function Overview({ profile, hideSections = [] }) {
             {Object.entries(getSkillClusters(profile)).map(([cat, skills]) => (
               <div key={cat}>
                 <div style={{
-                  fontSize: 11, fontWeight: 700, color: T3,
+                  fontSize: 11, fontWeight: 700, color: "var(--text3)",
                   letterSpacing: "0.08em", textTransform: "uppercase",
                   marginBottom: 8, fontFamily: "var(--sans)",
                 }}>{cat}</div>

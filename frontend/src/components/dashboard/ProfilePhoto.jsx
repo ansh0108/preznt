@@ -2,7 +2,7 @@ import { useState } from "react";
 import { API } from "../../lib/api";
 import Icon from "../ui/Icon";
 
-const PALETTE = ["#4648d4", "#db2777", "#0d9488", "#d97706", "#7c3aed", "#16a34a"];
+const PALETTE = ["#818cf8", "#f472b6", "#2dd4bf", "#fbbf24", "#a78bfa", "#4ade80"];
 
 function ProfilePhoto({ userId, name, size = 60, onUpload }) {
   const [err, setErr] = useState(false);

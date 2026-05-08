@@ -7,20 +7,8 @@ import CandidateEvaluator from "./CandidateEvaluator";
 import ProfileCard from "./ProfileCard";
 import CandidateProfileView from "./CandidateProfileView";
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// ─── Design tokens — all values via CSS variables ─────────────────────────────
 const T = {
-  primary: "#4648d4",
-  text: "#111c2d",
-  text2: "#464554",
-  text3: "#767586",
-  bg: "#f9f9ff",
-  card: "#ffffff",
-  bg2: "#f0f3ff",
-  container: "#e7eeff",
-  containerHigh: "#dee8ff",
-  primaryFixed: "#e1e0ff",
-  hairline: "rgba(0,0,0,0.06)",
-  shadow: "0 20px 40px -10px rgba(0,0,0,0.04)",
   r: "12px",
 };
 
@@ -54,12 +42,12 @@ function AddByUrl({ onAdd }) {
           placeholder="Paste portfolio URL, e.g. prolio.co/#/portfolio/name-id"
           style={{
             flex: 1,
-            background: T.card,
-            border: `1px solid ${T.hairline}`,
+            background: "var(--bg1)",
+            border: "1px solid var(--line2)",
             borderRadius: T.r,
             padding: "10px 14px",
             fontSize: 14,
-            color: T.text,
+            color: "var(--text)",
             outline: "none",
             fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
           }}
@@ -68,7 +56,7 @@ function AddByUrl({ onAdd }) {
           onClick={add}
           disabled={loading || !url.trim()}
           style={{
-            background: T.primary,
+            background: "var(--accent)",
             color: "#fff",
             border: "none",
             borderRadius: T.r,
@@ -119,12 +107,12 @@ function AddByUpload({ onAdd }) {
 
   const inputSt = {
     width: "100%",
-    background: T.card,
-    border: `1px solid ${T.hairline}`,
+    background: "var(--bg2)",
+    border: "1px solid var(--line2)",
     borderRadius: T.r,
     padding: "9px 12px",
     fontSize: 13,
-    color: T.text,
+    color: "var(--text)",
     outline: "none",
     boxSizing: "border-box",
     fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
@@ -133,7 +121,7 @@ function AddByUpload({ onAdd }) {
   const labelSt = {
     fontSize: 11,
     fontWeight: 700,
-    color: T.text3,
+    color: "var(--text3)",
     marginBottom: 6,
     textTransform: "uppercase",
     letterSpacing: "0.07em",
@@ -143,12 +131,12 @@ function AddByUpload({ onAdd }) {
 
   return (
     <div style={{
-      background: T.card,
-      border: `1px solid ${T.hairline}`,
+      background: "var(--bg1)",
+      border: "1px solid var(--line)",
       borderRadius: T.r,
       padding: "24px",
       maxWidth: 640,
-      boxShadow: T.shadow,
+      boxShadow: "0 20px 40px -10px rgba(0,0,0,0.18)",
     }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
         <div>
@@ -168,17 +156,17 @@ function AddByUpload({ onAdd }) {
           <label key={label} style={{ cursor: "pointer" }}>
             <span style={labelSt}>{label}</span>
             <div style={{
-              border: `1.5px dashed ${file ? T.primary : T.hairline}`,
+              border: `1.5px dashed ${file ? "var(--accent)" : "var(--line)"}`,
               borderRadius: T.r,
               padding: "14px 16px",
               display: "flex",
               alignItems: "center",
               gap: 9,
-              background: file ? T.primaryFixed : T.bg2,
+              background: file ? "var(--bg4)" : "var(--bg2)",
               transition: "all 0.15s",
             }}>
-              <Icon name={file ? "check" : "file"} size={14} color={file ? T.primary : T.text3} />
-              <span style={{ fontSize: 12.5, color: file ? T.primary : T.text3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+              <Icon name={file ? "check" : "file"} size={14} color={file ? "var(--accent)" : "var(--text3)"} />
+              <span style={{ fontSize: 12.5, color: file ? "var(--accent)" : "var(--text3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
                 {file ? file.name : `Upload ${label}`}
               </span>
             </div>
@@ -191,7 +179,7 @@ function AddByUpload({ onAdd }) {
         onClick={submit}
         disabled={loading || (!resume && !linkedin && !github.trim())}
         style={{
-          background: T.primary,
+          background: "var(--accent)",
           color: "#fff",
           border: "none",
           borderRadius: T.r,
@@ -228,12 +216,12 @@ function SideNavItem({ icon, label, active, onClick }) {
         alignItems: "center",
         gap: 11,
         width: "100%",
-        background: isActive ? T.bg2 : "transparent",
+        background: isActive ? "var(--bg2)" : "transparent",
         border: "none",
         borderRadius: 10,
         padding: "10px 14px",
         cursor: "pointer",
-        color: isActive ? T.primary : T.text2,
+        color: isActive ? "var(--accent)" : "var(--text2)",
         fontSize: 14,
         fontWeight: isActive ? 600 : 400,
         textAlign: "left",
@@ -241,7 +229,7 @@ function SideNavItem({ icon, label, active, onClick }) {
         fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
       }}
     >
-      <Icon name={icon} size={16} color={isActive ? T.primary : T.text3} />
+      <Icon name={icon} size={16} color={isActive ? "var(--accent)" : "var(--text3)"} />
       {label}
     </button>
   );
@@ -280,7 +268,7 @@ function RecruiterDashboard({ auth, onLogout }) {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, display: "flex" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex" }}>
 
       {/* ── Sidebar ── */}
       <aside style={{
@@ -290,8 +278,8 @@ function RecruiterDashboard({ auth, onLogout }) {
         top: 0,
         left: 0,
         bottom: 0,
-        background: T.card,
-        borderRight: `1px solid ${T.hairline}`,
+        background: "var(--bg1)",
+        borderRight: "1px solid var(--line)",
         display: "flex",
         flexDirection: "column",
         zIndex: 20,
@@ -303,13 +291,13 @@ function RecruiterDashboard({ auth, onLogout }) {
             fontFamily: "var(--serif, 'Playfair Display', serif)",
             fontSize: 28,
             fontWeight: 700,
-            color: T.primary,
+            color: "var(--accent)",
             letterSpacing: "-0.02em",
             lineHeight: 1,
           }}>
             Prolio
           </div>
-          <div style={{ fontSize: 11, color: T.text3, marginTop: 4, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)", letterSpacing: "0.04em" }}>
+          <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)", letterSpacing: "0.04em" }}>
             Recruiter Hub
           </div>
         </div>
@@ -326,22 +314,22 @@ function RecruiterDashboard({ auth, onLogout }) {
         <div style={{
           margin: "16px",
           padding: "14px 16px",
-          background: T.bg2,
+          background: "var(--bg2)",
           borderRadius: T.r,
-          border: `1px solid ${T.hairline}`,
+          border: "1px solid var(--line)",
         }}>
-          <div style={{ fontSize: 12, color: T.text2, fontWeight: 600, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+          <div style={{ fontSize: 12, color: "var(--text2)", fontWeight: 600, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
             {auth.email}
           </div>
-          <div style={{ fontSize: 11, color: T.text3, marginBottom: 12, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>Recruiter account</div>
+          <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 12, fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>Recruiter account</div>
           <button
             onClick={onLogout}
             style={{
               width: "100%",
               background: "transparent",
-              border: `1px solid ${T.hairline}`,
+              border: "1px solid var(--line)",
               borderRadius: 8,
-              color: T.text3,
+              color: "var(--text3)",
               padding: "7px 12px",
               fontSize: 12,
               cursor: "pointer",
@@ -352,8 +340,8 @@ function RecruiterDashboard({ auth, onLogout }) {
               fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
               transition: "all 0.14s",
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.14)"; e.currentTarget.style.color = T.text2; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = T.hairline; e.currentTarget.style.color = T.text3; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line2)"; e.currentTarget.style.color = "var(--text2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--text3)"; }}
           >
             <Icon name="logout" size={13} color="currentColor" /> Sign out
           </button>
@@ -370,32 +358,32 @@ function RecruiterDashboard({ auth, onLogout }) {
               fontFamily: "var(--serif, 'Playfair Display', serif)",
               fontSize: 32,
               fontWeight: 700,
-              color: T.text,
+              color: "var(--text)",
               margin: 0,
               letterSpacing: "-0.02em",
               lineHeight: 1.1,
             }}>
               Recruiter Hub
             </h1>
-            <p style={{ fontSize: 14, color: T.text3, margin: "8px 0 0", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+            <p style={{ fontSize: 14, color: "var(--text3)", margin: "8px 0 0", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
               Evaluate candidates and browse the talent pool.
             </p>
           </div>
           <button
             style={{
-              background: T.card,
-              border: `1px solid ${T.hairline}`,
+              background: "var(--bg1)",
+              border: "1px solid var(--line)",
               borderRadius: T.r,
-              color: T.text2,
+              color: "var(--text2)",
               padding: "9px 18px",
               fontSize: 13,
               fontWeight: 600,
               cursor: "pointer",
-              boxShadow: T.shadow,
+              boxShadow: "0 20px 40px -10px rgba(0,0,0,0.18)",
               fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = T.hairline; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; }}
           >
             Export Report
           </button>
@@ -407,13 +395,13 @@ function RecruiterDashboard({ auth, onLogout }) {
             fontFamily: "var(--serif, 'Playfair Display', serif)",
             fontSize: 24,
             fontWeight: 700,
-            color: T.text,
+            color: "var(--text)",
             margin: "0 0 6px",
             letterSpacing: "-0.01em",
           }}>
             Evaluate a Candidate
           </h2>
-          <p style={{ fontSize: 13, color: T.text3, margin: "0 0 22px", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+          <p style={{ fontSize: 13, color: "var(--text3)", margin: "0 0 22px", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
             Add a candidate via their Prolio portfolio link, or upload their resume / LinkedIn / GitHub directly.
           </p>
 
@@ -421,7 +409,7 @@ function RecruiterDashboard({ auth, onLogout }) {
           <div style={{
             display: "flex",
             gap: 3,
-            background: T.container,
+            background: "var(--bg3)",
             borderRadius: 100,
             padding: "4px",
             width: "fit-content",
@@ -432,14 +420,14 @@ function RecruiterDashboard({ auth, onLogout }) {
                 key={m.id}
                 onClick={() => setAddMode(m.id)}
                 style={{
-                  background: addMode === m.id ? T.card : "transparent",
-                  color: addMode === m.id ? T.primary : T.text3,
+                  background: addMode === m.id ? "var(--bg1)" : "transparent",
+                  color: addMode === m.id ? "var(--accent)" : "var(--text3)",
                   padding: "7px 18px",
                   borderRadius: 100,
                   fontSize: 13,
                   fontWeight: addMode === m.id ? 600 : 400,
-                  border: addMode === m.id ? `1px solid ${T.hairline}` : "1px solid transparent",
-                  boxShadow: addMode === m.id ? "0 1px 4px rgba(0,0,0,0.07)" : "none",
+                  border: addMode === m.id ? "1px solid var(--line)" : "1px solid transparent",
+                  boxShadow: addMode === m.id ? "0 1px 4px rgba(0,0,0,0.18)" : "none",
                   cursor: "pointer",
                   transition: "all 0.14s",
                   fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
@@ -468,7 +456,7 @@ function RecruiterDashboard({ auth, onLogout }) {
         </section>
 
         {/* Divider */}
-        <div style={{ borderTop: `1px solid ${T.hairline}`, marginBottom: 48 }} />
+        <div style={{ borderTop: "1px solid var(--line)", marginBottom: 48 }} />
 
         {/* ── Talent Pool ── */}
         <section>
@@ -476,20 +464,20 @@ function RecruiterDashboard({ auth, onLogout }) {
             fontFamily: "var(--serif, 'Playfair Display', serif)",
             fontSize: 24,
             fontWeight: 700,
-            color: T.text,
+            color: "var(--text)",
             margin: "0 0 6px",
             letterSpacing: "-0.01em",
           }}>
             Talent Pool
           </h2>
-          <p style={{ fontSize: 13, color: T.text3, margin: "0 0 24px", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
+          <p style={{ fontSize: 13, color: "var(--text3)", margin: "0 0 24px", fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)" }}>
             Browse AI-powered portfolios from registered job seekers.
           </p>
 
           {/* Search */}
           <div style={{ position: "relative", maxWidth: 480, marginBottom: 28 }}>
             <div style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}>
-              <Icon name="search" size={15} color={T.text3} />
+              <Icon name="search" size={15} color="var(--text3)" />
             </div>
             <input
               value={search}
@@ -497,15 +485,15 @@ function RecruiterDashboard({ auth, onLogout }) {
               placeholder="Search by name, role, or skill…"
               style={{
                 width: "100%",
-                background: T.card,
-                border: `1px solid ${T.hairline}`,
+                background: "var(--bg1)",
+                border: "1px solid var(--line)",
                 borderRadius: T.r,
                 padding: "10px 14px 10px 40px",
                 fontSize: 14,
-                color: T.text,
+                color: "var(--text)",
                 outline: "none",
                 boxSizing: "border-box",
-                boxShadow: T.shadow,
+                boxShadow: "0 20px 40px -10px rgba(0,0,0,0.18)",
                 fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
               }}
             />
@@ -520,11 +508,11 @@ function RecruiterDashboard({ auth, onLogout }) {
             <div style={{
               textAlign: "center",
               padding: "60px 24px",
-              color: T.text3,
+              color: "var(--text3)",
               fontSize: 14,
-              background: T.card,
+              background: "var(--bg1)",
               borderRadius: T.r,
-              border: `1px solid ${T.hairline}`,
+              border: "1px solid var(--line)",
               fontFamily: "var(--sans, 'Plus Jakarta Sans', sans-serif)",
             }}>
               {search ? "No candidates match your search." : "No profiles available yet."}

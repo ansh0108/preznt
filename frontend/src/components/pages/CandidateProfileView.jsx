@@ -1,24 +1,24 @@
 import { useState } from "react";
 
-const P    = "#4648d4";
-const T1   = "#111c2d";
-const T2   = "#464554";
-const T3   = "#767586";
-const BG   = "#f9f9ff";
-const BG1  = "#ffffff";
-const BG2  = "#f0f3ff";
-const BGC  = "#e7eeff";
-const BGH  = "#dee8ff";
-const BGFIX = "#e1e0ff";
-const BD   = "rgba(0,0,0,0.06)";
-const BD2  = "rgba(0,0,0,0.06)";
-const card = { background: BG1, border: `1px solid ${BD2}`, borderRadius: 12 };
+const P    = "var(--accent)";
+const T1   = "var(--text)";
+const T2   = "var(--text2)";
+const T3   = "var(--text3)";
+const BG   = "var(--bg)";
+const BG1  = "var(--bg1)";
+const BG2  = "var(--bg2)";
+const BGC  = "var(--bg3)";
+const BGH  = "var(--bg3)";
+const BGFIX = "var(--bg4)";
+const BD   = "var(--line)";
+const BD2  = "var(--line)";
+const card = { background: "var(--bg1)", border: "1px solid var(--line)", borderRadius: 12 };
 
 function TopNav({ onBack }) {
   return (
     <nav style={{
-      background: "rgba(249,249,255,0.85)", backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,0.05)",
+      background: "rgba(18,19,25,0.85)", backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid var(--line)",
       display: "flex", justifyContent: "space-between", alignItems: "center",
       padding: "0 40px", height: 80, position: "sticky", top: 0, zIndex: 50,
     }}>
@@ -112,7 +112,7 @@ function LeftSidebar({ candidate, onShortlist, shortlisted }) {
           {candidate.skills.map(skill => {
             const hl = candidate.highlightSkills.has(skill);
             return (
-              <span key={skill} style={{ background: hl ? "rgba(70,72,212,0.08)" : BGC, color: hl ? P : T1, border: `1px solid ${hl ? "rgba(70,72,212,0.2)" : BD}`, padding: "4px 12px", borderRadius: 4, fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              <span key={skill} style={{ background: hl ? "var(--accent-d)" : BGC, color: hl ? P : T1, border: `1px solid ${hl ? "var(--accent-b)" : BD}`, padding: "4px 12px", borderRadius: 4, fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 {skill}
               </span>
             );

@@ -1,22 +1,22 @@
 import { useState } from "react";
 
-const P    = "#4648d4";
-const T1   = "#111c2d";
-const T2   = "#464554";
-const T3   = "#767586";
-const BG   = "#f9f9ff";
-const BG1  = "#ffffff";
-const BG2  = "#f0f3ff";
-const BGC  = "#e7eeff";
-const BGH  = "#dee8ff";
-const BGOV = "#d8e3fb";
-const BGFIX = "#e1e0ff";
-const BD   = "rgba(0,0,0,0.06)";
+const P    = "var(--accent)";
+const T1   = "var(--text)";
+const T2   = "var(--text2)";
+const T3   = "var(--text3)";
+const BG   = "var(--bg)";
+const BG1  = "var(--bg1)";
+const BG2  = "var(--bg2)";
+const BGC  = "var(--bg3)";
+const BGH  = "var(--bg3)";
+const BGOV = "var(--bg4)";
+const BGFIX = "var(--bg4)";
+const BD   = "var(--line)";
 
 const COLORS = [
-  { label: "Background", hex: "#ffffff" },
-  { label: "Text Primary", hex: "#111c2d" },
-  { label: "Accent Color", hex: "#4648d4" },
+  { label: "Background", hex: "#121319" },
+  { label: "Text Primary", hex: "#e4e1eb" },
+  { label: "Accent Color", hex: "#818cf8" },
 ];
 
 const DENSITIES = ["Compact", "Relaxed", "Airy"];
@@ -52,7 +52,7 @@ function TopBar({ onBack, portfolio }) {
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           👁 Preview
         </button>
-        <button style={{ padding: "8px 12px", background: P, color: "#fff", border: "none", borderRadius: 4, fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 12px rgba(70,72,212,0.2)", transition: "opacity 0.15s" }}
+        <button style={{ padding: "8px 12px", background: P, color: "#fff", border: "none", borderRadius: 4, fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 12px rgba(129,140,248,0.2)", transition: "opacity 0.15s" }}
           onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
           onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
           Publish Updates
@@ -65,7 +65,7 @@ function TopBar({ onBack, portfolio }) {
 function ColorRow({ label, hex }) {
   const [hov, setHov] = useState(false);
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 8, borderRadius: 8, margin: "0 -8px", cursor: "pointer", transition: "background 0.15s", background: hov ? "rgba(216,227,251,0.5)" : "transparent" }}
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 8, borderRadius: 8, margin: "0 -8px", cursor: "pointer", transition: "background 0.15s", background: hov ? "var(--accent-d)" : "transparent" }}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ width: 24, height: 24, borderRadius: "50%", background: hex, border: "1px solid rgba(0,0,0,0.10)", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", flexShrink: 0 }} />
@@ -119,7 +119,7 @@ function LeftPanel({ density, setDensity, darkMode, setDarkMode }) {
               <div key={label} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <label style={{ fontSize: 12, fontWeight: 500, color: T2, fontFamily: "var(--sans)" }}>{label}</label>
                 <button style={{ width: "100%", background: BG1, border: `1px solid ${BD}`, borderRadius: 4, padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "border-color 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(70,72,212,0.30)"}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent-b)"}
                   onMouseLeave={e => e.currentTarget.style.borderColor = BD}>
                   <span style={{ fontFamily: serif ? "var(--serif)" : "var(--sans)", fontSize: 16, color: T1, lineHeight: 1 }}>{font}</span>
                   <span style={{ color: T2, fontSize: 16 }}>∨</span>
@@ -138,7 +138,7 @@ function LeftPanel({ density, setDensity, darkMode, setDarkMode }) {
               const gap = d === "Compact" ? 2 : d === "Relaxed" ? 4 : 6;
               return (
                 <button key={d} onClick={() => setDensity(d)}
-                  style={{ padding: "12px 0", border: active ? `1px solid ${P}` : `1px solid ${BD}`, borderRadius: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all 0.15s", background: active ? "rgba(70,72,212,0.04)" : "transparent", boxShadow: active ? "0 0 0 1px rgba(70,72,212,0.2)" : "none" }}>
+                  style={{ padding: "12px 0", border: active ? `1px solid ${P}` : `1px solid ${BD}`, borderRadius: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all 0.15s", background: active ? "var(--accent-d)" : "transparent", boxShadow: active ? "0 0 0 1px rgba(129,140,248,0.2)" : "none" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap }}>
                     {[24, 24, 16].map((w, i) => (
                       <div key={i} style={{ width: w, height: 4, background: active ? P : BGOV, borderRadius: 100 }} />
