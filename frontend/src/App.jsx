@@ -57,7 +57,10 @@ export default function App() {
     return (
       <>
         <GlobalStyle />
-        <PortfolioPage userId={userId} onBack={() => { window.location.hash = ""; setPage("landing"); }} />
+        <PortfolioPage userId={userId} onBack={() => {
+          if (auth) { window.location.hash = "#/dashboard"; setPage("dashboard"); }
+          else { window.location.hash = ""; setPage("landing"); }
+        }} />
       </>
     );
   }
