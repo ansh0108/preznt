@@ -23,8 +23,13 @@ const glass = {
 const CSS_VARS = ["--bg","--bg1","--bg2","--bg3","--line","--line2","--text","--text2","--text3","--accent","--accent-d","--accent-b"];
 
 function applyThemeVars(profile) {
-  const { accent = "#818cf8", dark_mode: _darkMode = false } = profile.preferences || {};
+  const { accent = "#818cf8", dark_mode: darkMode = true } = profile.preferences || {};
   const root = document.documentElement;
+  if (darkMode === false) {
+    document.body.classList.add("light-mode");
+  } else {
+    document.body.classList.remove("light-mode");
+  }
   root.style.setProperty("--accent",   accent);
   root.style.setProperty("--accent-d", accent + "14");
   root.style.setProperty("--accent-b", accent + "33");
@@ -258,7 +263,10 @@ function PortfolioPage({ userId, onBack }) {
   useEffect(() => {
     if (!profile) return;
     applyThemeVars(profile);
-    return () => CSS_VARS.forEach(v => document.documentElement.style.removeProperty(v));
+    return () => {
+      CSS_VARS.forEach(v => document.documentElement.style.removeProperty(v));
+      document.body.classList.remove("light-mode");
+    };
   }, [profile]);
 
   const switchTab = (t) => { setTab(t); axios.post(`${API}/analytics/${userId}/tab`, { tab: t }).catch(() => {}); };

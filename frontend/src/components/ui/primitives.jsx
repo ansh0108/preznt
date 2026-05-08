@@ -6,9 +6,18 @@ export const Spinner = ({ size = 16, color = "var(--accent)" }) => (
 
 export const BulletText = ({ text, style: s = {} }) => {
   if (!text) return null;
-  const hasBullets = text.includes("•");
-  if (!hasBullets) return <div style={{ whiteSpace: "pre-line", ...s }}>{text}</div>;
-  const bullets = text.split("•").map(b => b.trim()).filter(Boolean);
+
+  // Normalize dash-style bullets (lines starting with - or –) into • bullets
+  const normalized = text.replace(/^[\s]*[-–]\s+/gm, "• ");
+
+  const hasBullets = normalized.includes("•");
+  if (!hasBullets) {
+    // Clean up inline " - " used as a separator (but preserve date ranges like "2020 - 2023")
+    const cleaned = normalized.replace(/ - (?=[A-Z])/g, " — ");
+    return <div style={{ whiteSpace: "pre-line", ...s }}>{cleaned}</div>;
+  }
+
+  const bullets = normalized.split("•").map(b => b.trim()).filter(Boolean);
   return (
     <div style={s}>
       {bullets.map((b, i) => (
