@@ -15,7 +15,7 @@ import CoverLetter from "../features/CoverLetter";
 import InterviewPrep from "../features/InterviewPrep";
 
 // ─── useProfileData ────────────────────────────────────────────────────────────
-function useProfileData(activePortfolioId) {
+function useProfileData(activePortfolioId, auth) {
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [building, setBuilding] = useState(false);
@@ -49,7 +49,7 @@ function useProfileData(activePortfolioId) {
 
   const saveLinks = async (updatedLinks) => {
     try {
-      await axios.patch(`${API}/profile/${activePortfolioId}/links`, { links: updatedLinks });
+      await axios.patch(`${API}/profile/${activePortfolioId}/links`, { links: updatedLinks }, { headers: { Authorization: `Bearer ${auth?.token}` } });
       await loadProfile();
     } catch {}
   };
@@ -105,7 +105,7 @@ function usePortfolioList(auth, activePortfolioId, setActivePortfolioId) {
 // ─── usePortfolioManager ───────────────────────────────────────────────────────
 function usePortfolioManager(auth, initialPortfolioId) {
   const [activePortfolioId, setActivePortfolioId] = useState(initialPortfolioId);
-  const profileData = useProfileData(activePortfolioId);
+  const profileData = useProfileData(activePortfolioId, auth);
   const portfolioList = usePortfolioList(auth, activePortfolioId, setActivePortfolioId);
 
   useEffect(() => { profileData.loadProfile(); portfolioList.loadPortfolios(); }, [activePortfolioId]);

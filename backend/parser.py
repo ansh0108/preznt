@@ -219,6 +219,7 @@ def parse_linkedin_structured(text: str) -> dict:
 
         location = ""
         description_parts = []
+        found_real_description = False
         for fl in forward_lines:
             # Skip duration lines
             if duration_re.search(fl) and len(fl) < 30:
@@ -226,17 +227,24 @@ def parse_linkedin_structured(text: str) -> dict:
             # Skip employment-type labels
             if fl.lower().strip() in EMPLOYMENT_TYPES:
                 continue
-            # Skip department/group names: short lines with parenthetical acronyms
-            # e.g. "Business Intelligence Group (UIUC)"
-            if re.search(r'\([A-Z]{2,6}\)', fl) and len(fl) < 80:
+            # Skip sub-org / department names:
+            # 1. Short lines with parenthetical acronyms: "Business Intelligence Group (UIUC)"
+            # 2. Short title-cased lines that appear before any real description bullet
+            if re.search(r'[\(\（][A-Z]{2,6}[\)\）]', fl) and len(fl) < 100:
+                continue
+            if (not found_real_description and len(fl) < 55
+                    and not fl.startswith(('•', '-', '·', '*'))
+                    and not date_line_re.search(fl)
+                    and fl and fl[0].isupper()
+                    and not re.search(r'\b(led|built|developed|managed|designed|created|implemented|analyzed|improved|increased|reduced|achieved|delivered|collaborated|worked|supported|helped|responsible|owned|drove|launched|scaled)\b', fl.lower())):
                 continue
             if not location and len(fl) < 60 and re.search(
                     r',|area|india|il\b|ny\b|ca\b|remote|united states|boston|chicago|new york',
                     fl.lower()):
                 location = fl
             elif not date_line_re.search(fl) and (
-                    len(fl) > 40 or fl.startswith('-') or fl.startswith('•')):
-                # Require ≥40 chars for unformatted lines (filters stray short labels)
+                    len(fl) > 40 or fl.startswith(('•', '-', '·', '*'))):
+                found_real_description = True
                 description_parts.append(fl)
 
         experience.append({
