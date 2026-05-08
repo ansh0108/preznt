@@ -319,25 +319,33 @@ def parse_linkedin_structured(text: str) -> dict:
 def parse_github_repos(github_urls: list) -> list:
     repos = []
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
-    headers = {
-        "Accept": "application/vnd.github.v3+json",
-        **({"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {})
-    }
+
+    def gh_headers(with_token: bool) -> dict:
+        h = {"Accept": "application/vnd.github.v3+json"}
+        if with_token and GITHUB_TOKEN:
+            h["Authorization"] = f"token {GITHUB_TOKEN}"
+        return h
+
+    def gh_get(endpoint: str, use_token: bool) -> requests.Response:
+        resp = requests.get(endpoint, headers=gh_headers(use_token), timeout=10)
+        if resp.status_code == 401 and use_token:
+            resp = requests.get(endpoint, headers=gh_headers(False), timeout=10)
+        return resp
+
+    use_token = bool(GITHUB_TOKEN)
     for url in github_urls:
         try:
             match = re.search(r"github\.com/([^/]+)/([^/\s]+)", url)
             if not match:
                 continue
             owner, repo_name = match.group(1), match.group(2).rstrip("/")
-            resp = requests.get(
-                f"https://api.github.com/repos/{owner}/{repo_name}", headers=headers, timeout=10)
+            resp = gh_get(f"https://api.github.com/repos/{owner}/{repo_name}", use_token)
             if resp.status_code != 200:
                 continue
             data = resp.json()
 
             readme_text = ""
-            readme_resp = requests.get(
-                f"https://api.github.com/repos/{owner}/{repo_name}/readme", headers=headers, timeout=10)
+            readme_resp = gh_get(f"https://api.github.com/repos/{owner}/{repo_name}/readme", use_token)
             if readme_resp.status_code == 200:
                 import base64
                 raw = readme_resp.json().get("content", "")
