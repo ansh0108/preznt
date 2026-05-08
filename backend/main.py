@@ -832,26 +832,34 @@ async def get_photo(user_id: str):
 @app.get("/github/repos")
 async def get_github_user_repos(username: str = Query(...)):
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
-    headers = {
-        "Accept": "application/vnd.github.v3+json",
-        **({"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {})
-    }
+
+    def make_headers(with_token: bool):
+        h = {"Accept": "application/vnd.github.v3+json"}
+        if with_token and GITHUB_TOKEN:
+            h["Authorization"] = f"token {GITHUB_TOKEN}"
+        return h
+
+    def fetch_page(page: int, with_token: bool):
+        return requests.get(
+            f"https://api.github.com/users/{username}/repos",
+            headers=make_headers(with_token),
+            params={"per_page": 100, "page": page, "sort": "updated", "type": "owner"},
+            timeout=10,
+        )
+
     all_repos = []
+    use_token = bool(GITHUB_TOKEN)
     page = 1
     while True:
-        resp = requests.get(
-            f"https://api.github.com/users/{username}/repos",
-            headers=headers,
-            params={"per_page": 100, "page": page,
-                    "sort": "updated", "type": "owner"},
-            timeout=10
-        )
+        resp = fetch_page(page, use_token)
+        # If token is bad, retry once without it
+        if resp.status_code == 401 and use_token:
+            use_token = False
+            resp = fetch_page(page, use_token)
         if resp.status_code == 404:
-            raise HTTPException(
-                status_code=404, detail=f"GitHub user '{username}' not found")
+            raise HTTPException(status_code=404, detail=f"GitHub user '{username}' not found")
         if resp.status_code != 200:
-            raise HTTPException(
-                status_code=400, detail=f"GitHub API error: {resp.status_code}")
+            raise HTTPException(status_code=400, detail=f"GitHub API error: {resp.status_code}")
         data = resp.json()
         if not data:
             break
