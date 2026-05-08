@@ -165,6 +165,47 @@ function PortfolioSidebar({ profile, hideSections }) {
         );
       })()}
 
+      {/* Links & Credentials card */}
+      {!hideSections.includes("links") && profile.links?.length > 0 && (
+        <div
+          className="card-glow"
+          style={{
+            background: "var(--bg1)", border: "1px solid var(--line)",
+            borderRadius: 12, padding: "18px 20px", animation: "fadeUp 0.45s ease",
+          }}
+        >
+          <SecHead style={{ marginBottom: 12 }}>Links & Credentials</SecHead>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {profile.links.map((l, i) => {
+              const colors = {
+                product:     "var(--accent)",
+                publication: "var(--rose)",
+                certificate: "var(--teal)",
+                award:       "var(--amber)",
+                other:       "var(--text3)",
+              };
+              const color = colors[l.type] || "var(--text3)";
+              return (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>
+                      {l.type === "certificate" ? "cert" : l.type || "link"}
+                    </div>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.title}</div>
+                    {l.issuer && <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 1 }}>{l.issuer}</div>}
+                  </div>
+                  {l.url && (
+                    <a href={l.url} target="_blank" rel="noreferrer" style={{ flexShrink: 0, textDecoration: "none", paddingTop: 14 }}>
+                      <span style={{ fontSize: 11, color, background: `${color}14`, border: `1px solid ${color}33`, padding: "2px 8px", borderRadius: 100, fontWeight: 600, whiteSpace: "nowrap" }}>↗</span>
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Skills card */}
       {!hideSections.includes("skills") && profile.skills?.length > 0 && (
         <div
