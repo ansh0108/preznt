@@ -230,13 +230,16 @@ def parse_linkedin_structured(text: str) -> dict:
             # Skip sub-org / department names:
             # 1. Short lines with parenthetical acronyms: "Business Intelligence Group (UIUC)"
             # 2. Short title-cased lines that appear before any real description bullet
-            if re.search(r'[\(\（][A-Z]{2,6}[\)\）]', fl) and len(fl) < 100:
+            # 3. Lines containing "Group", "Team", "Division", "Department" etc. before first bullet
+            if re.search(r'[\(\（][A-Za-z]{2,8}[\)\）]', fl) and len(fl) < 100:
                 continue
-            if (not found_real_description and len(fl) < 55
+            if re.search(r'\b(group|team|division|department|unit|center|centre|lab|laboratory|program|programme|institute|initiative|office|bureau|branch|sector|hub|studio|guild)\b', fl.lower()) and len(fl) < 80 and not fl.startswith(('•', '-', '·', '*')):
+                continue
+            if (not found_real_description and len(fl) < 70
                     and not fl.startswith(('•', '-', '·', '*'))
                     and not date_line_re.search(fl)
                     and fl and fl[0].isupper()
-                    and not re.search(r'\b(led|built|developed|managed|designed|created|implemented|analyzed|improved|increased|reduced|achieved|delivered|collaborated|worked|supported|helped|responsible|owned|drove|launched|scaled)\b', fl.lower())):
+                    and not re.search(r'\b(led|built|developed|managed|designed|created|implemented|analyzed|improved|increased|reduced|achieved|delivered|collaborated|worked|supported|helped|responsible|owned|drove|launched|scaled|contributed|maintained|optimized|automated|integrated|coordinated|facilitated|conducted|performed|executed)\b', fl.lower())):
                 continue
             if not location and len(fl) < 60 and re.search(
                     r',|area|india|il\b|ny\b|ca\b|remote|united states|boston|chicago|new york',

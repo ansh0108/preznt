@@ -48,10 +48,8 @@ function useProfileData(activePortfolioId, auth) {
   };
 
   const saveLinks = async (updatedLinks) => {
-    try {
-      await axios.patch(`${API}/profile/${activePortfolioId}/links`, { links: updatedLinks }, { headers: { Authorization: `Bearer ${auth?.token}` } });
-      await loadProfile();
-    } catch {}
+    await axios.patch(`${API}/profile/${activePortfolioId}/links`, { links: updatedLinks }, { headers: { Authorization: `Bearer ${auth?.token}` } });
+    await loadProfile();
   };
 
   return { profile, setProfile, profileLoading, building, buildError, built, loadProfile, buildPortfolio, uploadFile, saveLinks };
@@ -190,11 +188,12 @@ function PortfolioSwitcher({ portfolios, activePortfolioId, setActivePortfolioId
 }
 
 // ─── OnboardingSteps ───────────────────────────────────────────────────────────
-function OnboardingSteps({ hasLinkedin, hasResume, hasGithub, built, building, buildError, uploadFile, setAddingGithub, buildPortfolio }) {
+function OnboardingSteps({ hasLinkedin, hasResume, hasGithub, hasLinks, built, building, buildError, uploadFile, setAddingGithub, buildPortfolio }) {
   const steps = [
     { label: "Upload LinkedIn PDF", done: hasLinkedin, id: "onb-li", accept: ".pdf", type: "linkedin", action: "upload", hint: "Go to your LinkedIn profile → More → Save to PDF" },
     { label: "Upload Resume", done: hasResume, id: "onb-cv", accept: ".pdf,.docx,.pptx,.txt", type: "resume", action: "upload", hint: "PDF, Word, or plain text — any format works" },
     { label: "Connect GitHub", done: hasGithub, action: "github", hint: "Shows your projects on the portfolio — optional but recommended" },
+    { label: "Links & Credentials", done: hasLinks, action: "none", hint: hasLinks ? "Links added — visible in your portfolio" : "Add product links, certs, or publications from the left sidebar" },
     { label: "Portfolio built", done: built, action: "none", hint: building ? "Building your AI portfolio now…" : "Happens automatically after each upload" },
   ];
   const allDone = steps.every(s => s.done);
@@ -518,6 +517,7 @@ function GithubSection({ hasGithub, pm, github, setGithub }) {
 
 // ─── LinksPanel ────────────────────────────────────────────────────────────────
 function LinksPanel({ links, saveLinks, link, setLink, profile }) {
+  const [saveErr, setSaveErr] = useState(null);
   return (
     <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
@@ -564,11 +564,18 @@ function LinksPanel({ links, saveLinks, link, setLink, profile }) {
           <input value={link.value.issuer} onChange={e => setLink(l => ({ ...l, value: { ...l.value, issuer: e.target.value } }))} placeholder={link.value.type === "publication" ? "Published in (optional)" : link.value.type === "product" ? "Short description (optional)" : "Issued by (optional)"} style={{ ...linkInputSt, marginTop: 6 }} />
           <input value={link.value.url} onChange={e => setLink(l => ({ ...l, value: { ...l.value, url: e.target.value } }))} placeholder="URL (optional)" style={{ ...linkInputSt, marginTop: 6 }} />
           <input value={link.value.date} onChange={e => setLink(l => ({ ...l, value: { ...l.value, date: e.target.value } }))} placeholder="e.g. March 2024 (optional)" style={{ ...linkInputSt, marginTop: 6 }} />
+          {saveErr && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 8 }}>{saveErr}</div>}
           <button disabled={!link.value.title.trim() || link.saving} className="b-primary"
             onClick={async () => {
+              setSaveErr(null);
               setLink(l => ({ ...l, saving: true }));
-              await saveLinks([...(profile?.links || []), { ...link.value }]);
-              setLink({ adding: false, value: { type: "product", title: "", url: "", issuer: "", date: "" }, saving: false });
+              try {
+                await saveLinks([...(profile?.links || []), { ...link.value }]);
+                setLink({ adding: false, value: { type: "product", title: "", url: "", issuer: "", date: "" }, saving: false });
+              } catch (e) {
+                setSaveErr("Failed to save. Please try again.");
+                setLink(l => ({ ...l, saving: false }));
+              }
             }}
             style={{ marginTop: 10, width: "100%", padding: "8px", borderRadius: "var(--r-md)", background: "var(--accent)", border: "none", color: "#fff", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: (!link.value.title.trim() || link.saving) ? 0.5 : 1 }}>
             {link.saving ? "Saving…" : "Add"}
@@ -580,7 +587,7 @@ function LinksPanel({ links, saveLinks, link, setLink, profile }) {
 }
 
 // ─── LeftSidebar ───────────────────────────────────────────────────────────────
-function LeftSidebar({ pm, hasLinkedin, hasResume, hasGithub, github, setGithub, link, setLink, links }) {
+function LeftSidebar({ pm, hasLinkedin, hasResume, hasGithub, github, setGithub, link, setLink, links, onReparseLinkedin, reparsingLinkedin }) {
   return (
     <div style={{ width: 300, flexShrink: 0 }}>
       <PortfolioSwitcher portfolios={pm.portfolios} activePortfolioId={pm.activePortfolioId} setActivePortfolioId={pm.setActivePortfolioId} setProfile={pm.setProfile} creatingPortfolio={pm.creatingPortfolio} setCreatingPortfolio={pm.setCreatingPortfolio} newRoleName={pm.newRoleName} setNewRoleName={pm.setNewRoleName} creatingLoading={pm.creatingLoading} createPortfolio={pm.createPortfolio} deletingPortfolioId={pm.deletingPortfolioId} setDeletingPortfolioId={pm.setDeletingPortfolioId} deletePortfolio={pm.deletePortfolio} deleteLoading={pm.deleteLoading} setPrimary={pm.setPrimary} />
@@ -598,6 +605,12 @@ function LeftSidebar({ pm, hasLinkedin, hasResume, hasGithub, github, setGithub,
         <SecHead style={{ marginBottom: 14 }}>Data Sources</SecHead>
         <UploadRow label="LinkedIn PDF" icon="user" done={hasLinkedin} accept=".pdf" onFile={f => pm.uploadFile(f, "linkedin")}
           hint={[["Go to your LinkedIn profile", "Click your profile photo → View Profile"], ['Click the "…" More button', "Below your name and headline"], ['Select "Save to PDF"', "Downloads your profile instantly as a PDF"]]} />
+        {hasLinkedin && (
+          <button onClick={onReparseLinkedin} disabled={reparsingLinkedin}
+            style={{ marginTop: -4, marginBottom: 8, marginLeft: 36, background: "transparent", border: "none", cursor: reparsingLinkedin ? "default" : "pointer", fontSize: 11, color: "var(--text3)", padding: 0, display: "flex", alignItems: "center", gap: 4, opacity: reparsingLinkedin ? 0.5 : 1 }}>
+            {reparsingLinkedin ? <><Spinner size={9} color="var(--text3)" /> Re-parsing…</> : "↺ Fix parsing issues"}
+          </button>
+        )}
         <UploadRow label="Resume / CV" icon="file" done={hasResume} accept=".pdf,.docx,.pptx,.txt" onFile={f => pm.uploadFile(f, "resume")} />
         <GithubSection hasGithub={hasGithub} pm={pm} github={github} setGithub={setGithub} />
         <LinksPanel links={links} saveLinks={pm.saveLinks} link={link} setLink={setLink} profile={pm.profile} />
@@ -607,7 +620,7 @@ function LeftSidebar({ pm, hasLinkedin, hasResume, hasGithub, github, setGithub,
 }
 
 // ─── RightPanel ────────────────────────────────────────────────────────────────
-function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClState, hasLinkedin, hasResume, hasGithub, setGithub, shareUrl, auth }) {
+function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClState, hasLinkedin, hasResume, hasGithub, hasLinks, setGithub, shareUrl, auth }) {
   return (
     <div style={{ flex: 1, minWidth: 0 }}>
       {/* Tab bar */}
@@ -664,6 +677,7 @@ function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClStat
             hasLinkedin={hasLinkedin}
             hasResume={hasResume}
             hasGithub={hasGithub}
+            hasLinks={hasLinks}
             built={pm.built}
             building={pm.building}
             buildError={pm.buildError}
@@ -722,6 +736,7 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
   const [link, setLink] = useState({ adding: false, value: { type: "product", title: "", url: "", issuer: "", date: "" }, saving: false });
   const [gapState, setGapState] = useState({ role: "", result: null, error: null });
   const [clState, setClState] = useState({ jd: "", company: "", role: "", result: null });
+  const [reparsingLinkedin, setReparsingLinkedin] = useState(false);
 
   if (pm.profileLoading) return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
@@ -738,6 +753,15 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
     ? `${window.location.origin}${window.location.pathname}#/portfolio/${nameToSlug(auth.profile_name)}${roleSlug}-${pm.activePortfolioId}`
     : `${window.location.origin}${window.location.pathname}#/portfolio/${pm.activePortfolioId}`;
   const links = pm.profile?.links || [];
+
+  const handleReparseLinkedin = async () => {
+    setReparsingLinkedin(true);
+    try {
+      await axios.post(`${API}/reparse/linkedin/${pm.activePortfolioId}`);
+      await pm.loadProfile();
+      pm.buildPortfolio();
+    } catch {} finally { setReparsingLinkedin(false); }
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", position: "relative" }}>
@@ -763,6 +787,8 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
             link={link}
             setLink={setLink}
             links={links}
+            onReparseLinkedin={handleReparseLinkedin}
+            reparsingLinkedin={reparsingLinkedin}
           />
           <RightPanel
             tab={tab}
@@ -775,6 +801,7 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
             hasLinkedin={hasLinkedin}
             hasResume={hasResume}
             hasGithub={hasGithub}
+            hasLinks={links.length > 0}
             setGithub={setGithub}
             shareUrl={shareUrl}
             auth={auth}

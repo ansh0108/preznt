@@ -920,6 +920,26 @@ async def upload_linkedin(user_id: str, file: UploadFile = File(...)):
     return {"message": "LinkedIn PDF uploaded", "found": {"experience": len(profile["experience"]), "education": len(profile["education"]), "skills": len(profile["skills"])}}
 
 
+@app.post("/reparse/linkedin/{user_id}")
+async def reparse_linkedin(user_id: str):
+    """Re-run the LinkedIn parser on the already-uploaded PDF using the latest parser code."""
+    profile = load_profile(user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    filepath = os.path.join(UPLOADS_DIR, f"{user_id}_linkedin.pdf")
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="No LinkedIn PDF found — please re-upload")
+    parsed = parse_linkedin_pdf(filepath)
+    structured = parsed.get("structured", {})
+    profile["experience"] = structured.get("experience", [])
+    profile["education"] = structured.get("education", [])
+    profile["skills"] = structured.get("skills", [])
+    profile["linkedin_summary"] = structured.get("summary", "")
+    profile["indexed"] = False
+    save_profile(user_id, profile)
+    return {"message": "LinkedIn re-parsed", "found": {"experience": len(profile["experience"]), "education": len(profile["education"]), "skills": len(profile["skills"])}}
+
+
 @app.post("/upload/document/{user_id}")
 async def upload_document(user_id: str, file: UploadFile = File(...)):
     profile = load_profile(user_id)
