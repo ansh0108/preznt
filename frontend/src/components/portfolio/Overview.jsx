@@ -4,10 +4,11 @@ import Icon from "../ui/Icon";
 import OrgLogo from "../ui/OrgLogo";
 
 const LINK_TYPE_META = {
-  publication: { label: "Publications",  color: "var(--rose)",  bg: "rgba(219,39,119,0.08)",  border: "rgba(219,39,119,0.25)", icon: "file"  },
-  certificate:  { label: "Certifications", color: "var(--teal)", bg: "rgba(45,212,191,0.08)",   border: "rgba(45,212,191,0.25)",  icon: "check" },
-  award:        { label: "Awards",         color: "var(--amber)", bg: "rgba(217,119,6,0.08)",   border: "rgba(217,119,6,0.25)",   icon: "star"  },
-  other:        { label: "Other Links",    color: "var(--accent)", bg: "var(--accent-d)",        border: "var(--accent-b)",        icon: "link"  },
+  product:     { label: "Products & Projects", color: "var(--accent)", bg: "var(--accent-d)",        border: "var(--accent-b)",        icon: "external" },
+  publication: { label: "Publications",        color: "var(--rose)",   bg: "rgba(219,39,119,0.08)",  border: "rgba(219,39,119,0.25)", icon: "file"  },
+  certificate: { label: "Certifications",      color: "var(--teal)",   bg: "rgba(45,212,191,0.08)",  border: "rgba(45,212,191,0.25)",  icon: "check" },
+  award:       { label: "Awards",              color: "var(--amber)",  bg: "rgba(217,119,6,0.08)",   border: "rgba(217,119,6,0.25)",   icon: "star"  },
+  other:       { label: "Other Links",         color: "var(--text3)",  bg: "var(--bg3)",             border: "var(--line2)",           icon: "link"  },
 };
 
 function ExperienceEntry({ exp, isLast }) {
@@ -64,7 +65,7 @@ function LinksSection({ links }) {
     grouped[t].push(l);
   }
 
-  const linkGroups = ["publication", "certificate", "award", "other"].filter(t => grouped[t]).map(type => {
+  const linkGroups = ["product", "publication", "certificate", "award", "other"].filter(t => grouped[t]).map(type => {
     const meta = LINK_TYPE_META[type];
     return (
       <div key={type}>
@@ -104,7 +105,7 @@ function LinksSection({ links }) {
 
   return (
     <div>
-      <SecHead>Publications & Credentials</SecHead>
+      <SecHead>Links & Credentials</SecHead>
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>{linkGroups}</div>
     </div>
   );

@@ -119,6 +119,10 @@ function FeaturedRepos({ repos, prefs, update }) {
 function HeadlineRow({ portfolioId, auth, profile, onSave }) {
   const [hl, setHl] = useState({ title: profile?.title || "", tagline: profile?.tagline || "", url: profile?.linkedin_url || "", saving: false, saved: false });
 
+  useEffect(() => {
+    setHl({ title: profile?.title || "", tagline: profile?.tagline || "", url: profile?.linkedin_url || "", saving: false, saved: false });
+  }, [portfolioId]);
+
   const save = async () => {
     setHl(h => ({ ...h, saving: true }));
     try {

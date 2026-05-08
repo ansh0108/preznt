@@ -547,22 +547,28 @@ function LinksPanel({ links, saveLinks, link, setLink, profile }) {
       {link.adding && (
         <div style={{ marginTop: 10, background: "var(--bg2)", borderRadius: "var(--r-md)", border: "1px solid var(--line2)", padding: "14px" }}>
           <div style={{ display: "flex", gap: 5, marginBottom: 10, flexWrap: "wrap" }}>
-            {["certificate", "publication", "award", "other"].map(t => (
-              <button key={t} onClick={() => setLink(l => ({ ...l, value: { ...l.value, type: t } }))} className="b-pill"
-                style={{ padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: "pointer", background: link.value.type === t ? "var(--accent-d)" : "var(--bg3)", border: `1px solid ${link.value.type === t ? "var(--accent)" : "var(--line2)"}`, color: link.value.type === t ? "var(--accent)" : "var(--text3)" }}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+            {[
+              { id: "product", label: "Product / Project" },
+              { id: "certificate", label: "Certificate" },
+              { id: "publication", label: "Publication" },
+              { id: "award", label: "Award" },
+              { id: "other", label: "Other" },
+            ].map(t => (
+              <button key={t.id} onClick={() => setLink(l => ({ ...l, value: { ...l.value, type: t.id } }))} className="b-pill"
+                style={{ padding: "4px 10px", borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: "pointer", background: link.value.type === t.id ? "var(--accent-d)" : "var(--bg3)", border: `1px solid ${link.value.type === t.id ? "var(--accent)" : "var(--line2)"}`, color: link.value.type === t.id ? "var(--accent)" : "var(--text3)" }}>
+                {t.label}
               </button>
             ))}
           </div>
           <input value={link.value.title} onChange={e => setLink(l => ({ ...l, value: { ...l.value, title: e.target.value } }))} placeholder="Title *" style={linkInputSt} />
-          <input value={link.value.issuer} onChange={e => setLink(l => ({ ...l, value: { ...l.value, issuer: e.target.value } }))} placeholder={link.value.type === "publication" ? "Published in (optional)" : "Issued by (optional)"} style={{ ...linkInputSt, marginTop: 6 }} />
+          <input value={link.value.issuer} onChange={e => setLink(l => ({ ...l, value: { ...l.value, issuer: e.target.value } }))} placeholder={link.value.type === "publication" ? "Published in (optional)" : link.value.type === "product" ? "Short description (optional)" : "Issued by (optional)"} style={{ ...linkInputSt, marginTop: 6 }} />
           <input value={link.value.url} onChange={e => setLink(l => ({ ...l, value: { ...l.value, url: e.target.value } }))} placeholder="URL (optional)" style={{ ...linkInputSt, marginTop: 6 }} />
           <input value={link.value.date} onChange={e => setLink(l => ({ ...l, value: { ...l.value, date: e.target.value } }))} placeholder="e.g. March 2024 (optional)" style={{ ...linkInputSt, marginTop: 6 }} />
           <button disabled={!link.value.title.trim() || link.saving} className="b-primary"
             onClick={async () => {
               setLink(l => ({ ...l, saving: true }));
               await saveLinks([...(profile?.links || []), { ...link.value }]);
-              setLink({ adding: false, value: { type: "certificate", title: "", url: "", issuer: "", date: "" }, saving: false });
+              setLink({ adding: false, value: { type: "product", title: "", url: "", issuer: "", date: "" }, saving: false });
             }}
             style={{ marginTop: 10, width: "100%", padding: "8px", borderRadius: "var(--r-md)", background: "var(--accent)", border: "none", color: "#fff", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: (!link.value.title.trim() || link.saving) ? 0.5 : 1 }}>
             {link.saving ? "Saving…" : "Add"}
@@ -713,7 +719,7 @@ function SeekerProfileDashboard({ auth, setAuth, onLogout, initialPortfolioId })
   const [tab, setTab] = useState("build");
   const [copied, setCopied] = useState(false);
   const [github, setGithub] = useState({ adding: false, url: "", loading: false });
-  const [link, setLink] = useState({ adding: false, value: { type: "certificate", title: "", url: "", issuer: "", date: "" }, saving: false });
+  const [link, setLink] = useState({ adding: false, value: { type: "product", title: "", url: "", issuer: "", date: "" }, saving: false });
   const [gapState, setGapState] = useState({ role: "", result: null, error: null });
   const [clState, setClState] = useState({ jd: "", company: "", role: "", result: null });
 
