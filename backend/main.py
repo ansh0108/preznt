@@ -23,12 +23,14 @@ from groq_client import call_groq
 from auth import init_db, create_user, get_user_by_email, get_user_by_id, verify_password, make_token, get_current_user, link_portfolio, add_portfolio_to_user, set_primary_portfolio, remove_portfolio_from_user
 from analytics import init_analytics_db, log_event, get_analytics as get_analytics_data
 from saved_analyses import init_saved_analyses_db, save_analysis, get_saved_analyses, delete_saved_analysis
+from rag_eval import init_rag_eval_db, judge_response, log_rag_score, get_rag_stats
 
 load_dotenv()
 app = FastAPI()
 init_db()
 init_analytics_db()
 init_saved_analyses_db()
+init_rag_eval_db()
 
 app.add_middleware(CORSMiddleware, allow_origins=[
                    "*"], allow_methods=["*"], allow_headers=["*"])
@@ -1085,7 +1087,31 @@ async def chat_stream_endpoint(req: ChatRequest):
             yield chunk
 
     log_event(req.user_id, "chat", req.question)
-    return StreamingResponse(_generate(), media_type="text/plain")
+
+    # Collect full answer and context in background for LLM-as-judge scoring
+    collected_chunks: list[str] = []
+
+    async def _generate_and_judge():
+        async for chunk in _generate():
+            collected_chunks.append(chunk)
+            yield chunk
+        # Fire judge in background after stream completes
+        full_answer = "".join(collected_chunks)
+        if full_answer and len(full_answer) > 20:
+            async def _run_judge():
+                try:
+                    from chatbot import search_index, INDEXES_DIR, build_profile_summary
+                    results = await asyncio.to_thread(
+                        search_index, req.question, req.user_id, top_k=6, index_dir=INDEXES_DIR
+                    )
+                    context = "\n\n".join([f"[{r['source']}]\n{r['text']}" for r in results])
+                    scores = await asyncio.to_thread(judge_response, req.question, context, full_answer)
+                    log_rag_score(req.user_id, req.question, scores)
+                except Exception as e:
+                    print(f"[RAG Eval] background judge error: {e}")
+            asyncio.create_task(_run_judge())
+
+    return StreamingResponse(_generate_and_judge(), media_type="text/plain")
 
 
 @app.post("/gap-analysis")
@@ -1098,6 +1124,64 @@ async def gap_analysis_endpoint(req: GapRequest):
     jd = req.job_description.strip() or req.target_role.strip()
     result = await analyze_gap(jd, req.user_id, profile["name"], profile)
     return result
+
+
+class RagInspectRequest(BaseModel):
+    user_id: str
+    question: str
+
+
+@app.post("/rag/inspect")
+async def rag_inspect_endpoint(req: RagInspectRequest):
+    """Return retrieved chunks + generated answer for a test question."""
+    profile = load_profile(req.user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    if not index_exists(req.user_id, INDEXES_DIR):
+        raise HTTPException(status_code=400, detail="Profile not indexed yet.")
+
+    from embeddings import search_index as _search
+    from chatbot import build_profile_summary
+    from groq_client import call_groq_chat
+
+    results = await asyncio.to_thread(_search, req.question, req.user_id, top_k=6, index_dir=INDEXES_DIR)
+    context_str = "\n\n".join([f"[{r['source']}]\n{r['text']}" for r in results])
+    structured = build_profile_summary(profile)
+    full_context = f"{structured}\n\n--- Relevant Details ---\n{context_str}".strip()
+
+    answer = await asyncio.to_thread(
+        call_groq_chat,
+        [
+            {
+                "role": "system",
+                "content": f"You are a portfolio assistant for {profile['name']}. Answer using ONLY the context below.\n\n{full_context}"
+            },
+            {"role": "user", "content": req.question}
+        ],
+        300, 0.3
+    )
+
+    scores = await asyncio.to_thread(judge_response, req.question, context_str, answer)
+
+    return {
+        "question": req.question,
+        "answer": answer,
+        "chunks": [
+            {
+                "rank": i + 1,
+                "source": r.get("source", "unknown"),
+                "text": r["text"],
+                "score": round(r.get("score", 0), 4),
+            }
+            for i, r in enumerate(results)
+        ],
+        "judge": scores,
+    }
+
+
+@app.get("/rag/stats/{user_id}")
+async def rag_stats_endpoint(user_id: str):
+    return get_rag_stats(user_id)
 
 
 @app.post("/interview-prep")
