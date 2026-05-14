@@ -9,6 +9,7 @@ import AuthPage from "./components/pages/AuthPage";
 import RecruiterDashboard from "./components/pages/RecruiterDashboard";
 import SeekerDashboard from "./components/dashboard/SeekerDashboard";
 import PortfolioPage from "./components/portfolio/PortfolioPage";
+import AdminPage from "./components/pages/AdminPage";
 
 export default function App() {
   const initial = getRouteFromHash();
@@ -85,6 +86,17 @@ export default function App() {
           }}
           onBack={() => { window.location.hash = ""; setPage("landing"); }}
         />
+      </>
+    );
+  }
+
+  // Admin page — requires auth, hidden route
+  if (page === "admin") {
+    if (!auth) { window.location.hash = "#/login"; return landingJsx; }
+    return (
+      <>
+        <GlobalStyle />
+        <AdminPage auth={auth} onBack={() => { window.location.hash = "#/dashboard"; setPage("dashboard"); }} />
       </>
     );
   }

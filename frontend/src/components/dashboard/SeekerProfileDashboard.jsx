@@ -290,7 +290,7 @@ function ScoreBar({ label, value, max = 5 }) {
   );
 }
 
-function RagInspector({ userId }) {
+export function RagInspector({ userId }) {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -473,7 +473,6 @@ const SEEKER_TABS = [
   { id: "cover", label: "Cover Letter", icon: "file" },
   { id: "analytics", label: "Analytics", icon: "chart" },
   { id: "interview", label: "Interview Prep", icon: "zap" },
-  { id: "ai", label: "AI Health", icon: "zap" },
 ];
 
 const linkInputSt = { width: "100%", background: "var(--bg3)", border: "1px solid var(--line2)", borderRadius: "var(--r-md)", color: "var(--text)", fontSize: 12, padding: "7px 10px", outline: "none" };
@@ -916,7 +915,6 @@ function RightPanel({ tab, setTab, pm, gapState, setGapState, clState, setClStat
         </div>
         {tab === "analytics" && <PortfolioAnalytics portfolioId={pm.activePortfolioId} token={auth.token} />}
         {tab === "interview" && <InterviewPrep userId={pm.activePortfolioId} jd={gapState.role} />}
-        {tab === "ai" && <RagInspector userId={pm.activePortfolioId} />}
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ export function getRouteFromHash() {
   if (hash === "#/login") return { page: "login", userId: null };
   if (hash === "#/signup") return { page: "signup", userId: null };
   if (hash === "#/dashboard") return { page: "dashboard", userId: null };
+  if (hash === "#/admin") return { page: "admin", userId: null };
   return { page: "landing", userId: null };
 }
 
