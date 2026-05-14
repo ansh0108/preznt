@@ -1,6 +1,8 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Header, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
+import asyncio
+import threading
 from pydantic import BaseModel
 import os
 import uuid
@@ -15,7 +17,7 @@ from parser import (
     parse_docx_file, parse_pptx_file, parse_txt_file, prepare_documents
 )
 from embeddings import build_index, index_exists
-from chatbot import chat
+from chatbot import chat, chat_stream
 from gap_analysis import analyze_gap
 from groq_client import call_groq
 from auth import init_db, create_user, get_user_by_email, get_user_by_id, verify_password, make_token, get_current_user, link_portfolio, add_portfolio_to_user, set_primary_portfolio, remove_portfolio_from_user
@@ -1055,6 +1057,37 @@ async def chat_endpoint(req: ChatRequest):
     return {"answer": answer}
 
 
+@app.post("/chat/stream")
+async def chat_stream_endpoint(req: ChatRequest):
+    profile = load_profile(req.user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    if not index_exists(req.user_id, INDEXES_DIR):
+        raise HTTPException(status_code=400, detail="Profile not indexed yet.")
+
+    loop = asyncio.get_event_loop()
+    queue: asyncio.Queue = asyncio.Queue()
+
+    def _produce():
+        try:
+            for chunk in chat_stream(req.question, req.user_id, profile["name"], req.history, profile):
+                loop.call_soon_threadsafe(queue.put_nowait, chunk)
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, None)
+
+    threading.Thread(target=_produce, daemon=True).start()
+
+    async def _generate():
+        while True:
+            chunk = await queue.get()
+            if chunk is None:
+                break
+            yield chunk
+
+    log_event(req.user_id, "chat", req.question)
+    return StreamingResponse(_generate(), media_type="text/plain")
+
+
 @app.post("/gap-analysis")
 async def gap_analysis_endpoint(req: GapRequest):
     profile = load_profile(req.user_id)
@@ -1063,7 +1096,7 @@ async def gap_analysis_endpoint(req: GapRequest):
     if not index_exists(req.user_id, INDEXES_DIR):
         raise HTTPException(status_code=400, detail="Profile not indexed yet.")
     jd = req.job_description.strip() or req.target_role.strip()
-    result = analyze_gap(jd, req.user_id, profile["name"], profile)
+    result = await analyze_gap(jd, req.user_id, profile["name"], profile)
     return result
 
 
@@ -1203,7 +1236,34 @@ Rules:
 - No placeholder text like [Date] or [Address]"""
 
     try:
-        letter = call_groq([{"role": "user", "content": prompt}], max_tokens=800, temperature=0.4)
+        letter = call_groq([{"role": "user", "content": prompt}], max_tokens=700, temperature=0.4)
+
+        # Critique-refine pass: only on new letters, not refinements
+        if not req.refinement:
+            refine_prompt = f"""This cover letter needs to be more specific and human. Review it critically then rewrite it.
+
+Current letter:
+{letter}
+
+Profile details:
+{profile_context[:800]}
+
+Common problems to fix:
+- Generic phrases ("passionate about", "I am excited to apply", "I am confident")
+- Missing specific project names, companies, or metrics from the profile
+- Weak opening that doesn't hook the reader
+- Sounds like a template
+
+Rewrite rules:
+- Under 200 words, keep Dear/Sincerely structure
+- Name at least one real project or company from the profile
+- Lead with something specific, not generic enthusiasm
+- Sound like a real human, not a career services template
+- Do NOT invent experience not in the profile
+
+Return ONLY the final revised letter, nothing else."""
+            letter = call_groq([{"role": "user", "content": refine_prompt}], max_tokens=700, temperature=0.35)
+
         return {"cover_letter": letter}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -2,7 +2,7 @@ import os
 import hashlib
 from dotenv import load_dotenv
 from embeddings import search_index
-from groq_client import call_groq_chat
+from groq_client import call_groq_chat, call_groq_stream
 
 # Simple in-memory cache: (user_id, question_hash) -> answer
 _chat_cache: dict = {}
@@ -111,3 +111,43 @@ Full profile context (LinkedIn + resume + GitHub):
         cache_key = (user_id, hashlib.md5(question.strip().lower().encode()).hexdigest())
         _chat_cache[cache_key] = answer
     return answer
+
+
+def chat_stream(question: str, user_id: str, user_name: str, chat_history: list = [], profile: dict | None = None):
+    """Streaming version of chat — yields text chunks as they arrive from Groq."""
+    results = search_index(question, user_id, top_k=6, index_dir=INDEXES_DIR)
+    vector_context = "\n\n".join([f"[From {r['source']}]\n{r['text']}" for r in results])
+    structured_summary = build_profile_summary(profile) if profile else ""
+    full_context = f"{structured_summary}\n\n--- Relevant Details ---\n{vector_context}".strip() if structured_summary else vector_context
+
+    if not full_context:
+        yield "I don't have enough information to answer that question yet."
+        return
+
+    messages = [
+        {
+            "role": "system",
+            "content": f"""You are a portfolio assistant speaking AS {user_name} — answer in first person, as if you are {user_name} speaking directly.
+
+STRICT RULES:
+- ONLY answer about {user_name}'s professional background: skills, experience, projects, education, tools, career goals.
+- If off-topic, respond: "I'm here to answer questions about my background and experience — feel free to ask about my skills, projects, or work history!"
+- ONLY use information from the profile context below. Never invent skills, tools, or experience.
+- Use "I", "my", "me" throughout. Never refer to {user_name} in third person.
+- Be specific: mention real project names, companies, and tools.
+
+FORMATTING:
+- Use bullet points ("- ") for multi-point answers.
+- Bold important words, technologies, company names with **double asterisks**.
+- Max 5-6 bullets per answer.
+
+Full profile context:
+{full_context}"""
+        }
+    ]
+
+    for msg in chat_history[-6:]:
+        messages.append(msg)
+    messages.append({"role": "user", "content": question})
+
+    yield from call_groq_stream(messages, max_tokens=400, temperature=0.3)

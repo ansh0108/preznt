@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 
 _key_index = 0
@@ -72,3 +73,42 @@ def call_groq(messages: list, max_tokens: int = 500, temperature: float = 0.2) -
 def call_groq_chat(messages: list, max_tokens: int = 300, temperature: float = 0.3) -> str:
     """For chatbot Q&A — use fast model (14,400 RPD) first, fall back to quality model."""
     return _call_with_fallback(CHAT_MODEL, QUALITY_MODEL, messages, max_tokens, temperature)
+
+
+def call_groq_stream(messages: list, max_tokens: int = 400, temperature: float = 0.3):
+    """Generator that yields text chunks for streaming chat. Uses fast chat model."""
+    keys = _get_keys()
+    if not keys:
+        yield "Error: No API keys configured"
+        return
+
+    global _key_index
+    key = keys[_key_index % len(keys)]
+    _key_index = (_key_index + 1) % len(keys)
+
+    try:
+        resp = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={"model": CHAT_MODEL, "messages": messages, "temperature": temperature, "max_tokens": max_tokens, "stream": True},
+            stream=True,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        for line in resp.iter_lines():
+            if not line:
+                continue
+            decoded = line.decode("utf-8")
+            if not decoded.startswith("data: "):
+                continue
+            payload = decoded[6:]
+            if payload == "[DONE]":
+                break
+            try:
+                delta = json.loads(payload)["choices"][0]["delta"].get("content", "")
+                if delta:
+                    yield delta
+            except (json.JSONDecodeError, KeyError, IndexError):
+                continue
+    except Exception as e:
+        yield f"\n\n[Error: {e}]"

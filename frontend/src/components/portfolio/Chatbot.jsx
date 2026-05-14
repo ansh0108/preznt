@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import axios from "axios";
 import { API } from "../../lib/api";
 import { Spinner } from "../ui/primitives";
 import Icon from "../ui/Icon";
@@ -138,15 +137,53 @@ function Chatbot({ userId, userName, messages: messagesProp, setMessages: setMes
     setMessages(p => [...p, { role: "user", content: q }]);
     setLoading(true);
     setCooldown(true);
+
+    let firstChunk = true;
     try {
       const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
-      const res = await axios.post(`${API}/chat`, { user_id: userId, question: q, history });
-      setMessages(p => [...p, { role: "assistant", content: res.data.answer }]);
+      const res = await fetch(`${API}/chat/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, question: q, history }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        if (!chunk) continue;
+        if (firstChunk) {
+          firstChunk = false;
+          setLoading(false);
+          setMessages(p => [...p, { role: "assistant", content: chunk }]);
+        } else {
+          setMessages(p => {
+            const msgs = [...p];
+            msgs[msgs.length - 1] = { ...msgs[msgs.length - 1], content: msgs[msgs.length - 1].content + chunk };
+            return msgs;
+          });
+        }
+      }
+
+      if (firstChunk) {
+        setLoading(false);
+        setMessages(p => [...p, { role: "assistant", content: "I don't have enough information to answer that." }]);
+      }
     } catch (err) {
-      const msg = err?.response?.data?.detail || "I'm having trouble connecting right now — please try again in a moment.";
+      setLoading(false);
+      const msg = err.message?.includes("429") || err.message?.includes("503")
+        ? "I'm getting a lot of questions right now — please try again in a few seconds!"
+        : "I'm having trouble connecting right now — please try again in a moment.";
       setMessages(p => [...p, { role: "assistant", content: msg, isError: true }]);
     } finally {
-      setLoading(false);
       setTimeout(() => setCooldown(false), 2000);
     }
   };

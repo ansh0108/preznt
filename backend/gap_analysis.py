@@ -1,5 +1,6 @@
 import os
 import json
+import asyncio
 from dotenv import load_dotenv
 from embeddings import search_index
 from groq_client import call_groq
@@ -56,23 +57,19 @@ def build_profile_context(profile: dict) -> str:
             parts.append(f"by {link['issuer']}")
         if link.get("date"):
             parts.append(f"({link['date']})")
-        if link.get("description"):
-            parts.append(link["description"])
         sections.append(" ".join(parts))
 
-    # Append raw resume text so bullet improvements use exact resume lines
     for doc in profile.get("documents", []):
         raw = (doc.get("raw_text") or "").strip()
         source = doc.get("source", "")
         if raw and doc.get("type") == "document" and "linkedin" not in source.lower():
-            sections.append(f"--- RESUME RAW TEXT (use exact lines from here for bullet improvements) ---\n{raw[:2500]}")
-            break  # only need the first resume doc
+            sections.append(f"--- RESUME RAW TEXT ---\n{raw[:2500]}")
+            break
 
     return "\n\n".join(sections)
 
 
 def _enforce_length(improved: str, original: str, tolerance: float = 0.05) -> str:
-    """Hard-trim improved bullet to within +5% of original character count at a word boundary."""
     max_len = int(len(original) * (1 + tolerance))
     if len(improved) <= max_len:
         return improved
@@ -83,106 +80,142 @@ def _enforce_length(improved: str, original: str, tolerance: float = 0.05) -> st
     return trimmed.rstrip(".,;: ")
 
 
-def analyze_gap(job_description: str, user_id: str, user_name: str, profile: dict | None = None) -> dict:
-    """ATS-aware gap analysis between candidate profile and a specific job description."""
+async def _run_agent(name: str, messages: list, max_tokens: int = 800) -> dict:
+    """Run a single Groq call in a thread (non-blocking) and parse JSON response."""
+    try:
+        raw = await asyncio.to_thread(call_groq, messages, max_tokens, 0.2)
+        raw = raw.replace("```json", "").replace("```", "").strip()
+        return json.loads(raw)
+    except Exception as e:
+        print(f"[Gap] Agent '{name}' failed: {e}")
+        return {}
 
+
+async def analyze_gap(job_description: str, user_id: str, user_name: str, profile: dict | None = None) -> dict:
+    """
+    Parallel 4-agent gap analysis.
+    Agents run concurrently via asyncio.gather — total time = slowest single agent.
+    """
     structured_context = build_profile_context(profile) if profile else ""
 
-    jd_query = job_description[:500]  # type: ignore[index]
-    results = search_index(jd_query, user_id, top_k=3, index_dir=INDEXES_DIR)
+    # Single vector search shared across all agents
+    jd_query = job_description[:500]
+    results = await asyncio.to_thread(search_index, jd_query, user_id, top_k=5, index_dir=INDEXES_DIR)
     vector_context = "\n\n".join([r["text"] for r in results])
 
-    # Trim structured context to avoid exceeding Groq's context limit
-    ctx_short = structured_context[:3000]  # type: ignore[index]
+    ctx_short = structured_context[:3000]
     profile_context = f"{ctx_short}\n\n--- Relevant Profile Chunks ---\n{vector_context}".strip()
+    jd_short = job_description[:2000]
 
-    # Detect role type from JD to tailor advice
     jd_lower = job_description.lower()
-    is_technical = any(w in jd_lower for w in ["engineer", "developer", "data", "ml", "python", "sql", "software", "backend", "frontend", "fullstack", "devops", "analyst"])
+    is_technical = any(w in jd_lower for w in [
+        "engineer", "developer", "data", "ml", "python", "sql", "software",
+        "backend", "frontend", "fullstack", "devops", "analyst"
+    ])
+    role_note = (
+        "Technical role: focus on tool/framework/language matches and project relevance."
+        if is_technical else
+        "Non-technical role: focus on transferable skills, domain knowledge, communication, and leadership."
+    )
 
-    system = f"""You are an expert ATS scanner and career coach who reviews resumes against specific job descriptions. You work with candidates at ALL career levels across technical and non-technical roles.
+    user_block = f"JOB DESCRIPTION:\n{jd_short}\n\n---\n\nCANDIDATE PROFILE:\n{profile_context}"
 
-Your task: conduct a thorough, ATS-optimised analysis of the candidate's profile against the provided job description.
+    # ── Agent 1: ATS Scanner ──────────────────────────────────────────────────
+    a1_system = f"""You are an ATS scanner. {role_note}
 
-⚠️ LANGUAGE RULE — NEVER BREAK THIS:
-Every piece of narrative text MUST use second person ("You" / "Your"), directly addressing the reader.
-CORRECT: "You have strong experience in..." / "Your background in X..."
-WRONG: "{user_name} has..." / "The candidate has..." / "He/She has..."
-This applies to EVERY field: summary, strengths details, tone_feedback, differentiation_tips, quick_wins.
+Scan the candidate profile against the job description for keyword overlap.
 
-{'This appears to be a technical role. Pay close attention to tool/framework/language matches and project relevance.' if is_technical else 'This appears to be a non-technical or business role. Focus on transferable skills, domain knowledge, communication, and leadership signals.'}
+Rules for missing_keywords / suggested_skills:
+- Scan ALL sections before marking anything missing.
+- Only flag a skill as missing if it is genuinely absent everywhere.
+- suggested_skills: ONLY skills/tools LITERALLY named in the JD — never infer. "data visualization" ≠ Tableau unless Tableau is written in the JD.
+- Treat synonyms as matches (e.g. "Machine Learning" matches ML + Python + model deployment).
 
-Respond ONLY with valid JSON in this EXACT format (no extra keys, no markdown):
+Respond ONLY with valid JSON, no markdown:
 {{
-  "ats_score": <integer 0-100 based on keyword overlap, skill relevance, and content alignment>,
+  "ats_score": <integer 0-100>,
+  "matching_keywords": ["<keyword from JD found in profile>"],
+  "missing_keywords": [
+    {{"keyword": "<missing JD keyword>", "importance": "<Must Have|Nice to Have>", "context": "<why it matters, 1 sentence>"}}
+  ],
+  "suggested_skills": ["<skill/tool LITERALLY named in JD but absent from profile>"]
+}}"""
+
+    # ── Agent 2: Resume Coach (Bullet Improvements) ───────────────────────────
+    a2_system = f"""You are a resume coach who rewrites experience bullets in STAR format. {role_note}
+
+Rules:
+- "original" MUST be copied VERBATIM from the RESUME RAW TEXT section — character for character.
+- If no RESUME RAW TEXT, use exact lines from experience descriptions.
+- "improved" MUST follow STAR format AND be within ±5% of original character count.
+- Only improve Experience or Project bullets — NEVER touch Skills.
+- Provide at least 2 bullet improvements.
+
+Respond ONLY with valid JSON, no markdown:
+{{
+  "bullet_improvements": [
+    {{"section": "<Experience|Project>", "original": "<EXACT verbatim text>", "improved": "<STAR rewrite within ±5% char count>", "why": "<what makes this better for ATS and human readers>"}}
+  ]
+}}"""
+
+    # ── Agent 3: Career Advisor (Positioning & Fit) ───────────────────────────
+    a3_system = f"""You are a senior career advisor assessing candidate fit and narrative. {role_note}
+
+⚠️ LANGUAGE RULE: Use second person ("You" / "Your") throughout. Never say "{user_name} has..." or "The candidate...".
+
+Provide at least 3 strengths with specific evidence from their actual profile.
+
+Respond ONLY with valid JSON, no markdown:
+{{
   "overall_fit": "<Strong|Moderate|Weak>",
-  "summary": "<2-3 sentence executive summary of the match — be specific and honest>",
+  "summary": "<2-3 sentence executive summary — be specific and honest>",
   "strengths": [
     {{"point": "<brief strength title>", "detail": "<1-2 sentences of specific evidence from their profile>"}}
   ],
-  "matching_keywords": ["<keyword from JD found in profile>"],
-  "missing_keywords": [
-    {{"keyword": "<missing JD keyword>", "importance": "<Must Have|Nice to Have>", "context": "<why it matters for this role, 1 sentence>"}}
-  ],
-  "suggested_skills": ["<skill or tool name only — short keyword, e.g. 'Tableau', 'dbt', 'Spark' — mentioned in JD but absent from profile>"],
-  "bullet_improvements": [
-    {{"section": "<Experience|Project>", "original": "<the EXACT existing sentence or bullet from their Experience or Project sections>", "improved": "<rewritten using STAR format: Situation/Task + Action + Result — must be within ±5% of the original's character count, so it fits the exact same space on a resume without any reformatting>", "why": "<what makes this version better for ATS and human readers>"}}
-  ],
-  "tone_feedback": "<1-2 paragraphs on tone, framing, and positioning — how to present their background as impactful and relevant, not academic or generic>",
-  "differentiation_tips": ["<specific tip for standing out — each should be actionable and role-specific>"],
-  "quick_wins": ["<action they can take in the next 7 days to improve their fit for this specific role>"]
-}}
+  "tone_feedback": "<1-2 paragraphs on tone, framing, positioning — use second person throughout>"
+}}"""
 
-SCORING GUIDE for ats_score:
-- 80-100: Strong keyword overlap, directly relevant experience, minimal gaps
-- 60-79: Moderate match, several relevant skills but key gaps exist
-- 40-59: Partial match, relevant background but significant gaps
-- 0-39: Weak match, major skill or domain mismatch
+    # ── Agent 4: Strategy Coach (Quick Wins & Differentiation) ───────────────
+    a4_system = f"""You are a job search strategist. {role_note}
 
-IMPORTANT:
-- bullet_improvements: ONLY improve Experience or Project bullets — NEVER touch the Skills section
-- bullet_improvements: "original" must be copied VERBATIM and CHARACTER-FOR-CHARACTER from the RESUME RAW TEXT section — do NOT use LinkedIn descriptions, do NOT paraphrase or reconstruct the line
-- bullet_improvements: if there is no RESUME RAW TEXT, use exact lines from the experience descriptions
-- bullet_improvements: "improved" must follow STAR format AND be within ±5% of the original's character count — resume line width and spacing must be preserved exactly
-- suggested_skills: ONLY short skill/tool keyword names that are EXPLICITLY AND VERBATIM written in the JD text — do NOT infer, imply, or derive skills (e.g. if the JD says "data visualization" but does NOT name Tableau or Power BI, do NOT add them; if the JD says "TensorFlow" explicitly, you may add it). Never add tools that are not literally spelled out in the JD.
-- Be specific — reference actual companies, projects, tools from their profile
-- Do NOT give generic advice. Every item must be tied to their actual profile and this specific JD
-- missing_keywords and suggested_skills: before marking ANYTHING as missing, scan ALL sections — Skills list, Experience descriptions, RESUME RAW TEXT, GITHUB PROJECT names/descriptions/topics, and RESUME PROJECT tech stacks. Treat synonyms as matches (e.g. "Machine Learning Engineering" matches ML + Python + model deployment; "Cloud Computing" matches AWS/Azure/GCP). A skill found ANYWHERE in the profile or reasonably implied by their tools is NOT missing. Only flag it if it is genuinely absent from every section. CRITICAL: for suggested_skills, ONLY include tools/skills that are LITERALLY named in the JD — never infer (e.g. "data visualization" in JD does NOT mean add Tableau or Power BI unless those exact words appear in the JD).
-- quick_wins: must be SPECIFIC and ACTIONABLE for THIS candidate and THIS role. Reference their actual experience, projects, or companies by name. Do NOT write generic advice like "tailor your resume", "network with professionals", or "work on side projects". Instead write things like "Add 'XGBoost' and 'SHAP' explicitly to your Skills section — they're in your Customer Churn project but not visible at a glance" or "Reframe your Yearbook Canvas bullet to lead with the 31% conversion lift — that metric directly matches the JD's KPI focus".
-- Provide at least 2 bullet_improvements (Experience/Project only), 3 strengths, and 3 quick wins"""
+⚠️ LANGUAGE RULE: Use second person ("You" / "Your") throughout.
 
-    jd_short = job_description[:2000]  # type: ignore[index]
-    user_message = f"""JOB DESCRIPTION:
-{jd_short}
+quick_wins must be SPECIFIC — reference their actual experience, projects, or companies by name.
+Never write generic advice like "tailor your resume" or "network with professionals".
+Good example: "Add 'XGBoost' and 'SHAP' explicitly to your Skills section — they appear in your Customer Churn project but aren't visible at a glance."
 
----
+Provide at least 3 quick wins and 3 differentiation tips.
 
-CANDIDATE PROFILE (LinkedIn + resume + GitHub combined):
-{profile_context}
+Respond ONLY with valid JSON, no markdown:
+{{
+  "differentiation_tips": ["<specific tip for standing out — role-specific and actionable>"],
+  "quick_wins": ["<action they can take in the next 7 days — specific to this candidate and this role>"]
+}}"""
 
-Analyze this candidate against the job description above. Be specific, constructive, and ATS-aware."""
+    # ── Launch all 4 agents concurrently ─────────────────────────────────────
+    a1, a2, a3, a4 = await asyncio.gather(
+        _run_agent("ats-scanner", [{"role": "system", "content": a1_system}, {"role": "user", "content": user_block}], max_tokens=600),
+        _run_agent("bullet-coach", [{"role": "system", "content": a2_system}, {"role": "user", "content": user_block}], max_tokens=900),
+        _run_agent("career-advisor", [{"role": "system", "content": a3_system}, {"role": "user", "content": user_block}], max_tokens=700),
+        _run_agent("strategy-coach", [{"role": "system", "content": a4_system}, {"role": "user", "content": user_block}], max_tokens=500),
+    )
 
-    try:
-        raw = call_groq([
-            {"role": "system", "content": system},
-            {"role": "user", "content": user_message}
-        ], max_tokens=3000, temperature=0.2)
-    except Exception as e:
-        if "payload_too_large" in str(e):
-            return {"error": "Your profile or job description is too large to analyse in one request. Try pasting a shorter job description (under 2000 characters)."}
-        raise
+    # ── Merge results ─────────────────────────────────────────────────────────
+    bullets = a2.get("bullet_improvements", [])
+    for b in bullets:
+        if b.get("original") and b.get("improved"):
+            b["improved"] = _enforce_length(b["improved"], b["original"])
 
-    raw = raw.replace("```json", "").replace("```", "").strip()
-
-    try:
-        result = json.loads(raw)
-        for b in result.get("bullet_improvements", []):
-            if b.get("original") and b.get("improved"):
-                b["improved"] = _enforce_length(b["improved"], b["original"])
-        return result
-    except Exception as e:
-        raw_short = raw[:1000]  # type: ignore[index]
-        return {
-            "error": f"Could not parse analysis: {str(e)}",
-            "raw": raw_short
-        }
+    return {
+        "ats_score": a1.get("ats_score", 0),
+        "overall_fit": a3.get("overall_fit", "Moderate"),
+        "summary": a3.get("summary", ""),
+        "strengths": a3.get("strengths", []),
+        "matching_keywords": a1.get("matching_keywords", []),
+        "missing_keywords": a1.get("missing_keywords", []),
+        "suggested_skills": a1.get("suggested_skills", []),
+        "bullet_improvements": bullets,
+        "tone_feedback": a3.get("tone_feedback", ""),
+        "differentiation_tips": a4.get("differentiation_tips", []),
+        "quick_wins": a4.get("quick_wins", []),
+    }

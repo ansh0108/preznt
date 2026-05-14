@@ -12,3 +12,4 @@ python-multipart
 aiofiles
 python-jose[cryptography]
 bcrypt
+rank-bm25
