@@ -1,13 +1,16 @@
 import { useState } from "react";
-import axios from "axios";
-import { API } from "../../lib/api";
-import { nameToSlug } from "../../lib/utils";
 import { Spinner, Btn, Divider } from "../ui/primitives";
 import Icon from "../ui/Icon";
 import PhotoUploadField from "../ui/PhotoUploadField";
 import GithubRepoPicker from "./GithubRepoPicker";
+import { useSetupWizard } from "./useSetupWizard";
 
 const STEPS = ["Profile", "LinkedIn", "Documents", "Build"];
+const LI_GUIDE = [
+  ["Go to your LinkedIn profile", "Click your profile photo at the top → View Profile"],
+  ['Click the "…" button', 'Below your name, click the three-dot "More" button'],
+  ['Select "Save to PDF"', "It downloads your profile as a PDF instantly"],
+];
 
 function StepIndicator({ step }) {
   return (
@@ -18,34 +21,14 @@ function StepIndicator({ step }) {
         return (
           <div key={i} style={{ display: "flex", alignItems: "center" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: "50%",
-                background: isCompleted ? "var(--accent)" : "transparent",
-                border: isCompleted ? "2px solid var(--accent)" : isActive ? "2px solid var(--accent)" : "2px solid var(--line2)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.3s ease",
-                boxShadow: isActive ? "0 0 0 4px var(--accent-d)" : "none",
-              }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: isCompleted ? "var(--accent)" : "transparent", border: isCompleted || isActive ? "2px solid var(--accent)" : "2px solid var(--line2)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s ease", boxShadow: isActive ? "0 0 0 4px var(--accent-d)" : "none" }}>
                 {isCompleted
                   ? <Icon name="check" size={13} color="#fff" />
                   : <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "var(--sans)", color: isActive ? "var(--accent)" : "var(--text3)" }}>{i + 1}</span>}
               </div>
-              <span style={{
-                fontSize: 12, fontFamily: "var(--sans)", fontWeight: isActive ? 600 : 400,
-                color: isActive ? "var(--text)" : isCompleted ? "var(--accent)" : "var(--text3)",
-                whiteSpace: "nowrap", transition: "color 0.2s ease",
-              }}>
-                {s}
-              </span>
+              <span style={{ fontSize: 12, fontFamily: "var(--sans)", fontWeight: isActive ? 600 : 400, color: isActive ? "var(--text)" : isCompleted ? "var(--accent)" : "var(--text3)", whiteSpace: "nowrap", transition: "color 0.2s ease" }}>{s}</span>
             </div>
-            {i < STEPS.length - 1 && (
-              <div style={{
-                width: 56, height: 2,
-                background: i + 1 < step ? "var(--accent)" : "var(--line2)",
-                margin: "0 8px", marginBottom: 22,
-                transition: "background 0.3s ease", borderRadius: 2,
-              }} />
-            )}
+            {i < STEPS.length - 1 && <div style={{ width: 56, height: 2, background: i + 1 < step ? "var(--accent)" : "var(--line2)", margin: "0 8px", marginBottom: 22, transition: "background 0.3s ease", borderRadius: 2 }} />}
           </div>
         );
       })}
@@ -53,10 +36,14 @@ function StepIndicator({ step }) {
   );
 }
 
+function ErrMsg({ error }) {
+  if (!error) return null;
+  return <div style={{ color: "var(--red)", fontSize: 12.5, marginTop: 12, fontFamily: "var(--sans)", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.20)", borderRadius: 8, padding: "9px 13px" }}>{error}</div>;
+}
+
 function Step1({ profile, setProfile, photo, setPhoto, error, loading, onCreate }) {
   const [selectedRepos, setSelectedRepos] = useState([]);
   const [githubUsername, setGithubUsername] = useState("");
-
   return (
     <div>
       <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 600, marginBottom: 6, color: "var(--text)", letterSpacing: "-0.02em" }}>Tell us about yourself</div>
@@ -75,7 +62,7 @@ function Step1({ profile, setProfile, photo, setPhoto, error, loading, onCreate 
           </div>
         )}
       </div>
-      {error && <div style={{ color: "var(--red)", fontSize: 12.5, marginTop: 14, fontFamily: "var(--sans)", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.20)", borderRadius: 8, padding: "9px 13px" }}>{error}</div>}
+      <ErrMsg error={error} />
       <div style={{ marginTop: 28, display: "flex", justifyContent: "flex-end" }}>
         <Btn onClick={() => onCreate(selectedRepos, githubUsername)} disabled={loading}>
           {loading ? <Spinner size={14} color="#fff" /> : "Continue"} {!loading && <Icon name="arrow" size={14} color="#fff" />}
@@ -85,50 +72,44 @@ function Step1({ profile, setProfile, photo, setPhoto, error, loading, onCreate 
   );
 }
 
+function LinkedInDownloadGuide() {
+  return (
+    <div style={{ background: "var(--bg2)", border: "1px solid var(--accent-d)", borderRadius: 12, padding: "16px 18px", marginBottom: 22 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", marginBottom: 12, letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "var(--sans)" }}>How to download your LinkedIn PDF</div>
+      {LI_GUIDE.map(([title, desc], i) => (
+        <div key={i} style={{ display: "flex", gap: 12, marginBottom: i < 2 ? 12 : 0, alignItems: "flex-start" }}>
+          <div style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", fontFamily: "var(--sans)" }}>{i + 1}</span>
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", fontFamily: "var(--sans)" }}>{title}</div>
+            <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 2, fontFamily: "var(--sans)", lineHeight: 1.4 }}>{desc}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Step2({ linkedinFile, setLinkedinFile, error, loading, onBack, onUpload }) {
   return (
     <div>
       <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 600, marginBottom: 6, color: "var(--text)", letterSpacing: "-0.02em" }}>LinkedIn export</div>
       <div style={{ color: "var(--text3)", fontSize: 13.5, marginBottom: 18, fontFamily: "var(--sans)", lineHeight: 1.5 }}>We use your LinkedIn PDF to extract experience, education, and skills.</div>
-      <div style={{ background: "var(--bg2)", border: "1px solid var(--accent-d)", borderRadius: 12, padding: "16px 18px", marginBottom: 22 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", marginBottom: 12, letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "var(--sans)" }}>How to download your LinkedIn PDF</div>
-        {[
-          ["Go to your LinkedIn profile", "Click your profile photo at the top → View Profile"],
-          ['Click the "…" button', 'Below your name, click the three-dot "More" button'],
-          ['Select "Save to PDF"', "It downloads your profile as a PDF instantly"],
-        ].map(([title, desc], i) => (
-          <div key={i} style={{ display: "flex", gap: 12, marginBottom: i < 2 ? 12 : 0, alignItems: "flex-start" }}>
-            <div style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", fontFamily: "var(--sans)" }}>{i + 1}</span>
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", fontFamily: "var(--sans)" }}>{title}</div>
-              <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 2, fontFamily: "var(--sans)", lineHeight: 1.4 }}>{desc}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <LinkedInDownloadGuide />
       <div
         onClick={() => document.getElementById("li-upload").click()}
-        style={{
-          border: linkedinFile ? "2px solid var(--accent)" : "2px dashed var(--accent-b)",
-          background: linkedinFile ? "var(--accent-d)" : "linear-gradient(135deg, rgba(129,140,248,0.03) 0%, rgba(129,140,248,0.07) 100%)",
-          borderRadius: 14, padding: "32px 24px", textAlign: "center", cursor: "pointer", transition: "all 0.2s ease",
-        }}
+        style={{ border: linkedinFile ? "2px solid var(--accent)" : "2px dashed var(--accent-b)", background: linkedinFile ? "var(--accent-d)" : "linear-gradient(135deg, rgba(129,140,248,0.03) 0%, rgba(129,140,248,0.07) 100%)", borderRadius: 14, padding: "32px 24px", textAlign: "center", cursor: "pointer", transition: "all 0.2s ease" }}
         onMouseEnter={e => { if (!linkedinFile) { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "var(--accent-d)"; } }}
         onMouseLeave={e => { if (!linkedinFile) { e.currentTarget.style.borderColor = "var(--accent-b)"; e.currentTarget.style.background = "linear-gradient(135deg, rgba(129,140,248,0.03) 0%, rgba(129,140,248,0.07) 100%)"; } }}
       >
-        <div style={{ marginBottom: 10 }}>
-          <Icon name="file" size={30} color={linkedinFile ? "var(--accent)" : "var(--text3)"} />
-        </div>
-        <div style={{ fontSize: 14, color: linkedinFile ? "var(--accent)" : "var(--text3)", fontWeight: 500, fontFamily: "var(--sans)" }}>
-          {linkedinFile ? linkedinFile.name : "Drop your LinkedIn PDF here or click to upload"}
-        </div>
+        <div style={{ marginBottom: 10 }}><Icon name="file" size={30} color={linkedinFile ? "var(--accent)" : "var(--text3)"} /></div>
+        <div style={{ fontSize: 14, color: linkedinFile ? "var(--accent)" : "var(--text3)", fontWeight: 500, fontFamily: "var(--sans)" }}>{linkedinFile ? linkedinFile.name : "Drop your LinkedIn PDF here or click to upload"}</div>
         {!linkedinFile && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 6, fontFamily: "var(--sans)" }}>PDF files only</div>}
         <input id="li-upload" type="file" accept=".pdf" style={{ display: "none" }} onChange={e => setLinkedinFile(e.target.files[0])} />
       </div>
       <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 10, textAlign: "center", fontFamily: "var(--sans)" }}>You can skip this step</div>
-      {error && <div style={{ color: "var(--red)", fontSize: 12.5, marginTop: 12, fontFamily: "var(--sans)", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.20)", borderRadius: 8, padding: "9px 13px" }}>{error}</div>}
+      <ErrMsg error={error} />
       <div style={{ marginTop: 24, display: "flex", justifyContent: "space-between" }}>
         <Btn variant="ghost" onClick={onBack}>← Back</Btn>
         <Btn onClick={onUpload} disabled={loading}>
@@ -171,12 +152,10 @@ function Step3({ extraFiles, setExtraFiles, error, loading, onBack, onUpload }) 
           ))}
         </div>
       )}
-      {error && <div style={{ color: "var(--red)", fontSize: 12.5, marginTop: 12, fontFamily: "var(--sans)", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.20)", borderRadius: 8, padding: "9px 13px" }}>{error}</div>}
+      <ErrMsg error={error} />
       <div style={{ marginTop: 24, display: "flex", justifyContent: "space-between" }}>
         <Btn variant="ghost" onClick={onBack}>← Back</Btn>
-        <Btn onClick={onUpload} disabled={loading}>
-          {loading ? <Spinner size={14} color="#fff" /> : "Continue"} {!loading && <Icon name="arrow" size={14} color="#fff" />}
-        </Btn>
+        <Btn onClick={onUpload} disabled={loading}>{loading ? <Spinner size={14} color="#fff" /> : "Continue"} {!loading && <Icon name="arrow" size={14} color="#fff" />}</Btn>
       </div>
     </div>
   );
@@ -188,15 +167,13 @@ function Step4({ portfolioUrl, indexing, indexed, error, onBuild, onBack, onComp
       {!indexed ? (
         <>
           <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 600, color: "var(--text)", marginBottom: 10, letterSpacing: "-0.02em" }}>Build your AI portfolio</div>
-          <div style={{ color: "var(--text3)", fontSize: 13.5, marginBottom: 40, lineHeight: 1.6, fontFamily: "var(--sans)", maxWidth: 340, margin: "0 auto 40px" }}>
-            We'll index all your data, summarise your experience, and generate descriptions.
-          </div>
+          <div style={{ color: "var(--text3)", fontSize: 13.5, marginBottom: 40, lineHeight: 1.6, fontFamily: "var(--sans)", maxWidth: 340, margin: "0 auto 40px" }}>We'll index all your data, summarise your experience, and generate descriptions.</div>
           <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg, var(--bg4) 0%, var(--bg3) 100%)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 32px", fontSize: 34 }}>🧠</div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
             <Btn onClick={onBuild} disabled={indexing}>
               {indexing ? <><Spinner size={14} color="#fff" /> Building · ~45 seconds</> : <><Icon name="zap" size={14} color="#fff" /> Build Portfolio</>}
             </Btn>
-            {error && <div style={{ color: "var(--red)", fontSize: 12.5, fontFamily: "var(--sans)", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.20)", borderRadius: 8, padding: "9px 13px", width: "100%", textAlign: "left" }}>{error}</div>}
+            <ErrMsg error={error} />
             {!indexing && <Btn variant="ghost" onClick={onBack}>← Back</Btn>}
           </div>
         </>
@@ -205,15 +182,8 @@ function Step4({ portfolioUrl, indexing, indexed, error, onBuild, onBack, onComp
           <div style={{ fontFamily: "var(--serif)", fontSize: 48, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.03em", marginBottom: 8, lineHeight: 1 }}>Ready.</div>
           <div style={{ color: "var(--text3)", fontSize: 14, marginBottom: 32, fontFamily: "var(--sans)", lineHeight: 1.5 }}>Share this link with anyone — it's live right now</div>
           <div style={{ display: "flex", gap: 8, marginBottom: 28, alignItems: "stretch" }}>
-            <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--accent-b)", borderRadius: 10, padding: "11px 14px", fontFamily: "monospace", fontSize: 12.5, color: "var(--accent)", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {portfolioUrl}
-            </div>
-            <button
-              onClick={() => navigator.clipboard.writeText(portfolioUrl)}
-              style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: 10, padding: "11px 16px", fontSize: 13, fontFamily: "var(--sans)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6, flexShrink: 0, cursor: "pointer", transition: "filter 0.15s ease" }}
-              onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.1)"}
-              onMouseLeave={e => e.currentTarget.style.filter = ""}
-            >
+            <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--accent-b)", borderRadius: 10, padding: "11px 14px", fontFamily: "monospace", fontSize: 12.5, color: "var(--accent)", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{portfolioUrl}</div>
+            <button onClick={() => navigator.clipboard.writeText(portfolioUrl)} style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: 10, padding: "11px 16px", fontSize: 13, fontFamily: "var(--sans)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6, flexShrink: 0, cursor: "pointer", transition: "filter 0.15s ease" }} onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.1)"} onMouseLeave={e => e.currentTarget.style.filter = ""}>
               <Icon name="copy" size={13} color="#fff" /> Copy
             </button>
           </div>
@@ -227,58 +197,9 @@ function Step4({ portfolioUrl, indexing, indexed, error, onBuild, onBack, onComp
   );
 }
 
+// ─── SetupPage ────────────────────────────────────────────────────────────────
 function SetupPage({ onComplete }) {
-  const [wizard, setWizard] = useState({ step: 1, loading: false, error: null });
-  const [build, setBuild] = useState({ userId: null, indexing: false, indexed: false });
-  const [profile, setProfile] = useState({ name: "", title: "", bio: "" });
-  const [photo, setPhoto] = useState(null);
-  const [linkedinFile, setLinkedinFile] = useState(null);
-  const [extraFiles, setExtraFiles] = useState([]);
-
-  const createProfile = async (selectedRepos, githubUsername) => {
-    if (!profile.name) return setWizard(w => ({ ...w, error: "Name is required" }));
-    setWizard(w => ({ ...w, loading: true, error: null }));
-    try {
-      const res = await axios.post(`${API}/setup/profile`, { name: profile.name, title: profile.title, bio: profile.bio, github_urls: selectedRepos, github_username: githubUsername });
-      const uid = res.data.user_id;
-      setBuild(b => ({ ...b, userId: uid }));
-      if (photo) { const f = new FormData(); f.append("file", photo); await axios.post(`${API}/upload/photo/${uid}`, f); }
-      setWizard(w => ({ ...w, step: 2 }));
-    } catch { setWizard(w => ({ ...w, error: "Could not connect to the backend. Please try again." })); }
-    finally { setWizard(w => ({ ...w, loading: false })); }
-  };
-
-  const uploadLinkedin = async () => {
-    if (!linkedinFile) return setWizard(w => ({ ...w, step: 3 }));
-    setWizard(w => ({ ...w, loading: true, error: "" }));
-    let lastErr;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const f = new FormData(); f.append("file", linkedinFile);
-        await axios.post(`${API}/upload/linkedin/${build.userId}`, f, { timeout: 60000 });
-        setWizard(w => ({ ...w, loading: false, step: 3 })); return;
-      } catch (e) { lastErr = e; if (attempt < 3) await new Promise(r => setTimeout(r, 1500 * attempt)); }
-    }
-    setWizard(w => ({ ...w, loading: false, error: "LinkedIn upload failed after 3 attempts. Please try again." }));
-  };
-
-  const uploadExtras = async () => {
-    setWizard(w => ({ ...w, loading: true }));
-    try {
-      for (const file of extraFiles) { const f = new FormData(); f.append("file", file); await axios.post(`${API}/upload/document/${build.userId}`, f); }
-      setWizard(w => ({ ...w, step: 4 }));
-    } catch { setWizard(w => ({ ...w, error: "Document upload failed" })); }
-    finally { setWizard(w => ({ ...w, loading: false })); }
-  };
-
-  const buildIndex = async () => {
-    setBuild(b => ({ ...b, indexing: true })); setWizard(w => ({ ...w, error: null }));
-    try { await axios.post(`${API}/index/${build.userId}`); setBuild(b => ({ ...b, indexed: true })); }
-    catch (e) { setWizard(w => ({ ...w, error: e.response?.data?.detail || "Indexing failed" })); }
-    finally { setBuild(b => ({ ...b, indexing: false })); }
-  };
-
-  const portfolioUrl = build.userId ? `${window.location.origin}${window.location.pathname}#/portfolio/${nameToSlug(profile.name)}-${build.userId}` : "";
+  const { wizard, setWizard, build, profile, setProfile, photo, setPhoto, linkedinFile, setLinkedinFile, extraFiles, setExtraFiles, portfolioUrl, createProfile, uploadLinkedin, uploadExtras, buildIndex } = useSetupWizard();
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "52px 20px", background: "var(--bg)", fontFamily: "var(--sans)" }}>

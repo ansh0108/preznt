@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RagInspector } from "../dashboard/SeekerProfileDashboard";
+import { RagInspector } from "../dashboard/RagInspector";
 
 export default function AdminPage({ auth, onBack }) {
   const portfolios = auth?.portfolios || [];

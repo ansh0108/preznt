@@ -176,6 +176,46 @@ function LayoutRow({ prefs, update }) {
 
 const DEFAULT_PREFS = { accent: "#818cf8", dark_mode: true, template: "sidebar", hide_sections: [], featured_repos: [] };
 
+function AccentColorRow({ prefs, update }) {
+  return (
+    <CustomizeRow label="Accent Color">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+        {COLORS.map(c => (
+          <button key={c.value} onClick={() => update("accent", c.value)} title={c.label}
+            style={{ width: 32, height: 32, borderRadius: "50%", background: c.value, border: prefs.accent === c.value ? `3px solid ${T1}` : "3px solid transparent", cursor: "pointer", transition: "transform 0.15s", transform: prefs.accent === c.value ? "scale(1.2)" : "scale(1)" }} />
+        ))}
+      </div>
+    </CustomizeRow>
+  );
+}
+
+function AppearanceRow({ prefs, update }) {
+  return (
+    <CustomizeRow label="Appearance">
+      <div style={{ display: "flex", gap: 10 }}>
+        {[{ id: true, label: "Dark" }, { id: false, label: "Light" }].map(m => (
+          <button key={String(m.id)} onClick={() => update("dark_mode", m.id)}
+            style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", border: `1px solid ${prefs.dark_mode === m.id ? "var(--accent-b)" : BD}`, background: prefs.dark_mode === m.id ? BGFIX : BG2, color: prefs.dark_mode === m.id ? P : T3 }}>
+            {m.label}
+          </button>
+        ))}
+      </div>
+    </CustomizeRow>
+  );
+}
+
+function VisibleSectionsRow({ prefs, onToggle }) {
+  return (
+    <CustomizeRow label="Visible Sections">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px" }}>
+        {SECTIONS.map(s => (
+          <CustomizeToggle key={s.id} on={!(prefs.hide_sections || []).includes(s.id)} onClick={() => onToggle(s.id)} label={s.label} />
+        ))}
+      </div>
+    </CustomizeRow>
+  );
+}
+
 function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChange }) {
   const [prefs, setPrefs] = useState(profile?.preferences || DEFAULT_PREFS);
   const [saveState, setSaveState] = useState({ saving: false, saved: false });
@@ -207,41 +247,12 @@ function CustomizeTab({ portfolioId, auth, profile, onPrefsChange, onProfileChan
         {saveState.saved && <span style={{ marginLeft: 12, color: "#0d9488", fontWeight: 600 }}>Saved!</span>}
         {saveState.saving && <span style={{ marginLeft: 12, color: T3 }}>Saving…</span>}
       </div>
-
       <HeadlineRow portfolioId={portfolioId} auth={auth} profile={profile} onSave={onProfileChange} />
-
-      <CustomizeRow label="Accent Color">
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-          {COLORS.map(c => (
-            <button key={c.value} onClick={() => update("accent", c.value)} title={c.label}
-              style={{ width: 32, height: 32, borderRadius: "50%", background: c.value, border: prefs.accent === c.value ? `3px solid ${T1}` : "3px solid transparent", cursor: "pointer", transition: "transform 0.15s, border 0.15s", transform: prefs.accent === c.value ? "scale(1.2)" : "scale(1)" }} />
-          ))}
-        </div>
-      </CustomizeRow>
-
-      <CustomizeRow label="Appearance">
-        <div style={{ display: "flex", gap: 10 }}>
-          {[{ id: true, label: "Dark" }, { id: false, label: "Light" }].map(m => (
-            <button key={String(m.id)} onClick={() => update("dark_mode", m.id)}
-              style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", border: `1px solid ${prefs.dark_mode === m.id ? "var(--accent-b)" : BD}`, background: prefs.dark_mode === m.id ? BGFIX : BG2, color: prefs.dark_mode === m.id ? P : T3, transition: "all 0.15s" }}>
-              {m.label}
-            </button>
-          ))}
-        </div>
-      </CustomizeRow>
-
+      <AccentColorRow prefs={prefs} update={update} />
+      <AppearanceRow prefs={prefs} update={update} />
       <LayoutRow prefs={prefs} update={update} />
-
-      <CustomizeRow label="Visible Sections">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px" }}>
-          {SECTIONS.map(s => (
-            <CustomizeToggle key={s.id} on={!(prefs.hide_sections || []).includes(s.id)} onClick={() => toggleSection(s.id)} label={s.label} />
-          ))}
-        </div>
-      </CustomizeRow>
-
+      <VisibleSectionsRow prefs={prefs} onToggle={toggleSection} />
       <FeaturedRepos repos={profile?.github_repos || []} prefs={prefs} update={update} />
-
       <CustomizeRow label="Tab Order">
         <div style={{ fontSize: 13, color: T3, marginBottom: 10 }}>Drag or use arrows to reorder tabs on your public portfolio.</div>
         <TabOrderSection prefs={prefs} update={update} />

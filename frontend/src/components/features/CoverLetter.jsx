@@ -124,22 +124,11 @@ function JobInputForm({ company, setCompany, role, setRole, jd, setJd, onGenerat
   );
 }
 
-function CoverLetter({ userId, built, profile, jd, setJd, company, setCompany, role, setRole, result, setResult }) {
+function useCoverLetter({ userId, jd, company, role, result, setResult }) {
   const [status, setStatus] = useState({ loading: false, error: null, refining: false, saving: false, savedId: null });
   const [copied, setCopied] = useState(false);
   const [refinement, setRefinement] = useState("");
   const editorRef = useRef(null);
-
-  const contactLine = [profile?.email, profile?.phone].filter(Boolean).join("  |  ");
-
-  useEffect(() => {
-    if (!editorRef.current || !result) return;
-    const contactHeader = contactLine
-      ? `<p style="margin:0 0 2px 0;font-size:12px;color:#767586">${contactLine}</p><p style="margin:0 0 1.2em 0"> </p>`
-      : "";
-    const html = result.split(/\n\n+/).map(block => `<p style="margin:0 0 1em 0">${block.replace(/\n/g, "<br>")}</p>`).join("");
-    editorRef.current.innerHTML = contactHeader + html;
-  }, [result]);
 
   const getEditorText = () => editorRef.current?.innerText || result || "";
   const fmt = (cmd) => { document.execCommand(cmd, false, null); editorRef.current?.focus(); };
@@ -172,6 +161,20 @@ function CoverLetter({ userId, built, profile, jd, setJd, company, setCompany, r
   };
 
   const copy = () => { navigator.clipboard.writeText(getEditorText()); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+
+  return { status, copied, refinement, setRefinement, editorRef, getEditorText, fmt, generate, refine, saveLetter, copy };
+}
+
+function CoverLetter({ userId, built, profile, jd, setJd, company, setCompany, role, setRole, result, setResult }) {
+  const { status, copied, refinement, setRefinement, editorRef, getEditorText, fmt, generate, refine, saveLetter, copy } = useCoverLetter({ userId, jd, company, role, result, setResult });
+  const contactLine = [profile?.email, profile?.phone].filter(Boolean).join("  |  ");
+
+  useEffect(() => {
+    if (!editorRef.current || !result) return;
+    const header = contactLine ? `<p style="margin:0 0 2px 0;font-size:12px;color:#767586">${contactLine}</p><p style="margin:0 0 1.2em 0"> </p>` : "";
+    const html = result.split(/\n\n+/).map(block => `<p style="margin:0 0 1em 0">${block.replace(/\n/g, "<br>")}</p>`).join("");
+    editorRef.current.innerHTML = header + html;
+  }, [result]);
 
   if (!built) return <CoverLetterPlaceholder />;
 

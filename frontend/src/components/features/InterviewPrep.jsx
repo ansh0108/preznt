@@ -46,6 +46,46 @@ const INTERVIEW_TYPES = [
   { id: "hr_culture",    label: "HR / Culture",        color: "#16a34a",  bg: "rgba(22,163,74,0.08)",    border: "rgba(22,163,74,0.25)"  },
 ];
 
+const TYPE_COLOR  = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.color]));
+const TYPE_BG     = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.bg]));
+const TYPE_BORDER = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.border]));
+const TYPE_LABEL  = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.label]));
+
+function TypeSelector({ selectedTypes, onToggle }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Interview Types (select all that apply)</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {INTERVIEW_TYPES.map(t => {
+          const active = selectedTypes.includes(t.id);
+          return (
+            <button key={t.id} onClick={() => onToggle(t.id)}
+              style={{ padding: "8px 16px", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: "pointer", background: active ? t.bg : "var(--bg2)", border: `1.5px solid ${active ? t.color : "var(--line)"}`, color: active ? t.color : "var(--text3)", transition: "all 0.15s", display: "flex", alignItems: "center", gap: 6 }}>
+              {active && <Icon name="check" size={12} color={t.color} />}
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+      {selectedTypes.length > 1 && (
+        <div style={{ marginTop: 8, fontSize: 12, color: "var(--text3)" }}>
+          ~{Math.ceil(8 / selectedTypes.length)} questions per type · {selectedTypes.length * Math.ceil(8 / selectedTypes.length)} total
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuestionList({ result, copied, onCopy }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "fadeUp 0.3s ease" }}>
+      {result.map((q, i) => (
+        <QuestionCard key={i} q={q} i={i} copied={copied} onCopy={onCopy} typeColor={TYPE_COLOR} typeBg={TYPE_BG} typeBorder={TYPE_BORDER} typeLabel={TYPE_LABEL} />
+      ))}
+    </div>
+  );
+}
+
 function InterviewPrep({ userId, jd: initialJd }) {
   const [jd, setJd] = useState(initialJd || "");
   const [selectedTypes, setSelectedTypes] = useState(["behavioral", "technical"]);
@@ -54,81 +94,32 @@ function InterviewPrep({ userId, jd: initialJd }) {
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(null);
 
-  const TYPE_COLOR  = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.color]));
-  const TYPE_BG     = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.bg]));
-  const TYPE_BORDER = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.border]));
-  const TYPE_LABEL  = Object.fromEntries(INTERVIEW_TYPES.map(t => [t.id, t.label]));
-
-  const toggleType = (id) => {
-    setSelectedTypes(prev =>
-      prev.includes(id) ? (prev.length > 1 ? prev.filter(t => t !== id) : prev) : [...prev, id]
-    );
-  };
+  const toggleType = (id) => setSelectedTypes(prev =>
+    prev.includes(id) ? (prev.length > 1 ? prev.filter(t => t !== id) : prev) : [...prev, id]
+  );
 
   const generate = async () => {
     if (!jd.trim() || selectedTypes.length === 0) return;
     setLoading(true); setError(null); setResult(null);
-    try {
-      const res = await axios.post(`${API}/interview-prep`, { user_id: userId, job_description: jd, interview_types: selectedTypes });
-      setResult(res.data.questions || []);
-    } catch { setError("Failed to generate. Please try again."); }
+    try { const res = await axios.post(`${API}/interview-prep`, { user_id: userId, job_description: jd, interview_types: selectedTypes }); setResult(res.data.questions || []); }
+    catch { setError("Failed to generate. Please try again."); }
     finally { setLoading(false); }
   };
 
-  const copyQ = (i, text) => {
-    navigator.clipboard.writeText(text);
-    setCopied(i); setTimeout(() => setCopied(null), 2000);
-  };
+  const copyQ = (i, text) => { navigator.clipboard.writeText(text); setCopied(i); setTimeout(() => setCopied(null), 2000); };
 
   return (
     <div>
       <div style={{ fontFamily: "var(--serif)", fontSize: 24, color: "var(--text)", letterSpacing: "-0.01em", fontWeight: 500, marginBottom: 6 }}>Interview Prep</div>
-      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
-        Select interview types, paste a job description, and get targeted questions with talking points drawn from your actual profile.
-      </div>
-
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Interview Types (select all that apply)</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {INTERVIEW_TYPES.map(t => {
-            const active = selectedTypes.includes(t.id);
-            return (
-              <button key={t.id} onClick={() => toggleType(t.id)}
-                style={{
-                  padding: "8px 16px", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  background: active ? t.bg : "var(--bg2)",
-                  border: `1.5px solid ${active ? t.color : "var(--line)"}`,
-                  color: active ? t.color : "var(--text3)",
-                  transition: "all 0.15s", display: "flex", alignItems: "center", gap: 6,
-                }}>
-                {active && <Icon name="check" size={12} color={t.color} />}
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-        {selectedTypes.length > 1 && (
-          <div style={{ marginTop: 8, fontSize: 12, color: "var(--text3)" }}>
-            ~{Math.ceil(8 / selectedTypes.length)} questions per type · {selectedTypes.length * Math.ceil(8 / selectedTypes.length)} total
-          </div>
-        )}
-      </div>
-
-      <textarea value={jd} onChange={e => setJd(e.target.value)}
-        placeholder="Paste the job description here..."
-        rows={6}
+      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>Select interview types, paste a job description, and get targeted questions with talking points drawn from your actual profile.</div>
+      <TypeSelector selectedTypes={selectedTypes} onToggle={toggleType} />
+      <textarea value={jd} onChange={e => setJd(e.target.value)} placeholder="Paste the job description here..." rows={6}
         style={{ width: "100%", marginBottom: 12, resize: "vertical", background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8 }} />
       <Btn onClick={generate} disabled={loading || !jd.trim()} style={{ marginBottom: 24 }}>
         {loading ? <><Spinner size={14} color="#fff" /> Generating questions…</> : <><Icon name="zap" size={14} color="#fff" /> Generate Questions</>}
       </Btn>
       {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
-      {result && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "fadeUp 0.3s ease" }}>
-          {result.map((q, i) => (
-            <QuestionCard key={i} q={q} i={i} copied={copied} onCopy={copyQ} typeColor={TYPE_COLOR} typeBg={TYPE_BG} typeBorder={TYPE_BORDER} typeLabel={TYPE_LABEL} />
-          ))}
-        </div>
-      )}
+      {result && <QuestionList result={result} copied={copied} onCopy={copyQ} />}
     </div>
   );
 }

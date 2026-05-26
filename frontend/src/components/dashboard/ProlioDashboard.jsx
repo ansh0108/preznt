@@ -21,73 +21,72 @@ const NAV_ITEMS = [
   { icon: "⚙️", label: "Settings" },
 ];
 
+function SidebarBrand() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 8px" }}>
+      <div style={{ width: 48, height: 48, borderRadius: "50%", background: P, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <span style={{ fontSize: 22, color: "#fff" }}>◈</span>
+      </div>
+      <span style={{ fontFamily: "var(--serif)", color: P, fontSize: 24, fontWeight: 700 }}>Prolio</span>
+    </div>
+  );
+}
+
+function SidebarUserCard({ name, initials }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 12, ...hairline }}>
+      <div style={{ width: 40, height: 40, borderRadius: "50%", background: BGFIX, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 16, color: P, flexShrink: 0 }}>{initials}</div>
+      <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: T1, fontFamily: "var(--sans)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+        <span style={{ fontSize: 12, fontWeight: 500, color: T2, fontFamily: "var(--sans)" }}>Executive Account</span>
+      </div>
+    </div>
+  );
+}
+
+function SidebarPrimaryNav({ onSwitchToFull }) {
+  return (
+    <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+      {NAV_ITEMS.map(item => (
+        <button key={item.label} onClick={item.label === "Portfolios" ? onSwitchToFull : undefined}
+          style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 12, border: "none", cursor: "pointer", textAlign: "left", width: "100%", fontFamily: "var(--sans)", fontSize: 15, fontWeight: item.active ? 700 : 400, background: item.active ? "rgba(225,224,255,0.4)" : "transparent", color: item.active ? P : T2 }}
+          onMouseEnter={e => { if (!item.active) e.currentTarget.style.background = "rgba(216,227,251,0.5)"; }}
+          onMouseLeave={e => { if (!item.active) e.currentTarget.style.background = "transparent"; }}>
+          <span style={{ fontSize: 18 }}>{item.icon}</span>{item.label}
+        </button>
+      ))}
+      <button style={{ width: "100%", marginTop: 12, padding: "12px 16px", background: P, color: "#fff", border: "none", borderRadius: 8, fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+        onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
+        onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+        onClick={onSwitchToFull}>Create New Portfolio</button>
+    </nav>
+  );
+}
+
+function SidebarFooterNav({ onLogout }) {
+  return (
+    <nav style={{ display: "flex", flexDirection: "column", gap: 4, borderTop: `1px solid ${BD}`, paddingTop: 12 }}>
+      {[{ icon: "❓", label: "Support" }, { icon: "→", label: "Sign Out" }].map(item => (
+        <button key={item.label} onClick={item.label === "Sign Out" ? onLogout : undefined}
+          style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 12, border: "none", background: "transparent", color: T2, cursor: "pointer", fontFamily: "var(--sans)", fontSize: 14 }}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(216,227,251,0.5)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+          <span>{item.icon}</span>{item.label}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
 function Sidebar({ auth, onLogout, onSwitchToFull }) {
   const name = auth?.name || "Your Account";
   const initials = name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
-
   return (
-    <aside style={{
-      background: BG, borderRight: `1px solid ${BD}`,
-      position: "fixed", left: 0, top: 0, height: "100%", width: 288,
-      display: "flex", flexDirection: "column", padding: 24, gap: 24, zIndex: 50,
-    }}>
-      {/* Brand */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 8px" }}>
-        <div style={{ width: 48, height: 48, borderRadius: "50%", background: P, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <span style={{ fontSize: 22, color: "#fff" }}>◈</span>
-        </div>
-        <span style={{ fontFamily: "var(--serif)", color: P, fontSize: 24, fontWeight: 700 }}>Prolio</span>
-      </div>
-
-      {/* User card */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", borderRadius: 12, ...hairline }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: BGFIX, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 16, color: P, flexShrink: 0 }}>
-          {initials}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: T1, fontFamily: "var(--sans)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
-          <span style={{ fontSize: 12, fontWeight: 500, color: T2, fontFamily: "var(--sans)" }}>Executive Account</span>
-        </div>
-      </div>
-
-      {/* Primary nav */}
-      <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-        {NAV_ITEMS.map(item => (
-          <button key={item.label}
-            onClick={item.label === "Portfolios" ? onSwitchToFull : undefined}
-            style={{
-              display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 12, border: "none", cursor: "pointer", textAlign: "left", width: "100%", fontFamily: "var(--sans)", fontSize: 15, fontWeight: item.active ? 700 : 400, transition: "all 0.15s",
-              background: item.active ? "rgba(225,224,255,0.4)" : "transparent",
-              color: item.active ? P : T2,
-            }}
-            onMouseEnter={e => { if (!item.active) e.currentTarget.style.background = "rgba(216,227,251,0.5)"; }}
-            onMouseLeave={e => { if (!item.active) e.currentTarget.style.background = "transparent"; }}>
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
-            {item.label}
-          </button>
-        ))}
-
-        <button
-          style={{ width: "100%", marginTop: 12, padding: "12px 16px", background: P, color: "#fff", border: "none", borderRadius: 8, fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "opacity 0.15s" }}
-          onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
-          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-          onClick={onSwitchToFull}>
-          Create New Portfolio
-        </button>
-      </nav>
-
-      {/* Footer nav */}
-      <nav style={{ display: "flex", flexDirection: "column", gap: 4, borderTop: `1px solid ${BD}`, paddingTop: 12 }}>
-        {[{ icon: "❓", label: "Support" }, { icon: "→", label: "Sign Out" }].map(item => (
-          <button key={item.label}
-            onClick={item.label === "Sign Out" ? onLogout : undefined}
-            style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 12, border: "none", background: "transparent", color: T2, cursor: "pointer", fontFamily: "var(--sans)", fontSize: 14, transition: "all 0.15s" }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(216,227,251,0.5)"}
-            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            <span>{item.icon}</span>{item.label}
-          </button>
-        ))}
-      </nav>
+    <aside style={{ background: BG, borderRight: `1px solid ${BD}`, position: "fixed", left: 0, top: 0, height: "100%", width: 288, display: "flex", flexDirection: "column", padding: 24, gap: 24, zIndex: 50 }}>
+      <SidebarBrand />
+      <SidebarUserCard name={name} initials={initials} />
+      <SidebarPrimaryNav onSwitchToFull={onSwitchToFull} />
+      <SidebarFooterNav onLogout={onLogout} />
     </aside>
   );
 }

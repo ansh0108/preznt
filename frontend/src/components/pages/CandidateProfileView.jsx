@@ -70,66 +70,42 @@ const DEFAULT_CANDIDATE = {
   ],
 };
 
-function LeftSidebar({ candidate, onShortlist, shortlisted }) {
+function CandidateHeroCard({ candidate }) {
   const initials = candidate.name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <aside style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* Hero card */}
-      <div style={{ ...card, padding: 24, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-        <div style={{ width: 128, height: 128, borderRadius: "50%", background: BGFIX, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--serif)", fontSize: 44, fontWeight: 700, color: P, marginBottom: 12, border: `2px solid ${BGC}` }}>
-          {initials}
-        </div>
-        <h1 style={{ fontFamily: "var(--serif)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.01em", color: T1, marginBottom: 4, margin: "0 0 4px" }}>{candidate.name}</h1>
-        <p style={{ fontFamily: "var(--sans)", fontSize: 18, color: P, marginBottom: 16, margin: "0 0 16px" }}>{candidate.title}</p>
-        <div style={{ display: "flex", gap: 8, width: "100%", marginTop: 16 }}>
-          <button style={{ flex: 1, background: P, color: "#fff", border: "none", borderRadius: 4, padding: "12px 0", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "opacity 0.15s" }}
-            onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
-            onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
-            ✉ Message
-          </button>
-          <button style={{ flex: 1, background: "transparent", color: P, border: `1px solid ${BD}`, borderRadius: 4, padding: "12px 0", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.15s" }}
-            onMouseEnter={e => e.currentTarget.style.background = BG2}
-            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            ↓ Resume
-          </button>
-        </div>
+    <div style={{ ...card, padding: 24, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+      <div style={{ width: 128, height: 128, borderRadius: "50%", background: BGFIX, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--serif)", fontSize: 44, fontWeight: 700, color: P, marginBottom: 12, border: `2px solid ${BGC}` }}>{initials}</div>
+      <h1 style={{ fontFamily: "var(--serif)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.01em", color: T1, margin: "0 0 4px" }}>{candidate.name}</h1>
+      <p style={{ fontFamily: "var(--sans)", fontSize: 18, color: P, margin: "0 0 16px" }}>{candidate.title}</p>
+      <div style={{ display: "flex", gap: 8, width: "100%", marginTop: 16 }}>
+        <button style={{ flex: 1, background: P, color: "#fff", border: "none", borderRadius: 4, padding: "12px 0", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "opacity 0.15s" }} onMouseEnter={e => e.currentTarget.style.opacity = "0.88"} onMouseLeave={e => e.currentTarget.style.opacity = "1"}>✉ Message</button>
+        <button style={{ flex: 1, background: "transparent", color: P, border: `1px solid ${BD}`, borderRadius: 4, padding: "12px 0", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = BG2} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>↓ Resume</button>
       </div>
+    </div>
+  );
+}
 
-      {/* Executive Summary */}
+function LeftSidebar({ candidate }) {
+  return (
+    <aside style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
+      <CandidateHeroCard candidate={candidate} />
       <div style={{ ...card, padding: 24 }}>
-        <h2 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color: T3, fontSize: 18 }}>≡</span> Executive Summary
-        </h2>
+        <h2 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: T3, fontSize: 18 }}>≡</span> Executive Summary</h2>
         <p style={{ fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.5, color: T2, margin: 0, textAlign: "justify" }}>{candidate.summary}</p>
       </div>
-
-      {/* Core Competencies */}
       <div style={{ ...card, padding: 24 }}>
-        <h2 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color: T3, fontSize: 18 }}>✓</span> Core Competencies
-        </h2>
+        <h2 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: T3, fontSize: 18 }}>✓</span> Core Competencies</h2>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {candidate.skills.map(skill => {
             const hl = candidate.highlightSkills.has(skill);
-            return (
-              <span key={skill} style={{ background: hl ? "var(--accent-d)" : BGC, color: hl ? P : T1, border: `1px solid ${hl ? "var(--accent-b)" : BD}`, padding: "4px 12px", borderRadius: 4, fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                {skill}
-              </span>
-            );
+            return <span key={skill} style={{ background: hl ? "var(--accent-d)" : BGC, color: hl ? P : T1, border: `1px solid ${hl ? "var(--accent-b)" : BD}`, padding: "4px 12px", borderRadius: 4, fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>{skill}</span>;
           })}
         </div>
       </div>
-
-      {/* Quick stats */}
       <div style={{ ...card, padding: 24, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        {[
-          { label: "Availability", value: candidate.availability },
-          { label: "Location", value: candidate.location },
-          { label: "Target Comp", value: candidate.targetComp },
-          { label: "Willing to Relocate", value: candidate.relocation },
-        ].map(({ label, value }) => (
+        {[{ label: "Availability", value: candidate.availability }, { label: "Location", value: candidate.location }, { label: "Target Comp", value: candidate.targetComp }, { label: "Willing to Relocate", value: candidate.relocation }].map(({ label, value }) => (
           <div key={label}>
-            <p style={{ fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, color: T3, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4, margin: "0 0 4px" }}>{label}</p>
+            <p style={{ fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, color: T3, textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 4px" }}>{label}</p>
             <p style={{ fontFamily: "var(--sans)", fontSize: 16, color: T1, margin: 0 }}>{value}</p>
           </div>
         ))}
@@ -138,46 +114,35 @@ function LeftSidebar({ candidate, onShortlist, shortlisted }) {
   );
 }
 
+function CareerTimeline({ experience }) {
+  return (
+    <div style={{ position: "relative", borderLeft: `1px solid ${BD}`, marginLeft: 16, display: "flex", flexDirection: "column", gap: 48, paddingTop: 4 }}>
+      {experience.map((exp, idx) => (
+        <div key={idx} style={{ position: "relative", paddingLeft: 32 }}>
+          <div style={{ position: "absolute", width: 12, height: 12, borderRadius: "50%", left: -6, top: 8, background: exp.active ? P : BGH, boxShadow: `0 0 0 4px ${BG1}` }} />
+          <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8, flexWrap: "wrap", gap: 4 }}>
+            <div>
+              <h3 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, margin: "0 0 2px" }}>{exp.role}</h3>
+              <p style={{ fontFamily: "var(--sans)", fontSize: 18, color: exp.active ? P : T2, margin: 0 }}>{exp.org}</p>
+            </div>
+            <span style={{ fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, color: T3 }}>{exp.period}</span>
+          </div>
+          <p style={{ fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.5, color: T2, marginBottom: exp.tags.length ? 16 : 0 }}>{exp.desc}</p>
+          {exp.tags.length > 0 && <div style={{ display: "flex", gap: 8 }}>{exp.tags.map(tag => <span key={tag} style={{ fontFamily: "var(--sans)", fontSize: 12, color: "#5c5f60", background: BG2, padding: "4px 8px", border: `1px solid rgba(0,0,0,0.04)`, borderRadius: 4 }}>{tag}</span>)}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function RightContent({ candidate }) {
   return (
     <section style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* Professional Trajectory */}
       <div style={{ ...card, padding: 48 }}>
-        <h2 style={{ fontFamily: "var(--serif)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.01em", color: T1, borderBottom: `1px solid ${BD}`, paddingBottom: 16, marginBottom: 48, margin: "0 0 0 0" }}>
-          Professional Trajectory
-        </h2>
-        {/* Timeline */}
-        <div style={{ position: "relative", borderLeft: `1px solid ${BD}`, marginLeft: 16, display: "flex", flexDirection: "column", gap: 48, paddingTop: 4 }}>
-          {candidate.experience.map((exp, idx) => (
-            <div key={idx} style={{ position: "relative", paddingLeft: 32 }}>
-              <div style={{
-                position: "absolute", width: 12, height: 12, borderRadius: "50%", left: -6, top: 8,
-                background: exp.active ? P : BGH,
-                boxShadow: `0 0 0 4px ${BG1}`,
-              }} />
-              <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8, flexWrap: "wrap", gap: 4 }}>
-                <div>
-                  <h3 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, margin: "0 0 2px" }}>{exp.role}</h3>
-                  <p style={{ fontFamily: "var(--sans)", fontSize: 18, color: exp.active ? P : T2, margin: 0 }}>{exp.org}</p>
-                </div>
-                <span style={{ fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600, color: T3 }}>{exp.period}</span>
-              </div>
-              <p style={{ fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.5, color: T2, marginBottom: exp.tags.length ? 16 : 0 }}>{exp.desc}</p>
-              {exp.tags.length > 0 && (
-                <div style={{ display: "flex", gap: 8 }}>
-                  {exp.tags.map(tag => (
-                    <span key={tag} style={{ fontFamily: "var(--sans)", fontSize: 12, color: "#5c5f60", background: BG2, padding: "4px 8px", border: `1px solid rgba(0,0,0,0.04)`, borderRadius: 4 }}>{tag}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <h2 style={{ fontFamily: "var(--serif)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.01em", color: T1, borderBottom: `1px solid ${BD}`, paddingBottom: 16, marginBottom: 48, margin: 0 }}>Professional Trajectory</h2>
+        <CareerTimeline experience={candidate.experience} />
       </div>
-
-      {/* Education + Recruiter Notes */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-        {/* Education */}
         <div style={{ ...card, padding: 24 }}>
           <h3 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, borderBottom: `1px solid ${BD}`, paddingBottom: 8, marginBottom: 16 }}>Education</h3>
           {candidate.education.map((edu, i) => (
@@ -188,16 +153,12 @@ function RightContent({ candidate }) {
             </div>
           ))}
         </div>
-
-        {/* Recruiter Notes */}
         <div style={{ ...card, padding: 24, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, right: 0, padding: 16, opacity: 0.10, pointerEvents: "none" }}>
             <span style={{ fontFamily: "var(--serif)", fontSize: 64, color: T1 }}>"</span>
           </div>
           <h3 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 500, color: T1, borderBottom: `1px solid ${BD}`, paddingBottom: 8, marginBottom: 16, position: "relative", zIndex: 1 }}>Recruiter Notes</h3>
-          <p style={{ fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.5, color: T2, fontStyle: "italic", position: "relative", zIndex: 1, margin: "0 0 16px" }}>
-            "Elena is a powerhouse. Presents incredibly well, possesses deep industry knowledge, and has a clear vision for how marketing drives enterprise value. Highly recommended for C-suite roles requiring immediate impact."
-          </p>
+          <p style={{ fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.5, color: T2, fontStyle: "italic", position: "relative", zIndex: 1, margin: "0 0 16px" }}>"Elena is a powerhouse. Presents incredibly well, possesses deep industry knowledge, and has a clear vision for how marketing drives enterprise value. Highly recommended for C-suite roles requiring immediate impact."</p>
           <p style={{ fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500, color: T3, position: "relative", zIndex: 1, margin: 0 }}>— Interviewed by J. Montgomery (Oct 12)</p>
         </div>
       </div>

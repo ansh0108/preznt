@@ -57,56 +57,90 @@ function EducationEntry({ edu, isLast }) {
   );
 }
 
+function LinkTypeGroup({ links, meta }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10, fontFamily: "var(--sans)" }}>{meta.label}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {links.map((l, i) => (
+          <div key={i} className="c-hover" style={{ display: "flex", gap: 14, padding: "14px 16px", background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8, borderLeft: `2px solid ${meta.color}` }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text)", fontFamily: "var(--sans)" }}>{l.title}</div>
+              {l.issuer && <div style={{ fontSize: 12.5, color: meta.color, marginTop: 3 }}>{l.issuer}</div>}
+              {l.date && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 2, fontFamily: "var(--sans)" }}>{l.date}</div>}
+              {l.description && <div style={{ fontSize: 13, color: "var(--text2)", marginTop: 6, lineHeight: 1.6, fontFamily: "var(--sans)" }}>{l.description}</div>}
+            </div>
+            {l.url && <a href={l.url} target="_blank" rel="noreferrer" style={{ flexShrink: 0, alignSelf: "flex-start", paddingTop: 2, textDecoration: "none" }}><span style={{ fontSize: 11, color: meta.color, background: meta.bg, border: `1px solid ${meta.border}`, padding: "3px 10px", borderRadius: 100, fontWeight: 600, whiteSpace: "nowrap" }}>↗ View</span></a>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function LinksSection({ links }) {
   const grouped = {};
-  for (const l of links) {
-    const t = l.type || "other";
-    if (!grouped[t]) grouped[t] = [];
-    grouped[t].push(l);
-  }
-
-  const linkGroups = ["product", "publication", "certificate", "award", "other"].filter(t => grouped[t]).map(type => {
-    const meta = LINK_TYPE_META[type];
-    return (
-      <div key={type}>
-        <div style={{
-          fontSize: 11, fontWeight: 700, color: "var(--text3)",
-          letterSpacing: "0.08em", textTransform: "uppercase",
-          marginBottom: 10, fontFamily: "var(--sans)",
-        }}>{meta.label}</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {grouped[type].map((l, i) => (
-            <div
-              key={i}
-              className="c-hover"
-              style={{
-                display: "flex", gap: 14, padding: "14px 16px",
-                background: "var(--bg2)", border: "1px solid var(--line)",
-                borderRadius: 8, borderLeft: `2px solid ${meta.color}`,
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text)", fontFamily: "var(--sans)" }}>{l.title}</div>
-                {l.issuer && <div style={{ fontSize: 12.5, color: meta.color, marginTop: 3 }}>{l.issuer}</div>}
-                {l.date && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 2, fontFamily: "var(--sans)" }}>{l.date}</div>}
-                {l.description && <div style={{ fontSize: 13, color: "var(--text2)", marginTop: 6, lineHeight: 1.6, fontFamily: "var(--sans)" }}>{l.description}</div>}
-              </div>
-              {l.url && (
-                <a href={l.url} target="_blank" rel="noreferrer" style={{ flexShrink: 0, alignSelf: "flex-start", paddingTop: 2, textDecoration: "none" }}>
-                  <span style={{ fontSize: 11, color: meta.color, background: meta.bg, border: `1px solid ${meta.border}`, padding: "3px 10px", borderRadius: 100, fontWeight: 600, whiteSpace: "nowrap" }}>↗ View</span>
-                </a>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  });
-
+  for (const l of links) { const t = l.type || "other"; if (!grouped[t]) grouped[t] = []; grouped[t].push(l); }
+  const ORDER = ["product", "publication", "certificate", "award", "other"];
   return (
     <div>
       <SecHead>Links & Credentials</SecHead>
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>{linkGroups}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {ORDER.filter(t => grouped[t]).map(type => <LinkTypeGroup key={type} links={grouped[type]} meta={LINK_TYPE_META[type]} />)}
+      </div>
+    </div>
+  );
+}
+
+function AboutSection({ profile }) {
+  return (
+    <div>
+      <SecHead>About</SecHead>
+      <div style={{ color: "var(--text2)", fontSize: 14, lineHeight: 1.85, fontWeight: 400, fontFamily: "var(--sans)" }}>{profile.bio || profile.linkedin_summary}</div>
+    </div>
+  );
+}
+
+function ExperienceSection({ experience }) {
+  return (
+    <div>
+      <SecHead>Experience</SecHead>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {experience.map((exp, i) => (
+          <ExperienceEntry key={i} exp={exp} isLast={i === experience.length - 1} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EducationSection({ education }) {
+  return (
+    <div>
+      <SecHead>Education</SecHead>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {education.map((edu, i) => (
+          <EducationEntry key={i} edu={edu} isLast={i === education.length - 1} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SkillsSection({ profile }) {
+  return (
+    <div>
+      <SecHead>Skills</SecHead>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {Object.entries(getSkillClusters(profile)).map(([cat, skills]) => (
+          <div key={cat}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8, fontFamily: "var(--sans)" }}>{cat}</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+              {skills.map((s, i) => <Pill key={i} size="md">{s}</Pill>)}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -119,61 +153,13 @@ function Overview({ profile, hideSections = [] }) {
       <div style={{ color: "var(--text3)", fontSize: 14, fontFamily: "var(--sans)" }}>Upload your LinkedIn PDF in setup to populate this section.</div>
     </div>
   );
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
-      {(profile.bio || profile.linkedin_summary) && !hideSections.includes("about") && (
-        <div>
-          <SecHead>About</SecHead>
-          <div style={{ color: "var(--text2)", fontSize: 14, lineHeight: 1.85, fontWeight: 400, fontFamily: "var(--sans)" }}>{profile.bio || profile.linkedin_summary}</div>
-        </div>
-      )}
-
-      {profile.experience?.length > 0 && !hideSections.includes("experience") && (
-        <div>
-          <SecHead>Experience</SecHead>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {profile.experience.map((exp, i) => (
-              <ExperienceEntry key={i} exp={exp} isLast={i === profile.experience.length - 1} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {profile.education?.length > 0 && !hideSections.includes("education") && (
-        <div>
-          <SecHead>Education</SecHead>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {profile.education.map((edu, i) => (
-              <EducationEntry key={i} edu={edu} isLast={i === profile.education.length - 1} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {profile.skills?.length > 0 && !hideSections.includes("skills") && (
-        <div>
-          <SecHead>Skills</SecHead>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {Object.entries(getSkillClusters(profile)).map(([cat, skills]) => (
-              <div key={cat}>
-                <div style={{
-                  fontSize: 11, fontWeight: 700, color: "var(--text3)",
-                  letterSpacing: "0.08em", textTransform: "uppercase",
-                  marginBottom: 8, fontFamily: "var(--sans)",
-                }}>{cat}</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                  {skills.map((s, i) => <Pill key={i} size="md">{s}</Pill>)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {profile.links?.length > 0 && !hideSections.includes("links") && (
-        <LinksSection links={profile.links} />
-      )}
+      {(profile.bio || profile.linkedin_summary) && !hideSections.includes("about") && <AboutSection profile={profile} />}
+      {profile.experience?.length > 0 && !hideSections.includes("experience") && <ExperienceSection experience={profile.experience} />}
+      {profile.education?.length > 0 && !hideSections.includes("education") && <EducationSection education={profile.education} />}
+      {profile.skills?.length > 0 && !hideSections.includes("skills") && <SkillsSection profile={profile} />}
+      {profile.links?.length > 0 && !hideSections.includes("links") && <LinksSection links={profile.links} />}
     </div>
   );
 }

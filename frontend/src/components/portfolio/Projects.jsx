@@ -82,6 +82,19 @@ function ResumeProjectCard({ proj }) {
   );
 }
 
+function SubTab({ id, label, count, active, onClick }) {
+  return (
+    <button onClick={onClick} className="b-tab" data-active={active}
+      style={{ background: active ? "var(--bg1)" : "transparent", border: active ? "1px solid var(--line)" : "1px solid transparent", color: active ? "var(--accent)" : "var(--text3)", padding: "7px 18px", borderRadius: 6, fontSize: 13, fontWeight: active ? 600 : 400, display: "flex", alignItems: "center", gap: 7, transition: "all 0.15s", fontFamily: "var(--sans)" }}>
+      <Icon name={id === "github" ? "github" : "file"} size={14} color={active ? "var(--accent)" : "var(--text3)"} />
+      {label}
+      <span style={{ background: active ? "rgba(129,140,248,0.08)" : "var(--bg3)", color: active ? "var(--accent)" : "var(--text3)", fontSize: 11, fontWeight: 700, padding: "1px 7px", borderRadius: 100, border: active ? "1px solid rgba(129,140,248,0.20)" : "1px solid var(--line)" }}>
+        {count}
+      </span>
+    </button>
+  );
+}
+
 function Projects({ profile, hideSections = [], featuredRepos = [] }) {
   const githubRepos = [...(profile.github_repos || [])].sort((a, b) => {
     const aF = featuredRepos.includes(a.name) ? 0 : 1;
@@ -98,69 +111,27 @@ function Projects({ profile, hideSections = [], featuredRepos = [] }) {
     else if (showResume) setSub("resume");
   }, [profile]);
 
-  const hasAny = showGithub || showResume;
-  if (!hasAny) return (
+  if (!showGithub && !showResume) return (
     <div style={{ textAlign: "center", padding: "64px 20px" }}>
       <Icon name="code" size={36} color="var(--text3)" style={{ marginBottom: 16 }} />
       <div style={{ color: "var(--text3)", fontSize: 14, fontFamily: "var(--sans)" }}>No projects found. Add GitHub repos in setup or upload your resume in Documents.</div>
     </div>
   );
 
-  const SubTab = ({ id, label, count }) => (
-    <button
-      onClick={() => setSub(id)}
-      className="b-tab"
-      data-active={sub === id}
-      style={{
-        background: sub === id ? "var(--bg1)" : "transparent",
-        border: sub === id ? "1px solid var(--line)" : "1px solid transparent",
-        color: sub === id ? "var(--accent)" : "var(--text3)",
-        padding: "7px 18px", borderRadius: 6, fontSize: 13,
-        fontWeight: sub === id ? 600 : 400,
-        display: "flex", alignItems: "center", gap: 7,
-        transition: "all 0.15s",
-        fontFamily: "var(--sans)",
-      }}
-    >
-      <Icon name={id === "github" ? "github" : "file"} size={14} color={sub === id ? "var(--accent)" : "var(--text3)"} />
-      {label}
-      <span style={{
-        background: sub === id ? "rgba(129,140,248,0.08)" : "var(--bg3)",
-        color: sub === id ? "var(--accent)" : "var(--text3)",
-        fontSize: 11, fontWeight: 700,
-        padding: "1px 7px", borderRadius: 100,
-        border: sub === id ? "1px solid rgba(129,140,248,0.20)" : "1px solid var(--line)",
-      }}>
-        {count}
-      </span>
-    </button>
-  );
-
   return (
     <div>
-      {/* Sub-tab container */}
-      <div style={{
-        display: "flex", gap: 6, marginBottom: 24,
-        background: "var(--bg)", border: "1px solid var(--line)",
-        borderRadius: 6, padding: 4, width: "fit-content",
-      }}>
-        {showGithub && <SubTab id="github" label="GitHub" count={githubRepos.length} />}
-        {showResume && <SubTab id="resume" label="From Resume" count={resumeProjects.length} />}
+      <div style={{ display: "flex", gap: 6, marginBottom: 24, background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 6, padding: 4, width: "fit-content" }}>
+        {showGithub && <SubTab id="github" label="GitHub" count={githubRepos.length} active={sub === "github"} onClick={() => setSub("github")} />}
+        {showResume && <SubTab id="resume" label="From Resume" count={resumeProjects.length} active={sub === "resume"} onClick={() => setSub("resume")} />}
       </div>
-
       {sub === "github" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "fadeIn 0.2s ease" }}>
-          {githubRepos.map((repo, i) => (
-            <GithubProjectCard key={i} repo={repo} featuredRepos={featuredRepos} />
-          ))}
+          {githubRepos.map((repo, i) => <GithubProjectCard key={i} repo={repo} featuredRepos={featuredRepos} />)}
         </div>
       )}
-
       {sub === "resume" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "fadeIn 0.2s ease" }}>
-          {resumeProjects.map((proj, i) => (
-            <ResumeProjectCard key={i} proj={proj} />
-          ))}
+          {resumeProjects.map((proj, i) => <ResumeProjectCard key={i} proj={proj} />)}
         </div>
       )}
     </div>

@@ -20,6 +20,54 @@ const luxShadow = "0 20px 40px -10px rgba(0,0,0,0.4)";
 
 const INPUT_ST = { width: "100%", background: "var(--bg2)", border: "1px solid var(--line2)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "var(--text)", outline: "none", boxSizing: "border-box", fontFamily: "var(--sans)" };
 
+function SetupNav({ onLogout }) {
+  return (
+    <div style={{ background: "rgba(18,19,25,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid var(--line)", padding: "0 40px", height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
+      <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 800, color: P, letterSpacing: "-0.02em" }}>Prolio</div>
+      <button onClick={onLogout} style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 8, color: T3, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--sans)" }}
+        onMouseEnter={e => e.currentTarget.style.background = "var(--accent-d)"}
+        onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+        <Icon name="logout" size={13} color={T3} /> Sign out
+      </button>
+    </div>
+  );
+}
+
+function PhotoUpload({ photo, onPhoto }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+      <label htmlFor="mps-photo" style={{ cursor: "pointer" }}>
+        <div style={{ width: 80, height: 80, borderRadius: "50%", background: BGH, border: photo.preview ? "2px dashed var(--accent-b)" : "2px dashed var(--line2)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          {photo.preview ? <img src={photo.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon name="camera" size={22} color={T3} />}
+        </div>
+        <input id="mps-photo" type="file" accept="image/*" style={{ display: "none" }} onChange={e => e.target.files[0] && onPhoto(e.target.files[0])} />
+      </label>
+    </div>
+  );
+}
+
+function ReconnectSection({ reconnect, setReconnect, onReconnect }) {
+  return (
+    <>
+      <div style={{ textAlign: "center" }}>
+        <button onClick={() => setReconnect(r => ({ ...r, show: !r.show }))} style={{ background: "transparent", border: "none", color: T3, fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}>
+          Already have a portfolio? Reconnect it
+        </button>
+      </div>
+      {reconnect.show && (
+        <div style={{ marginTop: 16, background: BG1, border: `1px solid ${BD}`, borderRadius: 12, padding: "16px" }}>
+          <div style={{ fontSize: 12.5, color: T3, marginBottom: 10 }}>Paste your portfolio URL to link it to this account.</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input value={reconnect.url} onChange={e => setReconnect(r => ({ ...r, url: e.target.value }))} onKeyDown={e => e.key === "Enter" && onReconnect()} placeholder="e.g. prolio.co/#/portfolio/..." style={{ ...INPUT_ST, flex: 1, fontSize: 12 }} />
+            <Btn onClick={onReconnect} disabled={!reconnect.url.trim()} style={{ flexShrink: 0, padding: "10px 14px" }}>Reconnect</Btn>
+          </div>
+          {reconnect.error && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 8 }}>{reconnect.error}</div>}
+        </div>
+      )}
+    </>
+  );
+}
+
 function MinimalProfileSetup({ auth, setAuth, onLogout }) {
   const [form, setForm] = useState({ name: "", title: "", bio: "" });
   const [photo, setPhoto] = useState({ file: null, preview: null });
@@ -58,25 +106,11 @@ function MinimalProfileSetup({ auth, setAuth, onLogout }) {
 
   return (
     <div style={{ minHeight: "100vh", background: BG }}>
-      <div style={{ background: "rgba(18,19,25,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid var(--line)", padding: "0 40px", height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 800, color: P, letterSpacing: "-0.02em", lineHeight: 1 }}>Prolio</div>
-        <button onClick={onLogout} style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 8, color: T3, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--sans)", transition: "background 0.15s" }}
-          onMouseEnter={e => e.currentTarget.style.background = "var(--accent-d)"}
-          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-          <Icon name="logout" size={13} color={T3} /> Sign out
-        </button>
-      </div>
+      <SetupNav onLogout={onLogout} />
       <div style={{ maxWidth: 480, margin: "60px auto", padding: "0 24px" }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.02em", color: T1, marginBottom: 8 }}>Set up your profile</div>
         <div style={{ color: T3, fontSize: 14, marginBottom: 36, lineHeight: 1.65, fontFamily: "var(--sans)" }}>Add your resume, LinkedIn, and GitHub repos from the dashboard after this.</div>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
-          <label htmlFor="mps-photo" style={{ cursor: "pointer" }}>
-            <div style={{ width: 80, height: 80, borderRadius: "50%", background: BGH, border: photo.preview ? "2px dashed var(--accent-b)" : "2px dashed var(--line2)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-              {photo.preview ? <img src={photo.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon name="camera" size={22} color={T3} />}
-            </div>
-            <input id="mps-photo" type="file" accept="image/*" style={{ display: "none" }} onChange={e => e.target.files[0] && handlePhoto(e.target.files[0])} />
-          </label>
-        </div>
+        <PhotoUpload photo={photo} onPhoto={handlePhoto} />
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
           <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Full name *" onKeyDown={e => e.key === "Enter" && submit()} style={INPUT_ST} />
           <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Professional title (optional)" style={INPUT_ST} />
@@ -84,24 +118,10 @@ function MinimalProfileSetup({ auth, setAuth, onLogout }) {
         </div>
         {error && <div style={{ color: "#ef4444", fontSize: 13, marginBottom: 12 }}>{error}</div>}
         <button onClick={submit} disabled={loading || !form.name.trim()}
-          style={{ width: "100%", background: "var(--accent)", color: "#fff", border: "none", borderRadius: 100, padding: "12px", fontWeight: 600, fontSize: 14, cursor: loading || !form.name.trim() ? "not-allowed" : "pointer", boxShadow: "0 4px 20px rgba(129,140,248,0.30)", opacity: loading || !form.name.trim() ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "var(--sans)", marginBottom: 24 }}>
+          style={{ width: "100%", background: "var(--accent)", color: "#fff", border: "none", borderRadius: 100, padding: "12px", fontWeight: 600, fontSize: 14, cursor: loading || !form.name.trim() ? "not-allowed" : "pointer", opacity: loading || !form.name.trim() ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "var(--sans)", marginBottom: 24 }}>
           {loading ? <><Spinner size={14} color="#fff" /> Creating profile…</> : "Continue to Dashboard"}
         </button>
-        <div style={{ textAlign: "center" }}>
-          <button onClick={() => setReconnect(r => ({ ...r, show: !r.show }))} style={{ background: "transparent", border: "none", color: T3, fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}>
-            Already have a portfolio? Reconnect it
-          </button>
-        </div>
-        {reconnect.show && (
-          <div style={{ marginTop: 16, background: BG1, border: `1px solid ${BD}`, borderRadius: 12, padding: "16px" }}>
-            <div style={{ fontSize: 12.5, color: T3, marginBottom: 10 }}>Paste your portfolio URL to link it to this account.</div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input value={reconnect.url} onChange={e => setReconnect(r => ({ ...r, url: e.target.value }))} onKeyDown={e => e.key === "Enter" && handleReconnect()} placeholder="e.g. prolio.co/#/portfolio/..." style={{ ...INPUT_ST, flex: 1, fontSize: 12 }} />
-              <Btn onClick={handleReconnect} disabled={!reconnect.url.trim()} style={{ flexShrink: 0, padding: "10px 14px" }}>Reconnect</Btn>
-            </div>
-            {reconnect.error && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 8 }}>{reconnect.error}</div>}
-          </div>
-        )}
+        <ReconnectSection reconnect={reconnect} setReconnect={setReconnect} onReconnect={handleReconnect} />
       </div>
     </div>
   );

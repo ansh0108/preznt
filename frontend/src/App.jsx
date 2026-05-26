@@ -11,115 +11,73 @@ import SeekerDashboard from "./components/dashboard/SeekerDashboard";
 import PortfolioPage from "./components/portfolio/PortfolioPage";
 import AdminPage from "./components/pages/AdminPage";
 
-export default function App() {
+// ─── useHashRouting ───────────────────────────────────────────────────────────
+function useHashRouting() {
   const initial = getRouteFromHash();
   const [page, setPage] = useState(initial.page);
   const [userId, setUserId] = useState(initial.userId);
-  const [auth, setAuth] = useState(loadAuth);
-  const [defaultUserType, setDefaultUserType] = useState("seeker");
-
   useEffect(() => {
-    const h = () => {
-      const r = getRouteFromHash();
-      setPage(r.page);
-      setUserId(r.userId);
-    };
+    const h = () => { const r = getRouteFromHash(); setPage(r.page); setUserId(r.userId); };
     window.addEventListener("hashchange", h);
     return () => window.removeEventListener("hashchange", h);
   }, []);
+  return { page, setPage, userId };
+}
 
-  // Verify token on load
+// ─── useAuthSync ──────────────────────────────────────────────────────────────
+function useAuthSync() {
+  const [auth, setAuth] = useState(loadAuth);
   useEffect(() => {
     if (!auth?.token) return;
     axios.get(`${API}/auth/me`, { headers: { Authorization: `Bearer ${auth.token}` } })
-      .then(r => {
-        const updated = { ...auth, ...r.data };
-        saveAuth(updated);
-        setAuth(updated);
-      })
+      .then(r => { const updated = { ...auth, ...r.data }; saveAuth(updated); setAuth(updated); })
       .catch(() => { clearAuth(); setAuth(null); });
   }, []);
+  return [auth, setAuth];
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+export default function App() {
+  const { page, setPage, userId } = useHashRouting();
+  const [auth, setAuth] = useAuthSync();
+  const [defaultUserType, setDefaultUserType] = useState("seeker");
 
   const logout = () => { clearAuth(); setAuth(null); window.location.hash = ""; setPage("landing"); };
-
   const goSeeker = () => { setDefaultUserType("seeker"); window.location.hash = "#/signup"; setPage("signup"); };
   const goRecruiter = () => { setDefaultUserType("recruiter"); window.location.hash = "#/signup"; setPage("signup"); };
   const goLogin = () => { window.location.hash = "#/login"; setPage("login"); };
 
-  const landingJsx = (
-    <>
-      <GlobalStyle />
-      <LandingPage onSeeker={goSeeker} onRecruiter={goRecruiter} onLogin={goLogin} />
-    </>
-  );
+  const landingJsx = (<><GlobalStyle /><LandingPage onSeeker={goSeeker} onRecruiter={goRecruiter} onLogin={goLogin} /></>);
 
   // Public portfolio view — no auth required
-  if (page === "portfolio") {
-    return (
-      <>
-        <GlobalStyle />
-        <PortfolioPage userId={userId} onBack={() => {
-          if (auth) { window.location.hash = "#/dashboard"; setPage("dashboard"); }
-          else { window.location.hash = ""; setPage("landing"); }
-        }} />
-      </>
-    );
-  }
+  if (page === "portfolio") return (
+    <><GlobalStyle /><PortfolioPage userId={userId} onBack={() => {
+      if (auth) { window.location.hash = "#/dashboard"; setPage("dashboard"); }
+      else { window.location.hash = ""; setPage("landing"); }
+    }} /></>
+  );
 
-  // Auth pages (login/signup) — only if not logged in
-  if ((page === "login" || page === "signup") && !auth) {
-    return (
-      <>
-        <GlobalStyle />
-        <AuthPage
-          mode={page}
-          defaultType={defaultUserType}
-          onSuccess={(data) => {
-            setAuth(data);
-            window.location.hash = "#/dashboard";
-            setPage("dashboard");
-          }}
-          onSwitch={() => {
-            const next = page === "login" ? "signup" : "login";
-            window.location.hash = `#/${next}`;
-            setPage(next);
-          }}
-          onBack={() => { window.location.hash = ""; setPage("landing"); }}
-        />
-      </>
-    );
-  }
+  // Auth pages — only if not logged in
+  if ((page === "login" || page === "signup") && !auth) return (
+    <><GlobalStyle /><AuthPage mode={page} defaultType={defaultUserType}
+      onSuccess={(data) => { setAuth(data); window.location.hash = "#/dashboard"; setPage("dashboard"); }}
+      onSwitch={() => { const next = page === "login" ? "signup" : "login"; window.location.hash = `#/${next}`; setPage(next); }}
+      onBack={() => { window.location.hash = ""; setPage("landing"); }}
+    /></>
+  );
 
-  // Admin page — requires auth, hidden route
+  // Admin page — hidden route, requires auth
   if (page === "admin") {
     if (!auth) { window.location.hash = "#/login"; return landingJsx; }
-    return (
-      <>
-        <GlobalStyle />
-        <AdminPage auth={auth} onBack={() => { window.location.hash = "#/dashboard"; setPage("dashboard"); }} />
-      </>
-    );
+    return (<><GlobalStyle /><AdminPage auth={auth} onBack={() => { window.location.hash = "#/dashboard"; setPage("dashboard"); }} /></>);
   }
 
   // Dashboard — requires auth
   if (page === "dashboard" || (auth && page === "landing")) {
     if (!auth) return landingJsx;
-    if (auth.user_type === "recruiter") {
-      return (
-        <>
-          <GlobalStyle />
-          <RecruiterDashboard auth={auth} onLogout={logout} />
-        </>
-      );
-    }
-    return (
-      <>
-        <GlobalStyle />
-        <SeekerDashboard auth={auth} setAuth={setAuth} onLogout={logout} />
-      </>
-    );
+    if (auth.user_type === "recruiter") return (<><GlobalStyle /><RecruiterDashboard auth={auth} onLogout={logout} /></>);
+    return (<><GlobalStyle /><SeekerDashboard auth={auth} setAuth={setAuth} onLogout={logout} /></>);
   }
 
-  // Default landing page
   return landingJsx;
 }

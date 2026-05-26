@@ -193,41 +193,8 @@ function QuickWinsSection({ wins }) {
   );
 }
 
-function GapAnalysis({ userId, built, role, setRole, result, setResult, error, setError }) {
-  const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [savedId, setSavedId] = useState(null);
-
-  const analyze = async () => {
-    if (!role.trim()) return;
-    setLoading(true); setError(null); setResult(null);
-    try {
-      const res = await axios.post(`${API}/gap-analysis`, { user_id: userId, job_description: role });
-      setResult(res.data);
-    }
-    catch { setError("Analysis failed. Please try again."); }
-    finally { setLoading(false); }
-  };
-
-  const saveAnalysis = async () => {
-    if (!result || saving) return;
-    setSaving(true);
-    try {
-      const title = role.trim().slice(0, 80) || "Gap Analysis";
-      const res = await axios.post(`${API}/analyses/save`, { user_id: userId, type: "gap", title, content: result });
-      setSavedId(res.data.id);
-    } catch {}
-    finally { setSaving(false); }
-  };
-
-  const copyText = (text, idx) => {
-    navigator.clipboard.writeText(text);
-    setCopied(idx);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  if (!built) return (
+function NotBuiltState() {
+  return (
     <div>
       <SecHead>ATS Gap Analysis</SecHead>
       <div style={{ marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center", padding: "40px 20px" }}>
@@ -239,38 +206,66 @@ function GapAnalysis({ userId, built, role, setRole, result, setResult, error, s
       </div>
     </div>
   );
+}
 
-  const score = result?.ats_score;
-  const scoreColor = score >= 70 ? "var(--teal)" : score >= 45 ? "var(--amber)" : "var(--red)";
-
+function GapAnalysisForm({ role, setRole, loading, saving, savedId, result, onAnalyze, onSave, error }) {
   return (
-    <div>
-      <div style={{ fontFamily: "var(--serif)", fontSize: 24, color: "var(--text)", letterSpacing: "-0.01em", fontWeight: 500, marginBottom: 6 }}>ATS Gap Analysis</div>
-      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 18 }}>Paste a full job description to get an ATS-optimised breakdown of your fit — match score, missing keywords, and bullet rewrites.</div>
-
-      <textarea
-        value={role}
-        onChange={e => setRole(e.target.value)}
-        placeholder="Paste the full job description here…"
-        rows={7}
-        style={{ width: "100%", marginBottom: 12, resize: "vertical", fontSize: 13, background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8, padding: 12 }}
-      />
+    <>
+      <textarea value={role} onChange={e => setRole(e.target.value)} placeholder="Paste the full job description here…" rows={7}
+        style={{ width: "100%", marginBottom: 12, resize: "vertical", fontSize: 13, background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 8, padding: 12 }} />
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
-        <Btn onClick={analyze} disabled={loading || !role.trim()}>
-          {loading
-            ? <><Spinner size={14} color="#fff" /> Analyzing…</>
-            : <><Icon name="target" size={14} color="#fff" /> Run ATS Analysis</>}
+        <Btn onClick={onAnalyze} disabled={loading || !role.trim()}>
+          {loading ? <><Spinner size={14} color="#fff" /> Analyzing…</> : <><Icon name="target" size={14} color="#fff" /> Run ATS Analysis</>}
         </Btn>
         {result && !result.error && (
-          <button onClick={saveAnalysis} disabled={saving || !!savedId}
-            style={{ background: savedId ? "rgba(13,148,136,0.08)" : "var(--bg1)", border: `1px solid ${savedId ? "var(--teal)" : "var(--line)"}`, color: savedId ? "var(--teal)" : "var(--text2)", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: saving || savedId ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6, transition: "all 0.15s" }}>
+          <button onClick={onSave} disabled={saving || !!savedId}
+            style={{ background: savedId ? "rgba(13,148,136,0.08)" : "var(--bg1)", border: `1px solid ${savedId ? "var(--teal)" : "var(--line)"}`, color: savedId ? "var(--teal)" : "var(--text2)", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: saving || savedId ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6 }}>
             <Icon name={savedId ? "check" : "file"} size={13} color={savedId ? "var(--teal)" : "var(--text2)"} />
             {saving ? "Saving…" : savedId ? "Saved" : "Save Analysis"}
           </button>
         )}
       </div>
       {error && <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+    </>
+  );
+}
 
+function useGapAnalysis({ userId, setResult, setError }) {
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [savedId, setSavedId] = useState(null);
+
+  const analyze = async (role) => {
+    if (!role.trim()) return;
+    setLoading(true); setError(null); setResult(null);
+    try { const res = await axios.post(`${API}/gap-analysis`, { user_id: userId, job_description: role }); setResult(res.data); }
+    catch { setError("Analysis failed. Please try again."); }
+    finally { setLoading(false); }
+  };
+
+  const saveAnalysis = async (role, result) => {
+    if (!result || saving) return;
+    setSaving(true);
+    try { const title = role.trim().slice(0, 80) || "Gap Analysis"; const res = await axios.post(`${API}/analyses/save`, { user_id: userId, type: "gap", title, content: result }); setSavedId(res.data.id); }
+    catch {} finally { setSaving(false); }
+  };
+
+  const copyText = (text, idx) => { navigator.clipboard.writeText(text); setCopied(idx); setTimeout(() => setCopied(null), 2000); };
+
+  return { loading, copied, saving, savedId, analyze, saveAnalysis, copyText };
+}
+
+function GapAnalysis({ userId, built, role, setRole, result, setResult, error, setError }) {
+  const { loading, copied, saving, savedId, analyze, saveAnalysis, copyText } = useGapAnalysis({ userId, setResult, setError });
+  if (!built) return <NotBuiltState />;
+  const score = result?.ats_score;
+  const scoreColor = score >= 70 ? "var(--teal)" : score >= 45 ? "var(--amber)" : "var(--red)";
+  return (
+    <div>
+      <div style={{ fontFamily: "var(--serif)", fontSize: 24, color: "var(--text)", letterSpacing: "-0.01em", fontWeight: 500, marginBottom: 6 }}>ATS Gap Analysis</div>
+      <div style={{ color: "var(--text3)", fontSize: 13, marginBottom: 18 }}>Paste a full job description to get an ATS-optimised breakdown of your fit — match score, missing keywords, and bullet rewrites.</div>
+      <GapAnalysisForm role={role} setRole={setRole} loading={loading} saving={saving} savedId={savedId} result={result} onAnalyze={() => analyze(role)} onSave={() => saveAnalysis(role, result)} error={error} />
       {result && !result.error && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeUp 0.35s ease" }}>
           <ScoreHeader result={result} score={score} scoreColor={scoreColor} />
@@ -282,10 +277,7 @@ function GapAnalysis({ userId, built, role, setRole, result, setResult, error, s
           <QuickWinsSection wins={result.quick_wins} />
         </div>
       )}
-
-      {result?.error && (
-        <div style={{ color: "var(--red)", fontSize: 13 }}>Analysis error: {result.error}</div>
-      )}
+      {result?.error && <div style={{ color: "var(--red)", fontSize: 13 }}>Analysis error: {result.error}</div>}
     </div>
   );
 }

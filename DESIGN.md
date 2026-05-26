@@ -1,5 +1,5 @@
 ---
-name: Preznt
+name: Prolio
 description: >
   AI-powered portfolio and career platform. Dark-first professional design system
   with an indigo accent, a serif-and-sans type pairing, and a restrained motion
@@ -271,7 +271,7 @@ components:
 
 ## Overview
 
-Preznt is a career platform where professionals publish AI-powered portfolios and recruiters evaluate candidates. The design reflects that dual audience: it feels polished and credible enough to hand a recruiter, while being expressive enough that job seekers feel proud to show it.
+Prolio is a career platform where professionals publish AI-powered portfolios and recruiters evaluate candidates. The design reflects that dual audience: it feels polished and credible enough to hand a recruiter, while being expressive enough that job seekers feel proud to show it.
 
 The aesthetic is **dark luxury professional** — deep near-black backgrounds, a restrained indigo accent, and a serif-and-sans type pairing that creates hierarchy without shouting. Everything is intentional: depth through layered surfaces rather than heavy shadows, motion through subtlety rather than spectacle. Borders are gossamer-thin at 6.5–11% white opacity; the surfaces beneath them do the heavy lifting.
 
@@ -308,7 +308,7 @@ Two typefaces work in concert to distinguish brand voice from functional UI.
 
 **Plus Jakarta Sans** (sans-serif) handles everything else — dashboard UI, labels, body copy, buttons, inputs. It is geometric and contemporary without feeling sterile. The range of weights in use (400 regular, 500 medium, 600 semibold, 700 bold) covers every hierarchy tier without requiring a second sans face.
 
-**Scale philosophy:** the scale is dense and fine-grained in the 10–14px range, which suits information-dense UI like dashboards and sidebars. Display sizes jump to 28–36px only for moments of real visual weight. There is no intermediate 18–24px "marketing body" range — Preznt favors compact efficiency over airy editorial layouts in its app surfaces.
+**Scale philosophy:** the scale is dense and fine-grained in the 10–14px range, which suits information-dense UI like dashboards and sidebars. Display sizes jump to 28–36px only for moments of real visual weight. There is no intermediate 18–24px "marketing body" range — Prolio favors compact efficiency over airy editorial layouts in its app surfaces.
 
 **Section heads** use `label-sm` (10.5px, 700 weight, 0.12em letter-spacing, uppercase) — the widest tracking in the system. This extreme spacing at small size creates clear section demarcation without adding vertical bulk.
 
@@ -332,7 +332,7 @@ Card internal padding is consistently 22–24px, creating a comfortable breathin
 
 ## Elevation & Depth
 
-Preznt uses **tonal layering** as its primary depth signal, not shadows. The five surface tiers (background → surface → surface-container-low → surface-container → surface-container-high) stack visually to indicate Z-order without explicit drop shadows in the resting state.
+Prolio uses **tonal layering** as its primary depth signal, not shadows. The five surface tiers (background → surface → surface-container-low → surface-container → surface-container-high) stack visually to indicate Z-order without explicit drop shadows in the resting state.
 
 **Shadows appear only on interaction:**
 - **Hover lift:** Cards gain `box-shadow: 0 12px 36px rgba(0,0,0,0.28)` and translate -3px on Y.
