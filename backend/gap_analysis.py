@@ -85,7 +85,16 @@ async def _run_agent(name: str, messages: list, max_tokens: int = 800) -> dict:
     try:
         raw = await asyncio.to_thread(call_groq, messages, max_tokens, 0.2)
         raw = raw.replace("```json", "").replace("```", "").strip()
-        return json.loads(raw)
+        # Try direct parse first
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            # Extract the largest {...} block in case of trailing text or truncation
+            start = raw.find("{")
+            end = raw.rfind("}") + 1
+            if start != -1 and end > start:
+                return json.loads(raw[start:end])
+            raise
     except Exception as e:
         print(f"[Gap] Agent '{name}' failed: {e}")
         return {}
@@ -194,7 +203,7 @@ Respond ONLY with valid JSON, no markdown:
 
     # ── Launch all 4 agents concurrently ─────────────────────────────────────
     a1, a2, a3, a4 = await asyncio.gather(
-        _run_agent("ats-scanner", [{"role": "system", "content": a1_system}, {"role": "user", "content": user_block}], max_tokens=600),
+        _run_agent("ats-scanner", [{"role": "system", "content": a1_system}, {"role": "user", "content": user_block}], max_tokens=1000),
         _run_agent("bullet-coach", [{"role": "system", "content": a2_system}, {"role": "user", "content": user_block}], max_tokens=900),
         _run_agent("career-advisor", [{"role": "system", "content": a3_system}, {"role": "user", "content": user_block}], max_tokens=700),
         _run_agent("strategy-coach", [{"role": "system", "content": a4_system}, {"role": "user", "content": user_block}], max_tokens=500),
