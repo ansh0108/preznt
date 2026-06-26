@@ -16,6 +16,7 @@ COPY . .
 
 EXPOSE 8000
 
-# Bind IPv6 dual-stack (::) so Railway's IPv6 private network / edge proxy can reach the container.
-# Plain 0.0.0.0 is IPv4-only and becomes unreachable once Railway migrates the service to IPv6 networking.
-CMD ["sh", "-c", "uvicorn main:app --host :: --port ${PORT:-8000}"]
+# Launch via start.py, which binds a true dual-stack (IPv4 + IPv6) socket.
+# Railway's edge uses IPv6 while its health check path can use IPv4; a single
+# 0.0.0.0 or :: bind only satisfies one. See start.py for details.
+CMD ["python", "start.py"]
