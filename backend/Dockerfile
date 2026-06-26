@@ -16,4 +16,6 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Bind IPv6 dual-stack (::) so Railway's IPv6 private network / edge proxy can reach the container.
+# Plain 0.0.0.0 is IPv4-only and becomes unreachable once Railway migrates the service to IPv6 networking.
+CMD ["sh", "-c", "uvicorn main:app --host :: --port ${PORT:-8000}"]
